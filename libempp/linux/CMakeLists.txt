@@ -6,8 +6,8 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif ()
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(UDEV REQUIRED IMPORTED_TARGET libudev)
-pkg_check_modules(BLKID REQUIRED IMPORTED_TARGET blkid)
+pkg_check_modules(LIBEMPP_UDEV REQUIRED IMPORTED_TARGET libudev)
+pkg_check_modules(LIBEMPP_BLKID REQUIRED IMPORTED_TARGET blkid)
 
 include(CheckCXXSourceCompiles)
 
@@ -16,7 +16,7 @@ set(LIBEMPP_USE_GPIOD "AUTO" CACHE STRING
 )
 set_property(CACHE LIBEMPP_USE_GPIOD PROPERTY STRINGS AUTO ON OFF)
 string(TOUPPER "${LIBEMPP_USE_GPIOD}" LIBEMPP_GPIOD_MODE)
-set(GPIOD_FOUND FALSE)
+set(LIBEMPP_GPIOD_FOUND FALSE)
 
 set(LIBEMPP_USE_PWM_CDEV "AUTO" CACHE STRING
 	"Use the Linux PWM character-device API: AUTO, ON, or OFF."
@@ -39,10 +39,13 @@ if(NOT LIBEMPP_PWM_CDEV_MODE MATCHES "^(AUTO|ON|OFF)$")
 endif()
 
 if(LIBEMPP_GPIOD_MODE STREQUAL "ON")
-	pkg_check_modules(GPIOD REQUIRED IMPORTED_TARGET libgpiod)
+	pkg_check_modules(LIBEMPP_GPIOD REQUIRED IMPORTED_TARGET libgpiod)
 elseif(LIBEMPP_GPIOD_MODE STREQUAL "AUTO")
-	pkg_check_modules(GPIOD QUIET IMPORTED_TARGET libgpiod)
+	pkg_check_modules(LIBEMPP_GPIOD QUIET IMPORTED_TARGET libgpiod)
 endif()
+
+set(GPIOD_FOUND ${LIBEMPP_GPIOD_FOUND})
+set(GPIOD_VERSION ${LIBEMPP_GPIOD_VERSION})
 
 set(gpio_backend_dir "${CMAKE_CURRENT_SOURCE_DIR}/subsys/detail/gpio")
 
@@ -119,12 +122,12 @@ libempp_add_library(${target_name})
 
 target_compile_definitions(${target_name} PRIVATE _FILE_OFFSET_BITS=64)
 target_link_libraries(${target_name} PUBLIC
-   empp.core PkgConfig::UDEV
+	empp.core PkgConfig::LIBEMPP_UDEV
 )
-target_link_libraries(${target_name} PRIVATE PkgConfig::BLKID)
+target_link_libraries(${target_name} PRIVATE PkgConfig::LIBEMPP_BLKID)
 
 if(GPIOD_FOUND)
-	target_link_libraries(${target_name} PRIVATE PkgConfig::GPIOD)
+	target_link_libraries(${target_name} PRIVATE PkgConfig::LIBEMPP_GPIOD)
 	message(STATUS "${PRO_NAME}: GPIO backend: libgpiod ${GPIOD_VERSION}")
 else()
 	message(STATUS "${PRO_NAME}: GPIO backend: legacy sysfs")

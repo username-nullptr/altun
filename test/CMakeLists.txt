@@ -140,13 +140,7 @@ else ()
 	)
 endif ()
 if (LIBEMPP_BUILD_PERFORMANCE_TESTS)
-	if (LIBEMPP_ENABLE_TEST_SANITIZERS OR LIBEMPP_ENABLE_TEST_TSAN)
-		message(STATUS
-			"${PRO_NAME}: Performance tests disabled in sanitizer builds."
-		)
-	else ()
-		add_subdirectory(performance)
-	endif ()
+	add_subdirectory(performance)
 else ()
 	message(STATUS
 		"${PRO_NAME}: Enable LIBEMPP_BUILD_PERFORMANCE_TESTS for performance benchmarks."

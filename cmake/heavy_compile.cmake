@@ -30,8 +30,8 @@ if (LIBEMPP_LOW_MEMORY_DEBUG_INFO)
 			"${PRO_NAME}: Use reduced GCC debug information for lower compile memory."
 		)
 	else ()
-		message(WARNING
-			"${PRO_NAME}: LIBEMPP_LOW_MEMORY_DEBUG_INFO currently supports GCC only."
+		message(FATAL_ERROR
+			"${PRO_NAME}: LIBEMPP_LOW_MEMORY_DEBUG_INFO requires the GNU compiler."
 		)
 	endif ()
 endif ()

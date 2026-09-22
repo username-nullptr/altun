@@ -42,6 +42,18 @@ target_link_libraries(my_app PRIVATE empp.core)
 
 Link Linux applications to `empp.linux`; it already carries the public Core dependency.
 
+After installing libEMpp, downstream projects can use its CMake package:
+
+```cmake
+find_package(libEMpp 0.6 CONFIG REQUIRED COMPONENTS core linux)
+
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE libEMpp::linux)
+```
+
+The installed package also provides the compatibility targets `empp.core` and
+`empp.linux`.
+
 ## Documentation
 
 - [Documentation index](doc/README.md)

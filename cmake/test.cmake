@@ -82,22 +82,97 @@ if (LIBEMPP_ENABLE_TEST_SANITIZERS AND LIBEMPP_ENABLE_TEST_TSAN)
 	)
 endif ()
 
+if ((LIBEMPP_BUILD_STRESS_TESTS OR LIBEMPP_BUILD_PERFORMANCE_TESTS) AND
+	NOT BUILD_TESTING)
+	message(FATAL_ERROR
+		"${PRO_NAME}: Stress and performance tests require BUILD_TESTING=ON."
+	)
+endif ()
+
+if (LIBEMPP_BUILD_PERFORMANCE_TESTS AND
+	(LIBEMPP_ENABLE_TEST_SANITIZERS OR LIBEMPP_ENABLE_TEST_TSAN))
+	message(FATAL_ERROR
+		"${PRO_NAME}: Performance tests cannot be combined with test sanitizers."
+	)
+endif ()
+
+if (LIBEMPP_BUILD_PERFORMANCE_TESTS)
+	if (NOT UNIX)
+		message(FATAL_ERROR
+			"${PRO_NAME}: Performance tests require a UNIX platform."
+		)
+	endif ()
+
+	if (NOT (LIBEMPP_BUILD_SBUS_CYCLONE AND LIBEMPP_BUILD_SBUS_DBUS AND
+		LIBEMPP_BUILD_SBUS_SHM))
+		message(FATAL_ERROR
+			"${PRO_NAME}: Performance tests require all CycloneDDS, D-Bus, "
+			"and shared-memory SBus transports."
+		)
+	endif ()
+
+	find_program(LIBEMPP_PERFORMANCE_DBUS_RUN_SESSION NAMES dbus-run-session)
+	if (NOT LIBEMPP_PERFORMANCE_DBUS_RUN_SESSION)
+		message(FATAL_ERROR
+			"${PRO_NAME}: Performance tests require dbus-run-session."
+		)
+	endif ()
+endif ()
+
 if (LIBEMPP_ENABLE_TEST_SANITIZERS OR LIBEMPP_ENABLE_TEST_TSAN)
 	if (NOT BUILD_TESTING)
 		message(FATAL_ERROR
 			"${PRO_NAME}: Test sanitizers require BUILD_TESTING=ON."
 		)
 	endif ()
+
 	if (MSVC OR NOT CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
 		message(FATAL_ERROR
 			"${PRO_NAME}: Test sanitizers require GCC or Clang with a GNU-style driver."
 		)
 	endif ()
+
 	if (ENABLE_LTO)
 		message(FATAL_ERROR "${PRO_NAME}: Disable ENABLE_LTO for sanitizer builds.")
 	endif ()
 
+	include(CheckCXXSourceCompiles)
+	set(libempp_saved_required_flags "${CMAKE_REQUIRED_FLAGS}")
+	set(libempp_saved_required_link_options "${CMAKE_REQUIRED_LINK_OPTIONS}")
+
+	if (LIBEMPP_ENABLE_TEST_SANITIZERS)
+		set(libempp_sanitizer_flags -fsanitize=address,undefined)
+	else ()
+		set(libempp_sanitizer_flags -fsanitize=thread)
+	endif ()
+
+	set(CMAKE_REQUIRED_FLAGS
+		"${libempp_saved_required_flags} ${libempp_sanitizer_flags}"
+	)
+	set(CMAKE_REQUIRED_LINK_OPTIONS
+		${libempp_saved_required_link_options} ${libempp_sanitizer_flags}
+	)
+	unset(LIBEMPP_TEST_SANITIZER_AVAILABLE CACHE)
+
+	check_cxx_source_compiles("int main() { return 0; }"
+		LIBEMPP_TEST_SANITIZER_AVAILABLE
+	)
+	set(CMAKE_REQUIRED_FLAGS "${libempp_saved_required_flags}")
+	set(CMAKE_REQUIRED_LINK_OPTIONS ${libempp_saved_required_link_options})
+
+	if (NOT LIBEMPP_TEST_SANITIZER_AVAILABLE)
+		message(FATAL_ERROR
+			"${PRO_NAME}: Requested test sanitizer runtime is unavailable."
+		)
+	endif ()
+
 	add_library(libempp.test.sanitizer INTERFACE)
+	set_target_properties(libempp.test.sanitizer PROPERTIES
+		EXPORT_NAME sanitizer
+	)
+	add_library(libEMpp::sanitizer ALIAS libempp.test.sanitizer)
+	install(TARGETS libempp.test.sanitizer EXPORT libEMppTargets)
+
 	if (LIBEMPP_ENABLE_TEST_SANITIZERS)
 		target_compile_options(libempp.test.sanitizer INTERFACE
 			-fsanitize=address,undefined

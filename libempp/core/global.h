@@ -7,11 +7,13 @@
 #include <libempp/core/cxx/configs.h>
 #include <libgs/utils/global.h>
 
-#ifdef libempp_EXPORTS
+#if LIBEMPP_BUILD_STATIC
+# define LIBEMPP_CORE_API
+#elif defined(empp_core_EXPORTS)
 # define LIBEMPP_CORE_API  LIBGS_DECL_EXPORT
-#else //libempp_EXPORTS
+#else //empp_core_EXPORTS
 # define LIBEMPP_CORE_API  LIBGS_DECL_IMPORT
-#endif //libempp_EXPORTS
+#endif //empp_core_EXPORTS
 
 #define LIBEMPP_CORE_VAPI
 #define LIBEMPP_CORE_TAPI

@@ -59,6 +59,8 @@ ctest --test-dir build-test -R '^empp\.' --output-on-failure
 | `LIBEMPP_BUILD_EXAMPLES` | `OFF` | Build `examples/` |
 | `LIBEMPP_BUILD_STATIC` | `OFF` | Build static instead of shared libraries |
 | `LIBEMPP_ADD_LIBRARY_VERSION` | `ON` | Add version/SOVERSION to shared libraries |
+| `LIBEMPP_BUILD_SUBMODEL_LIBGS` | `ON` | Build the bundled LibGS submodule |
+| `LIBSEPP_LIBGS_INSTALL_PREFIX` | empty | Absolute install prefix of an external LibGS package; requires `LIBEMPP_BUILD_SUBMODEL_LIBGS=OFF` |
 | `LIBEMPP_USE_GPIOD` | `AUTO` | `AUTO`, `ON`, or `OFF` for the GPIO backend |
 | `LIBEMPP_USE_PWM_CDEV` | `AUTO` | `AUTO`, `ON`, or `OFF` for the PWM character-device backend |
 | `LIBEMPP_HEAVY_COMPILE_JOBS` | GCC `6`, Clang `8`, other `0` | Limit concurrent memory-heavy compilations; `0` disables the limit |
@@ -83,7 +85,7 @@ Testing options are listed in the [testing guide](../test/README.md).
 
 ## Integrate with CMake
 
-The repository exports source-tree targets, not a `find_package` config:
+Use the source tree directly with:
 
 ```cmake
 add_subdirectory(third_party/libempp)
@@ -96,10 +98,49 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 ```
 
+For an installed package, use the exported namespaced targets:
+
+```cmake
+find_package(libEMpp 0.6 CONFIG REQUIRED COMPONENTS core)
+
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE libEMpp::core)
+```
+
+On Linux, request and link the `linux` component when needed:
+
+```cmake
+find_package(libEMpp 0.6 CONFIG REQUIRED COMPONENTS core linux)
+target_link_libraries(my_app PRIVATE libEMpp::linux)
+```
+
+The package restores its LibGS and platform dependencies automatically and
+also defines `empp.core` and `empp.linux` as compatibility targets.
+
+To build against an already installed LibGS outside the normal CMake search
+prefixes, configure libEMpp with its absolute install prefix:
+
+```sh
+cmake -S . -B build \
+  -DLIBEMPP_BUILD_SUBMODEL_LIBGS=OFF \
+  -DLIBSEPP_LIBGS_INSTALL_PREFIX=/opt/libgs
+```
+
+That prefix is recorded in the installed libEMpp package. A downstream build
+can override it before `find_package(libEMpp)` when LibGS has moved:
+
+```cmake
+set(LIBSEPP_LIBGS_INSTALL_PREFIX "/another/libgs/prefix")
+find_package(libEMpp CONFIG REQUIRED)
+```
+
 ## Install
 
 ```sh
 cmake --install build --prefix /opt/libempp
 ```
 
-Shared libraries, headers, and enabled examples are installed below `lib/`, `include/`, and `examples/`. Static library targets have no install rule; consume a static build with `add_subdirectory`.
+Shared or static libraries, headers, enabled examples, and CMake package files
+are installed below `lib/`, `include/`, `examples/`, and
+`lib/cmake/libEMpp/`. When bundled LibGS is enabled, its libraries and package
+files are installed into the same prefix.

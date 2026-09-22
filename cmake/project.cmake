@@ -16,11 +16,9 @@ endif()
 option(LIBEMPP_BUILD_STATIC
 	"-- ${PRO_NAME}: Build static libraries." OFF
 )
-if (NOT LIBEMPP_BUILD_STATIC)
-	option(LIBEMPP_ADD_LIBRARY_VERSION
-		"-- ${PRO_NAME}: Add version information to library names." ON
-	)
-endif ()
+option(LIBEMPP_ADD_LIBRARY_VERSION
+	"-- ${PRO_NAME}: Add version information to shared library names." ON
+)
 
 
 function(libempp_add_library target_name)
@@ -46,9 +44,18 @@ function(libempp_add_library target_name)
 	endif ()
 
 	string(REPLACE "." "_" target_micro "${target_name}")
-	target_compile_definitions(${target_name} PRIVATE ${target_micro}_EXPORTS)
-	target_include_directories(${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+	target_compile_definitions(${target_name} PRIVATE ${target_micro}_EXPORTS)
+	target_compile_features(${target_name} PUBLIC cxx_std_20)
+
+	target_include_directories(${target_name} PUBLIC
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+		$<BUILD_INTERFACE:${LIBEMPP_CORE_CONFIG_INCLUDE}>
+		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+	)
+	target_include_directories(${target_name} PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}
+	)
 	if (NOT ${ARGN} STREQUAL "")
 		target_link_libraries(${target_name} PUBLIC ${ARGN})
 	endif ()
@@ -58,14 +65,18 @@ function(libempp_add_library target_name)
 		RUNTIME_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/bin
 		ARCHIVE_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/lib
 	)
-	if (NOT LIBEMPP_BUILD_STATIC)
-		install(TARGETS ${target_name} DESTINATION ${install_dir}
-			PERMISSIONS
-			OWNER_READ OWNER_WRITE OWNER_EXECUTE
-			GROUP_READ GROUP_EXECUTE
-			WORLD_READ WORLD_EXECUTE
-		)
-	endif ()
+	string(REGEX REPLACE "^empp\\." "" target_export_name "${target_name}")
+	set_target_properties(${target_name} PROPERTIES
+		EXPORT_NAME ${target_export_name}
+	)
+	add_library(libEMpp::${target_export_name} ALIAS ${target_name})
+
+	install(TARGETS ${target_name}
+		EXPORT libEMppTargets
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	)
 
 endfunction ()
 
@@ -93,6 +104,6 @@ function(libempp_add_executable target_name)
 		RUNTIME_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/bin
 		ARCHIVE_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/lib
 	)
-	install(TARGETS ${target_name} DESTINATION bin)
+	install(TARGETS ${target_name} DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 endfunction ()

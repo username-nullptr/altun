@@ -86,4 +86,7 @@ The runner also reads `LIBEMPP_TEST_CASE`, `LIBEMPP_TEST_REPEAT`, `LIBEMPP_TEST_
 | `LIBEMPP_STRESS_SCALE`, `LIBEMPP_STRESS_REPEAT`, `LIBEMPP_STRESS_SEED`, `LIBEMPP_STRESS_TIMEOUT` | `4`, `1`, `1`, `180` | Stress execution controls |
 | `LIBEMPP_PERFORMANCE_SCALE`, `LIBEMPP_PERFORMANCE_TIMEOUT` | `1`, `180` | Benchmark controls |
 
-ASan/UBSan and TSan are mutually exclusive, require GCC or Clang and `BUILD_TESTING=ON`, and cannot be combined with `ENABLE_LTO`. Performance tests are disabled in sanitizer builds.
+ASan/UBSan and TSan are mutually exclusive, require GCC or Clang and
+`BUILD_TESTING=ON`, and cannot be combined with `ENABLE_LTO`. Performance
+tests cannot be combined with either sanitizer mode; invalid combinations are
+rejected during configuration.

@@ -13,6 +13,9 @@ set(PRO_NAME libEMpp)
 project(${PRO_NAME} VERSION ${PRO_VERSION} LANGUAGES C CXX)
 add_definitions(-DLIBEMPP_VERSION_STR="${PRO_VERSION}-dev")
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 # CMake include path.
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -24,6 +27,7 @@ include(heavy_compile)
 include(option)
 include(test)
 include(CTest)
+include(project)
 
 message(STATUS "")
 message(STATUS "${PRO_NAME}: using C: " ${CMAKE_C_STANDARD})
@@ -38,7 +42,6 @@ add_subdirectory(3rd_party)
 include(3rd_party)
 
 if (CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
-	add_link_options("$<$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>:-rdynamic>")
 	add_definitions(-D${PRO_NAME}_DEBUG)
 endif()
 
@@ -57,9 +60,54 @@ if (LIBEMPP_BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif()
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES libempp.h)
-install(FILES libempp.h DESTINATION include/)
+set(LIBEMPP_INSTALL_CMAKEDIR
+	"${CMAKE_INSTALL_LIBDIR}/cmake/${PRO_NAME}"
+	CACHE STRING "Install path for ${PRO_NAME} CMake package files."
+)
 
-install(DIRECTORY libempp/ DESTINATION include/libempp/
+set(LIBEMPP_BUILD_LINUX OFF)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	set(LIBEMPP_BUILD_LINUX ON)
+endif ()
+
+set(LIBEMPP_PACKAGE_NEEDS_CYCLONEDDS OFF)
+set(LIBEMPP_PACKAGE_NEEDS_DBUS OFF)
+set(LIBEMPP_PACKAGE_NEEDS_BLKID OFF)
+set(LIBEMPP_PACKAGE_NEEDS_GPIOD OFF)
+
+if (LIBEMPP_BUILD_STATIC)
+	set(LIBEMPP_PACKAGE_NEEDS_CYCLONEDDS ${LIBEMPP_BUILD_SBUS_CYCLONE})
+	set(LIBEMPP_PACKAGE_NEEDS_DBUS ${LIBEMPP_BUILD_SBUS_DBUS})
+	set(LIBEMPP_PACKAGE_NEEDS_BLKID ${LIBEMPP_BUILD_LINUX})
+
+	if (LIBEMPP_BUILD_LINUX AND LIBEMPP_GPIOD_FOUND)
+		set(LIBEMPP_PACKAGE_NEEDS_GPIOD ON)
+	endif ()
+endif ()
+
+configure_package_config_file (
+	cmake/libEMppConfig.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfig.cmake
+	INSTALL_DESTINATION ${LIBEMPP_INSTALL_CMAKEDIR}
+)
+write_basic_package_version_file (
+	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfigVersion.cmake
+	VERSION ${PROJECT_VERSION}
+	COMPATIBILITY SameMinorVersion
+)
+install(EXPORT libEMppTargets
+	FILE libEMppTargets.cmake
+	NAMESPACE libEMpp::
+	DESTINATION ${LIBEMPP_INSTALL_CMAKEDIR}
+)
+install(FILES
+	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfig.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfigVersion.cmake
+	DESTINATION ${LIBEMPP_INSTALL_CMAKEDIR}
+)
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES libempp.h)
+install(FILES libempp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(DIRECTORY libempp/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libempp/
 	FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )

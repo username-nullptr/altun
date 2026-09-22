@@ -94,7 +94,7 @@ if (TARGET empp.linux)
 		../support/linux/bus.cpp
 		../support/linux/gpio.cpp
 	)
-	if (GPIOD_FOUND AND GPIOD_VERSION VERSION_LESS "2.0")
+	if (LIBEMPP_GPIOD_FOUND AND LIBEMPP_GPIOD_VERSION VERSION_LESS "2.0")
 		target_compile_definitions(empp.test.virtual_devices PRIVATE
 			LIBEMPP_TEST_GPIOD_V1
 		)

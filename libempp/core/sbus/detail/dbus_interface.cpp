@@ -6,6 +6,7 @@
 
 #include "log.h"
 #include <dbus/dbus.h>
+#include <shared_mutex>
 
 namespace libempp::sbus
 {
@@ -59,9 +60,13 @@ runtime &bus_runtime();
 
 std::mutex g_interfaces_mutex {};
 std::unordered_map<dbus_interface*,std::shared_ptr<dbus_interface>> g_interfaces {};
+
 using interface_list = std::vector<std::shared_ptr<dbus_interface>>;
 using interface_list_ptr = std::shared_ptr<const interface_list>;
-interface_list_ptr g_interface_snapshot = std::make_shared<const interface_list>();
+
+std::atomic g_interface_snapshot {
+	std::make_shared<const interface_list>()
+};
 
 void rebuild_interface_snapshot()
 {
@@ -72,7 +77,7 @@ void rebuild_interface_snapshot()
 		LIBGS_UNUSED(pointer);
 		snapshot->emplace_back(object);
 	}
-	g_interface_snapshot = std::move(snapshot);
+	g_interface_snapshot.store(std::move(snapshot), std::memory_order_release);
 }
 
 class runtime
@@ -518,7 +523,7 @@ public:
 		}
 		global_snapshot = std::move(snapshot);
 	}
-	std::mutex mutex {};
+	std::shared_mutex mutex {};
 
 	uint64_t next_sid = 1;
 	topic_map topic_callbacks {};
@@ -526,23 +531,20 @@ public:
 
 	std::unordered_map<uint64_t,std::string> topics_by_sid {};
 	std::unordered_map<uint64_t,global_callback> global_callbacks {};
+
 	global_callback_list_ptr global_snapshot =
 		std::make_shared<const global_callback_list>();
 };
 
 void bridge_dbus_data_available(std::string_view topic, const void *data, size_t size)
 {
-	interface_list_ptr interfaces;
-	{
-		std::lock_guard lock(g_interfaces_mutex);
-		interfaces = g_interface_snapshot;
-	}
+	auto interfaces = g_interface_snapshot.load(std::memory_order_acquire);
 	for(const auto &interface : *interfaces)
 	{
 		dbus_interface::impl::topic_callback_list_ptr topic_callbacks;
 		dbus_interface::impl::global_callback_list_ptr global_callbacks;
 		{
-			std::lock_guard lock(interface->m_impl->mutex);
+			std::shared_lock lock(interface->m_impl->mutex);
 			if( auto it = interface->m_impl->topic_snapshots.find(topic);
 				it != interface->m_impl->topic_snapshots.end() )
 				topic_callbacks = it->second;

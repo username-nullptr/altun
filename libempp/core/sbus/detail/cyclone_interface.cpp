@@ -141,8 +141,7 @@ protected:
 	}
 
 public:
-	virtual ~subscriber_thread()
-	{
+	virtual ~subscriber_thread() {
 		stop();
 	}
 

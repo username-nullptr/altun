@@ -1,47 +1,39 @@
 # Storage
 
-[Back to the Linux module guide](../linux.md) · [Back to the documentation index](../README.md)
+[Linux module](../linux.md) · [Documentation](../README.md)
 
-Block-device discovery, read-only I/O, filesystems, partitions, and mounts are provided by `libempp::storage` and use the `empp.linux` link target. Include the `<libempp/linux/storage.h>` aggregate header or individual component headers as needed:
+Storage APIs live in `libempp::storage`, link with `empp.linux`, and return `libgs::sys_expected<T>`. A successful lookup with no result uses `libgs::optional<T>`.
 
-| Capability | Header | Modifies the target? |
-| --- | --- | --- |
-| Device enumeration, stable identity, geometry, and reads at an offset | `storage/block_device.h` | No; the descriptor is always read-only |
-| Filesystem, disk, and partition inspection | `storage/information.h` | No |
-| Mounted-filesystem capacity | `storage/space.h` | No |
-| Formatting | `storage/format.h` | Yes |
-| Replacing, adding, expanding, and deleting partitions | `storage/partition.h` | Yes |
-| Mount-table queries, mounting, and unmounting | `storage/mount.h` | Queries do not; mounting and unmounting do |
+| Header | Capability | Writes storage? |
+| --- | --- | :---: |
+| `storage/block_device.h` | Enumerate, resolve, identify, and read block devices | No |
+| `storage/information.h` | Inspect filesystems, disks, and partitions | No |
+| `storage/space.h` | Query filesystem capacity | No |
+| `storage/partition.h` | Replace, add, expand, or delete partitions | Yes |
+| `storage/format.h` | Create a filesystem | Yes |
+| `storage/mount.h` | Query, mount, or unmount | Mount state only |
 
-Every operation returns `libgs::sys_expected<T>`. An absent value in a successful result is represented by `libgs::optional<T>` rather than an empty string, empty object, or Boolean sentinel.
+## Identify and inspect
 
-> Formatting and `replace_partition_table()` destroy data. For real media, obtain a `device_info` first and use the overload that accepts it. That overload revalidates major/minor numbers, sysfs path, and a non-empty serial number before and after the operation, reducing the risk that the same `/dev/sdX` name points to a different device after a hot plug.
-
-## Device discovery, identity, and read-only access
-
-`enumerate_devices()` returns a unified `device_info` containing the device node, sysfs path, major/minor numbers, parent disk, bus, model, serial number, partition/removable/read-only flags, and, when the device can be opened, capacity and block sizes. `resolve_device()` resolves aliases such as `/dev/disk/by-id/*` into the same structure.
+Use `device_info` for real devices so mutating operations can validate major/minor numbers, sysfs path, and serial identity. Path overloads are useful for regular image files.
 
 ```cpp
 #include <libempp/linux/storage.h>
 
 namespace storage = libempp::storage;
 
-auto devices = storage::enumerate_devices();
-if(not devices)
-    return devices.error().value();
-
-for(const auto &candidate : *devices)
-{
-    if(candidate.removable and not candidate.partition)
-        std::cout << candidate.device << ' ' << candidate.serial << '\n';
-}
-
 auto selected = storage::resolve_device("/dev/disk/by-id/example");
 if(not selected)
     return selected.error().value();
+
+auto disk = storage::inspect_disk(*selected);
+auto filesystem = storage::inspect_filesystem(*selected);
+auto mounts = storage::find_mounts_by_device(*selected);
 ```
 
-Access a block device through a read-only RAII object. Opening from `device_info` validates the selected identity first:
+`enumerate_devices()` returns device nodes, stable identity, parent disk, model, serial, flags, and available geometry. `inspect_filesystem()` returns an empty optional when no signature exists; `disk_info::table` is empty when no partition table exists.
+
+Read-only access uses `block_device`:
 
 ```cpp
 auto opened = storage::block_device::open(*selected);
@@ -53,42 +45,17 @@ if(not info)
     return info.error().value();
 
 std::vector<std::byte> data(info->geometry.logical_block_size);
-auto transferred = (*opened)->read_some_at(0, libgs::buffer(data));
+auto count = (*opened)->read_some_at(0, libgs::buffer(data));
 ```
 
-The offset and return value of `read_some_at()` are in bytes. Short reads are allowed, and the shared file offset is not changed. After a hot unplug, discard the object, re-enumerate, and select the device again; do not continue using only the previous device-node name.
+Offsets and counts are bytes; short reads are valid. Re-resolve a device after hot unplug instead of trusting an old `/dev` name.
 
-## Inspecting filesystems, partitions, and space
-
-```cpp
-auto disk = storage::inspect_disk(*selected);
-if(not disk)
-    return disk.error().value();
-
-if(disk->table)
-    std::cout << disk->table->type << ' ' << disk->size_bytes << " bytes\n";
-
-for(const auto &partition : disk->partitions)
-{
-    if(partition.device)
-        std::cout << *partition.device << '\n';
-    if(partition.filesystem)
-        std::cout << partition.filesystem->type << '\n';
-}
-```
-
-`inspect_filesystem()` returns `result_t<optional<filesystem_info>>`; success with an empty optional means no signature was found. An empty `disk_info::table` means no partition table exists. Image files do not have real partition nodes, so `partition_info::device` may be empty. `space(path)` uses `statvfs` to return capacity and inode statistics.
-
-Pass a `path_t` directly when inspecting a regular image file. For a real block device, prefer `device_info` so identity changes can also be detected during inspection.
-
-## Modifying a partition table
-
-Modify real disks through `device_info`; image tests may continue to pass a file path:
+## Partition tables
 
 ```cpp
 storage::partition_spec data;
 data.start_sector = 2048;
-data.size_sectors = 0; // Use all remaining space.
+data.size_sectors = 0; // Remaining space.
 data.type = "83";
 
 auto disk = storage::replace_partition_table(
@@ -98,51 +65,30 @@ auto expanded = storage::expand_partition(*selected, 1);
 auto deleted = storage::delete_partition(*selected, 2);
 ```
 
-Partition operations start `sfdisk` with a separate argument vector and do not invoke a shell. Before an operation, they verify that neither the whole disk nor its partitions are mounted. Afterward, they verify device identity and the kernel-visible layout.
+`replace_partition_table()` replaces the complete layout. `expand_partition()` does not resize the filesystem; `delete_partition()` removes only the table entry. Operations reject mounted targets and use `sfdisk` at runtime.
 
-- `replace_partition_table()` replaces the entire layout; an empty list leaves an empty partition table.
-- `create_partition()` requires an existing GPT or DOS partition table.
-- Only GPT accepts `partition_spec::name`.
-- `expand_partition()` refuses to shrink a partition and does not expand the filesystem inside it.
-- `delete_partition()` removes only the table entry; it does not erase the former data region.
-- `partition_options::timeout` and `poll_interval` control the tool-execution and kernel-layout convergence limits.
-
-## Formatting
-
-```cpp
-auto partition = storage::resolve_device("/dev/sdb1");
-if(not partition)
-    return partition.error().value();
-
-storage::format_options options;
-options.type = storage::filesystem_type::ext4;
-options.label = "DATA";
-options.mode = storage::format_mode::quick;
-
-auto formatted = storage::format(*partition, options);
-```
-
-exFAT, ext4, and NTFS are supported. A block device must be writable and unmounted; regular files can be used for image tests. Before returning success, the operation probes the filesystem again and verifies its type and non-empty label. exFAT supports quick mode only. At runtime, the corresponding `mkfs.exfat`, `mkfs.ext4`, or `mkfs.ntfs` command must be installed; a missing tool returns `ENOENT`. The default timeout is two minutes.
-
-## Mounting, unmounting, and the mount table
+## Format and mount
 
 ```cpp
 #include <sys/mount.h>
 
-storage::mount_options options;
-options.flags = MS_NODEV | MS_NOSUID | MS_SYNCHRONOUS;
-auto mounted = storage::mount(*partition, "/media/sdcard0", options);
+auto partition = storage::resolve_device("/dev/disk/by-id/example-part1");
+if(not partition)
+    return partition.error().value();
 
-auto by_target = storage::find_mount_by_target("/media/sdcard0");
-auto by_disk = storage::find_mounts_by_device(*selected);
-auto unmounted = storage::unmount_device(*selected);
+storage::format_options format;
+format.type = storage::filesystem_type::ext4;
+format.label = "DATA";
+auto formatted = storage::format(*partition, format);
+
+storage::mount_options mount;
+mount.flags = MS_NODEV | MS_NOSUID;
+auto mounted = storage::mount(*partition, "/media/data", mount);
+auto unmounted = storage::unmount_target("/media/data");
 ```
 
-The library first tries `mount(2)` and invokes the user-space `mount` helper when required. Before returning success, it reads `/proc/self/mountinfo` and verifies device identity. `unmount_target()` handles one mount point. `unmount_device()` unmounts a disk and its partitions from deepest to shallowest path. The library neither creates nor removes mount directories and does not modify `/etc/fstab`.
+Formatting supports exFAT, ext4, and NTFS and requires the matching `mkfs.*` executable. The library does not create mount directories or edit `/etc/fstab`. `unmount_device()` unmounts a disk and its partitions from deepest to shallowest mount path.
 
-## Dependencies, permissions, and errors
+> Partitioning and formatting destroy data. Resolve a stable device identity, verify its serial and major/minor numbers, confirm it is not mounted or in use, and use the `device_info` overload. These operations normally require root or `CAP_SYS_ADMIN`.
 
-- Building requires `libudev` and `libblkid`; partition changes require `sfdisk` at runtime.
-- Partitioning, formatting, mounting, and unmounting normally require root or `CAP_SYS_ADMIN`.
-- `storage::errc` represents library-level errors such as helper failure, timeout, validation failure, and device-identity changes. errno-style failures preserve the system error code.
-- Production logs should retain at least the operation, device node, major/minor numbers, stable serial number, and `error()` value.
+`storage::errc` reports validation, helper, timeout, and device-identity failures; system failures preserve their `std::error_code`. See [`examples/linux/block.cpp`](../../examples/linux/block.cpp) and [`examples/linux/storage.cpp`](../../examples/linux/storage.cpp) for read-only programs.

@@ -1,20 +1,14 @@
 # Stress tests
 
-[Testing guide](../README.md)
+[Test guide](../README.md)
 
-Stress tests verify correctness under concurrency, bulk asynchronous operations, and repeated lifecycles; they do not produce performance benchmarks. CTest marks every stress executable `RUN_SERIAL` to prevent high-load processes from interfering with each other.
+Stress tests check correctness under concurrency, bulk asynchronous work, and repeated object lifecycles. They are not benchmarks and run serially under CTest.
 
-| CTest name | Main coverage |
+| CTest name | Coverage |
 | --- | --- |
-| `empp.stress.core` | Large numbers of plugin descriptors, multithreaded shared-library interfaces, and version queries |
-| `empp.stress.linux` | Multiple virtual devices and bulk asynchronous I²C and SPI reads across multiple threads |
+| `empp.stress.core` | Plugin descriptors, concurrent library interfaces, and version queries |
+| `empp.stress.linux` | Multiple virtual devices and concurrent I²C/SPI operations |
 
-See the [testing guide](../README.md#stress) for build, filtering, workload scale, repeat count, and seed configuration.
+`LIBEMPP_STRESS_SCALE` controls work within a fixture; `LIBEMPP_STRESS_REPEAT` controls fixture reconstruction; `LIBEMPP_STRESS_SEED` reproduces scheduling.
 
-## Writing cases
-
-- Every run must accept the seed supplied by the runner and include reproduction parameters in failure messages.
-- `LIBEMPP_STRESS_SCALE` controls work within one fixture; `LIBEMPP_STRESS_REPEAT` controls fixture reconstruction count.
-- Use virtual devices or in-process simulators so hardware timing variability is not mistaken for library behavior.
-- Clean up threads, executors, unfinished operations, and temporary files deterministically.
-- Put behavior that can be reproduced with a single deterministic assertion in [Functional](../functional/README.md).
+New stress cases must report reproduction parameters, clean up threads and unfinished operations deterministically, and avoid physical-hardware timing dependencies.

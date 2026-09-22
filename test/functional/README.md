@@ -1,22 +1,23 @@
 # Functional tests
 
-[Testing guide](../README.md)
+[Test guide](../README.md)
 
-Functional tests define deterministic public API contracts and cover successful paths, input validation, error returns, asynchronous completion, resource ownership, and state transitions. Set `BUILD_TESTING=ON` to build them.
+Functional tests exercise public behavior, validation, errors, asynchronous completion, ownership, and state transitions.
 
 | CTest name | Main coverage |
 | --- | --- |
-| `empp.core` | Version interface, settings loading and persistence, plugin descriptor parsing, process loading, and shared-library loading |
-| `empp.virtual_devices` | Filesystem images, serial PTYs, I²C/SPI simulation, GPIO/PWM/LED/backlight/block devices, and udev |
+| `empp.core` | Version, settings, plugin parsing/loading, and child processes |
+| `empp.sbus` | Selected SBus backend and available interprocess path |
+| `empp.virtual_devices` | Linux storage images, serial PTYs, simulated buses/subsystems, and udev |
+| `empp.block_device` | Validation and optional read-only real block device |
+| `empp.storage_destructive` | Explicitly opted-in removable-media mutation |
 
-Linux tests use local files, pseudo-terminals, and in-process simulators and do not require a real board. Only when `LIBEMPP_TEST_BLOCK_DEVICE` is set do they access the selected real block device for additional read-only checks.
+The virtual suite needs no physical board. Real-device environment variables and the destructive-test warning are documented in the [main test guide](../README.md#functional).
 
-See the [testing guide](../README.md#functional) for build, filtering, and runner arguments.
+When adding tests:
 
-## Writing cases
-
-- Prefer calling interfaces through public headers.
-- Cover synchronous, callback, future, and coroutine paths separately only when their behavior truly differs.
-- Assert error reporting, cancellation, timeout, object lifetime, and buffer lifetime explicitly.
-- Isolate external state with local fixtures or simulators so results are reproducible with the same seed.
-- Put tests whose main purpose is sustained concurrency or heavy load in [Stress](../stress/README.md).
+- Exercise public headers and deterministic observable behavior.
+- Cover completion styles separately only when behavior differs.
+- Assert errors, cancellation, timeouts, ownership, and buffer lifetime.
+- Use local fixtures or simulators unless the test is explicitly labeled `real-device`.
+- Put sustained concurrency and heavy load in [stress tests](../stress/README.md).

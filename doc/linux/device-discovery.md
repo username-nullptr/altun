@@ -1,38 +1,37 @@
-# udev device discovery
+# Device discovery
 
-[Back to the Linux module guide](../linux.md) · [Back to the documentation index](../README.md)
+[Linux module](../linux.md) · [Documentation](../README.md)
 
-The udev interfaces find devices by subsystem and property and monitor hot-plug or property changes. Their headers are `<libempp/linux/udev/enumeration.h>` and `<libempp/linux/udev/event.h>`, and both use the `empp.linux` link target.
+The udev API has two parts:
 
-## Enumerating devices
+| Header | Interface | Purpose |
+| --- | --- | --- |
+| `linux/udev/enumeration.h` | `udev::enumeration<Subsys>` | List devices and read udev properties |
+| `linux/udev/event.h` | `udev::event<Subsys>` | Receive device lifecycle events |
 
-`libempp::udev::enumeration<Subsys>` enumerates devices by subsystem and properties. Supported subsystems include `usb`, `tty`, `net`, `block`, `backlight`, `led`, `gpio`, and `pwm`; `led` maps to the kernel subsystem name `leds`.
+Supported subsystems are `usb`, `tty`, `net`, `block`, `backlight`, `led`, `gpio`, and `pwm`.
 
-This example matches tty devices by `ID_MODEL`:
+## Enumerate
 
 ```cpp
 #include <libempp/linux/udev/enumeration.h>
-#include <iostream>
 
 using tty_device =
     libempp::udev::enumeration<libempp::subsys_enum::tty>;
 
-int main()
-{
-    auto devices = tty_device::list(
-        libempp::udev::prop_key::id_model,
-        "USB_Serial*"
-    );
+auto devices = tty_device::list(
+    libempp::udev::prop_key::id_model,
+    "USB_Serial*"
+);
 
-    for(const auto &device : devices)
-    {
-        if(auto name = device.property(libempp::udev::prop_key::dev_name))
-            std::cout << name->to_string() << '\n';
-    }
+for(const auto &device : devices)
+{
+    if(auto name = device.property(libempp::udev::prop_key::dev_name))
+        std::cout << name->to_string() << '\n';
 }
 ```
 
-Property values support wildcard matching. Every rule in a multi-property query must match:
+Property values accept wildcards. A property map uses AND matching:
 
 ```cpp
 auto devices = tty_device::list({
@@ -41,35 +40,12 @@ auto devices = tty_device::list({
 });
 ```
 
-Calling `list()` without filters returns every device in the subsystem:
+`list()` without properties returns all devices in the subsystem. `path()` returns the sysfs path; `property_keys()` lists the udev properties actually present. Property names may be passed directly when `prop_key` does not define one.
 
-```cpp
-using net_device =
-    libempp::udev::enumeration<libempp::subsys_enum::net>;
-
-for(const auto &device : net_device::list())
-{
-    if(auto name = device.property(libempp::udev::prop_key::interface))
-        std::cout << name->to_string() << '\n';
-}
-```
-
-`prop_key` provides common udev properties, including:
-
-- Basic device information: `DEVNAME`, `DEVTYPE`, `DEVLINKS`, `DRIVER`, and `MODALIAS`.
-- Hardware identity and paths: `ID_VENDOR_ID`, `ID_MODEL_ID`, `ID_SERIAL_SHORT`, and `ID_PATH`.
-- Filesystem and partition data: `ID_FS_TYPE`, `ID_FS_UUID`, and `ID_PART_ENTRY_UUID`.
-- Input-device types and network-interface properties.
-
-You can also pass a udev property name directly. `path()` returns the sysfs path, and `property_keys()` helps diagnose the properties a device actually exposes. These keys are udev properties, not sysfs attributes. For example, access a backlight's `brightness` through `libempp::subsys::backlight`.
-
-## Monitoring device events
-
-`libempp::udev::event<Subsys>` integrates a libudev monitor with LibGS/Asio. Each `device_event` owns copies of its path, node name, and properties, so it does not depend on the lifetime of a native `udev_device`.
+## Monitor
 
 ```cpp
 #include <libempp/linux/udev/event.h>
-#include <iostream>
 
 using block_events =
     libempp::udev::event<libempp::subsys_enum::block>;
@@ -80,17 +56,13 @@ events.received.connect([](const libempp::udev::device_event &event) {
               << ' ' << event.dev_node << '\n';
 });
 events.error.connect([](const std::error_code &error) {
-    std::cerr << "udev monitor: " << error.message() << '\n';
+    std::cerr << error.message() << '\n';
 });
 events.open("disk");
 ```
 
-Actions include `add`, `remove`, `change`, `move`, `online`, `offline`, `bind`, and `unbind`; any other action is preserved as `unknown`. `device_event::matches()` uses the same property rules as enumeration. `open("disk")` or `open("partition")` adds a kernel-level filter by device type. Call `open()` without arguments when no filter is needed.
+`open("disk")` and `open("partition")` add a device-type filter; `open()` monitors the whole subsystem. Each `device_event` owns its path, node, type, and property data.
 
-## Consumption and recovery semantics
+Every connected observer receives the event. Slow synchronous slots delay the monitor loop; explicitly asynchronous slots move queueing responsibility to the application. Kernel event delivery is not durable, so re-enumerate after monitor errors or suspected event loss.
 
-The event interface exposes signals rather than `next()`: every observer receives the same event. A synchronous slot connected in the default mode is awaited by the reader coroutine and therefore applies backpressure without creating an unbounded queue inside the library. When `slot_mode::async` is used explicitly, tasks may accumulate on the corresponding executor; the caller owns that queueing and concurrency policy.
-
-Linux netlink sockets still have finite capacity, so the kernel can drop events when observers block for too long. Applications that must recover the final device state should run `udev::enumeration` again after an `error` signal or another anomaly. Do not treat hot-plug events as a durable, complete event log.
-
-Complete programs are available in [`examples/linux/udev.cpp`](../../examples/linux/udev.cpp) and [`examples/linux/udev_event.cpp`](../../examples/linux/udev_event.cpp).
+See [`examples/linux/udev.cpp`](../../examples/linux/udev.cpp) and [`examples/linux/udev_event.cpp`](../../examples/linux/udev_event.cpp).

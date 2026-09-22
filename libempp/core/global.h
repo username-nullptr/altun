@@ -21,7 +21,8 @@
 namespace libempp
 {
 
-LIBEMPP_CORE_API [[nodiscard]] const char *version_string() noexcept;
+[[nodiscard]] LIBEMPP_CORE_API
+const char *version_string() noexcept;
 
 } //namespace libempp
 

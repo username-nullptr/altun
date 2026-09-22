@@ -1,0 +1,4 @@
+[submodule "3rd_party/libgs"]
+	path = 3rd_party/libgs
+	url = https://gitee.com/jin-xiaoqiang/libgs.git
+	branch = bc

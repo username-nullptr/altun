@@ -1,0 +1,6 @@
+Source of the third-party library:
+
+libgs          https://gitee.com/jin-xiaoqiang/libgs.git
+
+nlohmann.json  https://github.com/nlohmann/json.git
+               https://gitee.com/ws-mirror-github/nlohmann.json.git

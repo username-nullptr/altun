@@ -32,6 +32,12 @@ endif ()
 target_link_libraries(${target_name} PUBLIC
 	gs.coro gs.utils
 )
+if (NOT LIBEMPP_USE_EMBEDDED_NLOHMANN)
+	target_link_libraries(${target_name} PUBLIC
+		nlohmann_json::nlohmann_json
+	)
+endif ()
+
 if (LIBEMPP_BUILD_SBUS_CYCLONE)
 	find_package(CycloneDDS REQUIRED)
 	idlc_generate (

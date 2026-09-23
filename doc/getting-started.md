@@ -9,7 +9,8 @@
 | CMake | 3.16+ |
 | Language | C++20 |
 | Compiler | GCC 13+, Clang 17+, or supported MSVC 2022 |
-| LibGS | Bundled Git submodule |
+| LibGS | Embedded by default; an external CMake package is also supported |
+| nlohmann/json | Embedded by default; an external CMake package is also supported |
 | Linux libraries | `pkg-config`, `libudev`, and `libblkid` development files |
 | Optional Linux backend | libgpiod 1.x/2.x; otherwise GPIO uses sysfs |
 | Runtime tools | `sfdisk` for partition changes; matching `mkfs.*` tools for formatting |
@@ -59,8 +60,10 @@ ctest --test-dir build-test -R '^empp\.' --output-on-failure
 | `LIBEMPP_BUILD_EXAMPLES` | `OFF` | Build `examples/` |
 | `LIBEMPP_BUILD_STATIC` | `OFF` | Build static instead of shared libraries |
 | `LIBEMPP_ADD_LIBRARY_VERSION` | `ON` | Add version/SOVERSION to shared libraries |
-| `LIBEMPP_BUILD_SUBMODEL_LIBGS` | `ON` | Build the bundled LibGS submodule |
-| `LIBSEPP_LIBGS_INSTALL_PREFIX` | empty | Absolute install prefix of an external LibGS package; requires `LIBEMPP_BUILD_SUBMODEL_LIBGS=OFF` |
+| `LIBEMPP_USE_EMBEDDED_LIBGS` | `ON` | Use the embedded LibGS dependency |
+| `LIBEMPP_LIBGS_INSTALL_PREFIX` | empty | Absolute install prefix of an external LibGS package; requires `LIBEMPP_USE_EMBEDDED_LIBGS=OFF` |
+| `LIBEMPP_USE_EMBEDDED_NLOHMANN` | `ON` | Use the embedded nlohmann/json dependency |
+| `LIBEMPP_NLOHMANN_INSTALL_PREFIX` | empty | Absolute install prefix of an external nlohmann/json package; requires `LIBEMPP_USE_EMBEDDED_NLOHMANN=OFF` |
 | `LIBEMPP_USE_GPIOD` | `AUTO` | `AUTO`, `ON`, or `OFF` for the GPIO backend |
 | `LIBEMPP_USE_PWM_CDEV` | `AUTO` | `AUTO`, `ON`, or `OFF` for the PWM character-device backend |
 | `LIBEMPP_HEAVY_COMPILE_JOBS` | GCC `6`, Clang `8`, other `0` | Limit concurrent memory-heavy compilations; `0` disables the limit |
@@ -122,17 +125,29 @@ prefixes, configure libEMpp with its absolute install prefix:
 
 ```sh
 cmake -S . -B build \
-  -DLIBEMPP_BUILD_SUBMODEL_LIBGS=OFF \
-  -DLIBSEPP_LIBGS_INSTALL_PREFIX=/opt/libgs
+  -DLIBEMPP_USE_EMBEDDED_LIBGS=OFF \
+  -DLIBEMPP_LIBGS_INSTALL_PREFIX=/opt/libgs
 ```
 
 That prefix is recorded in the installed libEMpp package. A downstream build
 can override it before `find_package(libEMpp)` when LibGS has moved:
 
 ```cmake
-set(LIBSEPP_LIBGS_INSTALL_PREFIX "/another/libgs/prefix")
+set(LIBEMPP_LIBGS_INSTALL_PREFIX "/another/libgs/prefix")
 find_package(libEMpp CONFIG REQUIRED)
 ```
+
+The same pattern selects an external nlohmann/json package:
+
+```sh
+cmake -S . -B build \
+  -DLIBEMPP_USE_EMBEDDED_NLOHMANN=OFF \
+  -DLIBEMPP_NLOHMANN_INSTALL_PREFIX=/opt/nlohmann-json
+```
+
+The nlohmann/json prefix is also recorded in the installed package and can be
+overridden by setting `LIBEMPP_NLOHMANN_INSTALL_PREFIX` before
+`find_package(libEMpp)`.
 
 ## Install
 

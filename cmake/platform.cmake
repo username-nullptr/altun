@@ -126,3 +126,9 @@ else()
 endif ()
 
 set(CMAKE_CXX_STANDARD 20)
+set(LIBEMPP_OUTPUT_DIR ${CMAKE_BINARY_DIR}/output)
+
+message(STATUS "")
+message(STATUS "${PRO_NAME}: Using C++: " ${CMAKE_CXX_STANDARD})
+message(STATUS "${PRO_NAME}: Build type: " ${CMAKE_BUILD_TYPE})
+message(STATUS "${PRO_NAME}: Install prefix: " ${CMAKE_INSTALL_PREFIX})

@@ -22,16 +22,17 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # Build output path.
 set(LIBEMPP_OUTPUT_DIR ${CMAKE_BINARY_DIR}/output)
 
-include(platform)  # Check compiler.
+include(platform)
 include(heavy_compile)
-include(option)
-include(test)
-include(CTest)
+
+include(options)
 include(project)
 
-# Add 3rd-libraries
 add_subdirectory(3rd_party)
 include(3rd_party)
+
+include(test)
+include(CTest)
 
 if (CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
 	add_definitions(-D${PRO_NAME}_DEBUG)
@@ -39,6 +40,12 @@ endif()
 
 include_directories(.)
 add_subdirectory(libempp)
+
+# Generate the installed package only after every provider and exported target
+# has been resolved.  External providers choose their concrete imported target
+# names while configuring 3rd_party, so generating this file earlier leaves
+# empty target names in LibGSConfig.cmake.
+include(provider)
 
 if (BUILD_TESTING)
 	add_subdirectory(test)
@@ -48,26 +55,6 @@ if (LIBEMPP_BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif()
 
-configure_package_config_file (
-	cmake/libEMppConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfig.cmake
-	INSTALL_DESTINATION ${LIBEMPP_INSTALL_CMAKEDIR}
-)
-write_basic_package_version_file (
-	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfigVersion.cmake
-	VERSION ${PROJECT_VERSION}
-	COMPATIBILITY SameMinorVersion
-)
-install(EXPORT libEMppTargets
-	FILE libEMppTargets.cmake
-	NAMESPACE libEMpp::
-	DESTINATION ${LIBEMPP_INSTALL_CMAKEDIR}
-)
-install(FILES
-	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfig.cmake
-	${CMAKE_CURRENT_BINARY_DIR}/libEMppConfigVersion.cmake
-	DESTINATION ${LIBEMPP_INSTALL_CMAKEDIR}
-)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES libempp.h)
 install(FILES libempp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 

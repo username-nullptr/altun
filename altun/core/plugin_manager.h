@@ -34,8 +34,8 @@ public:
 	};
 	struct process_node : library_node
 	{
-		std::vector<riwo::value> args {};
-		std::map<std::string,riwo::value> envs {};
+		std::vector<path_t> args {};
+		std::map<std::string,path_t> envs {};
 	};
 
 public:

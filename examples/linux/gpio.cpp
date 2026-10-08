@@ -95,7 +95,7 @@ int main(int argc, const char *argv[])
 					context.stop();
 				} | gpio::duration_t(timeout));
 			context.run();
-			if( event_error == asio::error::timed_out )
+			if( event_error == std::errc::timed_out )
 			{
 				std::cout << "Timed out\n";
 				return 2;

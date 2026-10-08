@@ -90,21 +90,33 @@ public:
 	basic_gpio &operator=(basic_gpio &&other) noexcept;
 
 public:
-	basic_gpio &open(const node_t &node, std::error_code &error) noexcept;
+	template <typename Error>
+	basic_gpio &open(const node_t &node, Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
 	basic_gpio &open(const node_t &node);
 	basic_gpio &close() noexcept;
 
 public:
-	basic_gpio &set(bool value, std::error_code &error) noexcept;
+	template <typename Error>
+	basic_gpio &set(bool value, Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
+	template <typename Error>
+	basic_gpio &rising(Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
+	template <typename Error>
+	basic_gpio &falling(Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
+	template <typename Error>
+	basic_gpio &invert(Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
 	basic_gpio &set(bool value);
-
-	basic_gpio &rising(std::error_code &error) noexcept;
 	basic_gpio &rising();
-
-	basic_gpio &falling(std::error_code &error) noexcept;
 	basic_gpio &falling();
-
-	basic_gpio &invert(std::error_code &error) noexcept;
 	basic_gpio &invert();
 
 	[[nodiscard]] riwo::sys_expected<bool> get() const noexcept;
@@ -114,7 +126,7 @@ public:
 public:
 	template <typename Token>
 	static constexpr bool event_token_v =
-		riwo::concepts::tf_opt_token<Token,std::error_code> and
+		riwo::concepts::tf_opt_token<Token,riwo::error_code> and
 		not riwo::is_detached_v<riwo::token_unbound_t<Token>>;
 
 	template <typename Token = const riwo::use_sync_t&>

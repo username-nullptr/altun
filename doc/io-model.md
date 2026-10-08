@@ -4,6 +4,12 @@
 
 altun asynchronous APIs follow Asio and Riwo conventions. Executor-bound types expose `executor_type`, `executor_t`, and `get_executor()`; convenience aliases use the default Riwo execution context.
 
+The Asio provider is selected by Riwo. `RIWO_ASIO_PROVIDER=BOOST` builds altun
+against Boost.Asio; `BUNDLED` and `EXTERNAL` select standalone Asio. Public
+error-code arguments and tokens on the I²C, SPI, GPIO-line, udev, and serial
+interfaces accept either `std::error_code` or the provider type, while
+asynchronous completion signatures use `riwo::error_code`.
+
 ## Completion and lifetime
 
 - Completion handlers are submitted through the associated executor, including immediate failures.

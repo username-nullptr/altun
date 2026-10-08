@@ -33,4 +33,4 @@ Both libgpiod 1.x and 2.x are supported. Inspect the selected backend with `gpio
 4. Verify addresses, line/channel numbers, voltage, mode, timing, and resource ownership before writing hardware.
 5. For storage mutation, use a stable device identity and confirm the disk and its partitions are unmounted.
 
-Storage functions return `riwo::sys_expected<T>`. Other device APIs provide throwing and/or `std::error_code` overloads. Follow the [execution and I/O model](io-model.md) for asynchronous lifetimes and serialization.
+Storage functions return `riwo::sys_expected<T>`. Other device APIs provide throwing and/or error-code overloads. The I²C, SPI, GPIO-line, udev, and serial interfaces accept both `std::error_code` and the selected provider's error type for public error-code arguments and tokens. Follow the [execution and I/O model](io-model.md) for asynchronous lifetimes and serialization.

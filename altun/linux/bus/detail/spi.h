@@ -144,7 +144,7 @@ public:
 		using token_t = std::remove_cvref_t<Token>;
 		token_t completion_token(std::forward<Token>(token));
 
-		return asio::async_initiate<token_t,void(std::error_code,Buffer)>(
+		return asio::async_initiate<token_t,void(riwo::error_code,Buffer)>(
 		[self = this->shared_from_this()]<typename T0>(T0 completion_handler) mutable
 		{
 			auto allocator = asio::get_associated_allocator(completion_handler);
@@ -161,7 +161,7 @@ public:
 			auto slot = asio::get_associated_cancellation_slot(completion_handler);
 			auto next_handler = asio::bind_immediate_executor(immediate_executor,
 				asio::bind_allocator(allocator, asio::bind_executor(executor, asio::bind_cancellation_slot(slot,
-				[result, completion = std::move(completion_handler)](std::error_code error, size_t) mutable {
+				[result, completion = std::move(completion_handler)](riwo::error_code error, size_t) mutable {
 					std::move(completion)(error, std::move(*result));
 				}))
 			));
@@ -204,11 +204,11 @@ private:
 		if( result >= 0 and static_cast<size_t>(result) == size )
 			return size;
 
-		std::error_code error;
+		riwo::error_code error;
 		if( result < 0 )
-			error = std::error_code(errno, std::system_category());
+			error = riwo::error_code(errno, riwo::system_category());
 		else
-			error = std::make_error_code(std::errc::io_error);
+			error = riwo::make_system_error_code(std::errc::io_error);
 
 		altun_log_warning("Altun.Linux",
 			"spi::{}: ioctl(SPI_IOC_MESSAGE) failed: {}", operation, error
@@ -240,7 +240,7 @@ private:
 		]() mutable
 		{
 			RIWO_UNUSED(io_work);
-			std::error_code error;
+			riwo::error_code error;
 			size_t transferred = 0;
 			try {
 				auto result = operation();
@@ -363,7 +363,9 @@ basic_spi<Exec> &basic_spi<Exec>::operator=(basic_spi<Exec0> &&other) noexcept
 }
 
 template <riwo::concepts::exec Exec>
-void basic_spi<Exec>::open(const node &dev, std::error_code &error) noexcept
+template <typename Error>
+void basic_spi<Exec>::open(const node &dev, Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
 {
 	error.clear();
 	if( is_open() )
@@ -381,6 +383,19 @@ void basic_spi<Exec>::open(const node &dev, std::error_code &error) noexcept
 }
 
 template <riwo::concepts::exec Exec>
+template <typename Error>
+void basic_spi<Exec>::close(Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
+{
+	error.clear();
+	if( m_impl->m_handle.is_open() )
+	{
+		auto adapted_error = riwo::adapt_error_code(error);
+		m_impl->m_handle.close(adapted_error.get());
+	}
+}
+
+template <riwo::concepts::exec Exec>
 void basic_spi<Exec>::open(const node &dev)
 {
 	std::error_code error;
@@ -391,14 +406,6 @@ void basic_spi<Exec>::open(const node &dev)
 			"altun::spi::open('{}')", dev.dev_name.string()
 		));
 	}
-}
-
-template <riwo::concepts::exec Exec>
-void basic_spi<Exec>::close(std::error_code &error) noexcept
-{
-	error.clear();
-	if( m_impl->m_handle.is_open() )
-		m_impl->m_handle.close(error);
 }
 
 template <riwo::concepts::exec Exec>
@@ -489,8 +496,10 @@ auto basic_spi<Exec>::handle() noexcept -> handle_t&
 }
 
 template <riwo::concepts::exec Exec>
+template <typename Error>
 auto basic_spi<Exec>::make_handle
-(const node &dev, riwo::concepts::match_sched<Exec> auto &&exec, std::error_code &error) noexcept -> handle_t
+(const node &dev, riwo::concepts::match_sched<Exec> auto &&exec, Error &error) noexcept -> handle_t
+	requires riwo::is_error_code_token_v<Error&>
 {
 	handle_t stream(riwo::get_executor_helper (
 		std::forward<decltype(exec)>(exec)
@@ -526,7 +535,10 @@ auto basic_spi<Exec>::make_handle
 				error = std::error_code(errno, std::system_category());
 				break;
 			}
-			error = stream.assign(fd, error);
+			{
+				auto adapted_error = riwo::adapt_error_code(error);
+				stream.assign(fd, adapted_error.get());
+			}
 			if( error )
 				break;
 			return stream;
@@ -537,14 +549,16 @@ auto basic_spi<Exec>::make_handle
 			::close(fd);
 	}
 	altun_log_warning("Altun.Linux",
-		"basic_spi<Exec>::make_handle: '{}': {}", dev.dev_name.string(), error
+		"basic_spi<Exec>::make_handle: '{}': {}", dev.dev_name.string(),
+		riwo::error_code(error)
 	);
 	return stream;
 }
 
 template <riwo::concepts::exec Exec>
-auto basic_spi<Exec>::make_handle(const node &dev, std::error_code &error) noexcept -> handle_t
-	requires riwo::concepts::match_def_exec<Exec>
+template <typename Error>
+auto basic_spi<Exec>::make_handle(const node &dev, Error &error) noexcept -> handle_t
+	requires (riwo::concepts::match_def_exec<Exec> and riwo::is_error_code_token_v<Error&>)
 {
 	return make_handle(dev, riwo::io_context(), error);
 }

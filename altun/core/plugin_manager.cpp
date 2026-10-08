@@ -127,8 +127,8 @@ public:
 	struct app_desc
 	{
 		std::string file_name {};
-		std::vector<riwo::value> args {};
-		std::map<std::string,riwo::value> envs {};
+		std::vector<fs::path> args {};
+		std::map<std::string,fs::path> envs {};
 	};
 	explicit config_parser(std::string_view group) :
 		m_group(group) {}
@@ -361,7 +361,7 @@ void plugin_manager::load(std::string_view group)
 		{
 			altun_clog_warning("Altun.Core",
 				"plugin_manager: Load application '{}' failed: {}.",
-				node.file_name, std::make_error_code(std::errc::no_such_file_or_directory)
+				node.file_name, riwo::make_system_error_code(std::errc::no_such_file_or_directory)
 			);
 			continue;
 		}
@@ -397,7 +397,7 @@ void plugin_manager::load(std::string_view group)
 		{
 			altun_clog_warning("Altun.Core",
 				"plugin_manager: Load plugin '{}' failed: {}.",
-				file_name, std::make_error_code(std::errc::no_such_file_or_directory)
+				file_name, riwo::make_system_error_code(std::errc::no_such_file_or_directory)
 			);
 			continue;
 		}

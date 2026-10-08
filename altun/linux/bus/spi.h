@@ -76,16 +76,21 @@ public:
 	basic_spi &operator=(basic_spi<Exec0> &&other) noexcept;
 
 public:
-	void open(const node &dev, std::error_code &error) noexcept;
-	void open(const node &dev);
+	template <typename Error>
+	void open(const node &dev, Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
 
-	void close(std::error_code &error) noexcept;
+	template <typename Error>
+	void close(Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
+	void open(const node &dev);
 	void close();
 
 public:
 	template <typename Token, typename Value = size_t>
 	static constexpr bool task_token_v =
-		riwo::concepts::tf_opt_token<Token,std::error_code,Value>;
+		riwo::concepts::tf_opt_token<Token,riwo::error_code,Value>;
 
 	template <typename Token, typename Value = size_t>
 	static constexpr bool read_token_v = task_token_v<Token,Value> and
@@ -116,14 +121,14 @@ public:
 	[[nodiscard]] handle_t &handle() noexcept;
 
 public:
+	template <typename Error>
 	[[nodiscard]] static handle_t make_handle (
-		const node &dev, riwo::concepts::match_sched<Exec> auto &&exec,
-		std::error_code &error
-	) noexcept;
+		const node &dev, riwo::concepts::match_sched<Exec> auto &&exec, Error &error
+	) noexcept requires riwo::is_error_code_token_v<Error&>;
 
-	[[nodiscard]] static handle_t make_handle (
-		const node &dev, std::error_code &error
-	) noexcept requires riwo::concepts::match_def_exec<Exec>;
+	template <typename Error>
+	[[nodiscard]] static handle_t make_handle(const node &dev, Error &error) noexcept
+		requires (riwo::concepts::match_def_exec<Exec> and riwo::is_error_code_token_v<Error&>);
 
 	template <riwo::concepts::match_sched<Exec> Exec0 = riwo::io_context_t&>
 	[[nodiscard]] static handle_t make_handle (

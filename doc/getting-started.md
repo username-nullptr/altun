@@ -65,6 +65,7 @@ ctest --test-dir build-test -R '^altun\.' --output-on-failure
 | `ALTUN_ENABLE_LTO` | `OFF` | Enable LTO with GCC |
 | `ALTUN_USE_BUNDLED_RIWO` | `ON` | Use the bundled Riwo dependency |
 | `ALTUN_RIWO_INSTALL_PREFIX` | empty | Absolute install prefix of an external Riwo package; requires `ALTUN_USE_BUNDLED_RIWO=OFF` |
+| `RIWO_ASIO_PROVIDER` | `BUNDLED` | Select `BUNDLED`, `EXTERNAL`, or `BOOST` Asio through Riwo |
 | `ALTUN_USE_EMBEDDED_NLOHMANN` | `ON` | Use the embedded nlohmann/json dependency |
 | `ALTUN_NLOHMANN_INSTALL_PREFIX` | empty | Absolute install prefix of an external nlohmann/json package; requires `ALTUN_USE_EMBEDDED_NLOHMANN=OFF` |
 | `ALTUN_USE_GPIOD` | `AUTO` | `AUTO`, `ON`, or `OFF` for the GPIO backend |
@@ -73,6 +74,20 @@ ctest --test-dir build-test -R '^altun\.' --output-on-failure
 | `ALTUN_LOW_MEMORY_DEBUG_INFO` | `OFF` | Use `-g1` for GCC Debug builds |
 
 `AUTO` selects the character-device backend when its dependency or kernel header is available, otherwise sysfs. `ON` makes the character-device backend mandatory. The selected backend is available at runtime through `gpio::backend_name()` and `pwm::backend_name()`.
+
+For example, select Boost.Asio with:
+
+```sh
+cmake -S . -B build-boost -DRIWO_ASIO_PROVIDER=BOOST
+cmake --build build-boost --parallel
+```
+
+The I²C, SPI, GPIO-line, udev, and serial interfaces accept both
+`std::error_code` and `boost::system::error_code` for public error-code
+arguments and tokens. Asynchronous completion signatures use the error type of
+the selected provider, available uniformly as `riwo::error_code`.
+When using an externally installed Riwo, that package's configured provider is
+used instead.
 
 ### SBus
 

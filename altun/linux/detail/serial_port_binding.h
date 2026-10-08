@@ -39,14 +39,14 @@ public:
 			co_return co_await q_ptr->opened(port);
 		});
 		context->closed.connect(self, [q_ptr]
-		(std::string_view port, const std::error_code &error) -> riwo::awaitable<void> {
+		(std::string_view port, const riwo::error_code &error) -> riwo::awaitable<void> {
 			co_return co_await q_ptr->closed(port, error);
 		});
 		context->received.connect(self, [q_ptr](io_context_ptr ioc) -> riwo::awaitable<void> {
 			co_return co_await q_ptr->received(std::move(ioc));
 		});
 		context->error.connect(self, [q_ptr]
-		(std::string_view port, const std::error_code &error) -> riwo::awaitable<void> {
+		(std::string_view port, const riwo::error_code &error) -> riwo::awaitable<void> {
 			co_return co_await q_ptr->error(port, error);
 		});
 	}
@@ -186,7 +186,7 @@ public:
 		m_open = false;
 		++m_generation;
 
-		std::error_code close_error {};
+		riwo::error_code close_error {};
 		for(auto &[port,stream] : m_devs)
 		{
 			close_error.clear();
@@ -203,12 +203,12 @@ public:
 		m_shutdown = true;
 		close();
 
-		std::error_code ignored;
+		riwo::error_code ignored;
 		m_event.close(ignored);
 	}
 
 public:
-	using io_handler_t = asio::any_completion_handler<void(std::error_code,size_t)>;
+	using io_handler_t = asio::any_completion_handler<void(riwo::error_code,size_t)>;
 	using write_target_t = std::pair<std::string,stream_ptr>;
 	using write_targets_t = std::vector<write_target_t>;
 
@@ -218,10 +218,10 @@ public:
 		if( not stream )
 		{
 			return riwo::io_unexpected (
-				std::make_error_code(std::errc::no_such_device)
+				riwo::make_system_error_code(std::errc::no_such_device)
 			);
 		}
-		std::error_code write_error {};
+		riwo::error_code write_error {};
 		auto sum = asio::write(*stream, buffer, write_error);
 
 		if( write_error )
@@ -265,7 +265,7 @@ public:
 	[[nodiscard]] riwo::awaitable<riwo::io_expected> co_write
 	(std::string port, stream_ptr stream, riwo::const_buffer buffer)
 	{
-		std::error_code write_error {};
+		riwo::error_code write_error {};
 		auto size = co_await async_write(std::move(port), stream, buffer,
 			asio::redirect_error(riwo::use_awaitable, write_error)
 		);
@@ -281,7 +281,7 @@ public:
 		using token_t = std::remove_cvref_t<Token>;
 		token_t completion_token(std::forward<Token>(token));
 
-		return asio::async_initiate<token_t,void(std::error_code,size_t)>(
+		return asio::async_initiate<token_t,void(riwo::error_code,size_t)>(
 		[self = this->shared_from_this(), port = std::move(port), stream, buffer](auto handler) mutable
 		{
 			self->async_write(std::move(port), stream, buffer,
@@ -296,7 +296,7 @@ public:
 	{
 		if( not stream )
 		{
-			const auto write_error = std::make_error_code(std::errc::no_such_device);
+			const auto write_error = riwo::make_system_error_code(std::errc::no_such_device);
 			notify_error(port, write_error);
 			post_write_result(std::move(handler),
 				write_error, 0
@@ -311,7 +311,7 @@ public:
 
 		auto completion = [self = this->shared_from_this(),
 			port = std::move(port), handler = std::move(handler)
-		](std::error_code error, size_t size) mutable
+		](riwo::error_code error, size_t size) mutable
 		{
 			if( error )
 				self->notify_error(port, error);
@@ -336,7 +336,7 @@ public:
 		if constexpr( riwo::is_error_code_token_v<Token> )
 		{
 			auto result = write_many(targets, buffer);
-			token = result ? std::error_code{} : result.error();
+			token = result ? riwo::error_code{} : result.error();
 		}
 		else if constexpr( riwo::is_sync_opt_token_v<Token> )
 			return write_many(targets, buffer);
@@ -375,11 +375,11 @@ private:
 		return owner;
 	}
 
-	void post_write_result(io_handler_t handler, std::error_code write_error, size_t size) {
+	void post_write_result(io_handler_t handler, riwo::error_code write_error, size_t size) {
 		riwo::post_completion(m_exec, std::move(handler), write_error, size);
 	}
 
-	void notify_error(std::string_view port, std::error_code operation_error) noexcept
+	void notify_error(std::string_view port, riwo::error_code operation_error) noexcept
 	{
 		try {
 			auto context = q_ptr.lock();
@@ -397,7 +397,7 @@ private:
 		catch(...) {}
 	}
 
-	void notify_closed(std::string_view port, std::error_code close_error) noexcept
+	void notify_closed(std::string_view port, riwo::error_code close_error) noexcept
 	{
 		try {
 			auto context = q_ptr.lock();
@@ -416,7 +416,7 @@ private:
 	}
 
 	[[nodiscard]] riwo::awaitable<void> emit_closed
-	(const std::string &port, const std::error_code &close_error)
+	(const std::string &port, const riwo::error_code &close_error)
 	{
 		if( m_opened_ports.erase(port) == 0 )
 			co_return ;
@@ -438,7 +438,7 @@ private:
 	[[nodiscard]] riwo::sys_expected<> write_many
 	(const write_targets_t &targets, const riwo::const_buffer &buffer)
 	{
-		std::error_code first_error {};
+		riwo::error_code first_error {};
 		for( const auto &[port, stream] : targets )
 		{
 			auto result = write_and_notify(port, stream, buffer);
@@ -458,10 +458,10 @@ private:
 	[[nodiscard]] riwo::awaitable<riwo::sys_expected<>>
 	co_write_many(write_targets_t targets, riwo::const_buffer buffer)
 	{
-		std::error_code first_error {};
+		riwo::error_code first_error {};
 		for( auto &[port, stream] : targets )
 		{
-			std::error_code write_error {};
+			riwo::error_code write_error {};
 			co_await write(port, stream, buffer,
 				asio::redirect_error(riwo::use_awaitable, write_error)
 			);
@@ -480,8 +480,7 @@ private:
 		co_return riwo::make_sys_expected();
 	}
 
-	static void log_write_error
-	(std::string_view port, const std::error_code &write_error)
+	static void log_write_error(std::string_view port, const riwo::error_code &write_error)
 	{
 		altun_clog_warning("Altun.Linux",
 			"serial_port_binding: Failed to write device [{}]: {}",
@@ -498,7 +497,7 @@ private:
 		if( m_shutdown or q_ptr.expired() )
 			co_return ;
 
-		std::error_code monitor_error;
+		riwo::error_code monitor_error;
 		m_event.open(monitor_error);
 
 		udev::properties_t properties;
@@ -544,7 +543,7 @@ private:
 			unregister_rule_device(port, sys_path);
 	}
 
-	void handle_monitor_error(const std::error_code &event_error) noexcept
+	void handle_monitor_error(const riwo::error_code &event_error) noexcept
 	{
 		if( event_error == asio::error::operation_aborted or
 			event_error == std::errc::operation_canceled or m_shutdown )
@@ -646,14 +645,14 @@ private:
 		auto stream = std::move(it->second);
 		m_devs.erase(it);
 
-		std::error_code close_error;
+		riwo::error_code close_error;
 		if( stream->is_open() )
 			stream->close(close_error);
 
 		if( m_opened_ports.erase(port) > 0 )
 		{
 			if( not close_error )
-				close_error = std::make_error_code(std::errc::no_such_device);
+				close_error = riwo::make_system_error_code(std::errc::no_such_device);
 			notify_closed(port, close_error);
 		}
 		if( close_error and close_error != std::errc::no_such_device )
@@ -681,15 +680,15 @@ private:
 		while( not q_ptr.expired() and m_open and generation == m_generation and
 			   is_current_rule_device(port, stream, is_rule) )
 		{
-			std::error_code open_error {};
-			std::error_code cleanup_error {};
+			riwo::error_code open_error {};
+			riwo::error_code cleanup_error {};
 			try {
 				stream->open(port);
 				set_option(stream);
 			}
-			catch(const std::system_error &ex)
+			catch(...)
 			{
-				open_error = ex.code();
+				open_error = riwo::exception_error(std::current_exception());
 				if( stream->is_open() )
 					stream->close(cleanup_error);
 			}
@@ -753,15 +752,17 @@ private:
 		using namespace riwo::coro::literals;
 		using namespace riwo::operators;
 
-		auto self = this->shared_from_this();
 		constexpr size_t read_buffer_size = 1024;
+
+		auto self = this->shared_from_this();
 		typename io_context::payload_t read_buffer(read_buffer_size);
-		std::error_code closed_error {};
+
+		riwo::error_code closed_error {};
 		bool closed_edge = false;
 
 		while( not q_ptr.expired() and m_open and generation == m_generation )
 		{
-			std::error_code read_error {};
+			riwo::error_code read_error {};
 			auto sum = co_await stream->async_read_some (
 				asio::buffer(read_buffer), asio::use_awaitable | read_error
 			);
@@ -818,7 +819,7 @@ private:
 		}
 		if( generation == m_generation )
 		{
-			std::error_code close_error {};
+			riwo::error_code close_error {};
 			if( stream->is_open() )
 				stream->close(close_error);
 
@@ -877,7 +878,7 @@ public:
 	bool m_shutdown = false;
 	size_t m_generation = 0;
 
-	std::error_code m_open_error {};
+	riwo::error_code m_open_error {};
 	size_t m_open_err_cr = 0;
 };
 
@@ -955,7 +956,7 @@ basic_serial_port_binding<Exec>::rule_context::close()
 }
 
 template <riwo::concepts::exec Exec>
-template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::rule_context::write
 (const std::vector<std::string> &ports, riwo::const_buffer buffer, Token &&token)
 {
@@ -972,7 +973,7 @@ auto basic_serial_port_binding<Exec>::rule_context::write
 }
 
 template <riwo::concepts::exec Exec>
-template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::rule_context::write
 (std::string_view port, riwo::const_buffer buffer, Token &&token)
 {
@@ -991,7 +992,7 @@ auto basic_serial_port_binding<Exec>::rule_context::write
 }
 
 template <riwo::concepts::exec Exec>
-template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::rule_context::write
 (riwo::const_buffer buffer, Token &&token)
 {
@@ -1049,7 +1050,7 @@ template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::io_context::~io_context() = default;
 
 template <riwo::concepts::exec Exec>
-template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::io_context::write
 (riwo::const_buffer buffer, Token &&token)
 {

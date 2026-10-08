@@ -20,15 +20,15 @@ public:
 		riwo::awaitable<void>(device_event)
 	>;
 	using error_signal_t = riwo::utils::signal <
-		riwo::awaitable<void>(std::error_code)
+		riwo::awaitable<void>(riwo::error_code)
 	>;
 	event_core(asio::any_io_executor exec, std::string subsystem,
 		received_signal_t &received, error_signal_t &error
 	);
 	~event_core();
 
-	void open(std::string_view dev_type, std::error_code &error) noexcept;
-	void close(std::error_code &error) noexcept;
+	void open(std::string_view dev_type, riwo::error_code &error) noexcept;
+	void close(riwo::error_code &error) noexcept;
 
 	void detach() noexcept;
 	[[nodiscard]] bool is_open() const noexcept;

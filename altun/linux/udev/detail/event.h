@@ -72,37 +72,39 @@ basic_event<Subsys,Exec>::~basic_event()
 
 template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
-void basic_event<Subsys,Exec>::open(std::error_code &ec) noexcept
+template <typename Error>
+void basic_event<Subsys,Exec>::open(Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
 {
-	m_impl->open({}, ec);
+	auto adapted_error = riwo::adapt_error_code(error);
+	m_impl->open({}, adapted_error.get());
 }
 
 template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
-void basic_event<Subsys,Exec>::open(std::string_view dev_type, std::error_code &ec) noexcept
+template <typename Error>
+void basic_event<Subsys,Exec>::open(std::string_view dev_type, Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
 {
-	m_impl->open(dev_type, ec);
+	auto adapted_error = riwo::adapt_error_code(error);
+	m_impl->open(dev_type, adapted_error.get());
 }
 
 template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
-void basic_event<Subsys,Exec>::open(std::string_view dev_type)
+template <typename Error>
+void basic_event<Subsys,Exec>::close(Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
 {
-	std::error_code ec;
-	open(dev_type, ec);
-	if( ec )
-	{
-		riwo::system_error::loc_throw (
-			ec, "altun::udev::basic_event::open"
-		);
-	}
+	auto adapted_error = riwo::adapt_error_code(error);
+	m_impl->close(adapted_error.get());
 }
 
 template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::open()
 {
-	std::error_code ec;
+	riwo::error_code ec;
 	open(ec);
 	if( ec )
 	{
@@ -114,16 +116,23 @@ void basic_event<Subsys,Exec>::open()
 
 template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
-void basic_event<Subsys,Exec>::close(std::error_code &ec) noexcept
+void basic_event<Subsys,Exec>::open(std::string_view dev_type)
 {
-	m_impl->close(ec);
+	riwo::error_code ec;
+	open(dev_type, ec);
+	if( ec )
+	{
+		riwo::system_error::loc_throw (
+			ec, "altun::udev::basic_event::open"
+		);
+	}
 }
 
 template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::close()
 {
-	std::error_code ec;
+	riwo::error_code ec;
 	close(ec);
 	if( ec )
 	{

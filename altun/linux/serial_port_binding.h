@@ -108,10 +108,10 @@ public:
 
 public:
 	signal_t<std::string_view> opened;
-	signal_t<std::string_view,std::error_code> closed;
+	signal_t<std::string_view,riwo::error_code> closed;
 
 	signal_t<io_context_ptr> received;
-	signal_t<std::string_view,std::error_code> error;
+	signal_t<std::string_view,riwo::error_code> error;
 
 private:
 	class impl;
@@ -141,13 +141,13 @@ public:
 	ptr_t open();
 	ptr_t close();
 
-	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token = riwo::use_sync_t>
 	auto write(const std::vector<std::string> &ports, riwo::const_buffer buffer, Token &&token = {});
 
-	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token = riwo::use_sync_t>
 	auto write(std::string_view port, riwo::const_buffer buffer, Token &&token = {});
 
-	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token = riwo::use_sync_t>
 	auto write(riwo::const_buffer buffer, Token &&token = {});
 
 public:
@@ -156,10 +156,10 @@ public:
 
 public:
 	signal_t<std::string_view> opened;
-	signal_t<std::string_view,std::error_code> closed;
+	signal_t<std::string_view,riwo::error_code> closed;
 
 	signal_t<io_context_ptr> received;
-	signal_t<std::string_view,std::error_code> error;
+	signal_t<std::string_view,riwo::error_code> error;
 
 private:
 	class impl;
@@ -181,7 +181,7 @@ public:
 	io_context(rule_ptr rule, std::string port, stream_ptr stream, payload_t payload);
 	~io_context();
 
-	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	template <riwo::concepts::dis_func_tf_opt_token<riwo::error_code,size_t> Token = riwo::use_sync_t>
 	auto write(riwo::const_buffer buffer, Token &&token = {});
 
 public:

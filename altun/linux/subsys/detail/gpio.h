@@ -24,12 +24,15 @@ class ALTUN_LINUX_TAPI basic_gpio<Exec>::impl : public std::enable_shared_from_t
 	RIWO_DISABLE_COPY_MOVE(impl)
 
 private:
-	using event_handler_t = asio::any_completion_handler<void(std::error_code)>;
+	using event_handler_t = asio::any_completion_handler<void(riwo::error_code)>;
 	using event_handle_t = asio::posix::basic_stream_descriptor<executor_t>;
+
 	using callback_executor_t = asio::strand<executor_t>;
 	using io_work_t = decltype(asio::make_work_guard(std::declval<const executor_t&>()));
-	using completion_work_t = decltype(asio::make_work_guard(
-		std::declval<const event_handler_t&>(), std::declval<const executor_t&>()));
+
+	using completion_work_t = decltype(asio::make_work_guard (
+		std::declval<const event_handler_t&>(), std::declval<const executor_t&>()
+	));
 
 	struct wait_operation
 	{
@@ -41,6 +44,7 @@ private:
 		uint64_t id = 0;
 		event_t *destination = nullptr;
 		event_handler_t completion;
+
 		io_work_t io_work;
 		completion_work_t completion_work;
 	};
@@ -103,9 +107,13 @@ public:
 					error = {errno, std::system_category()};
 				else
 				{
-					m_event_handle.assign(monitor_handle, error);
-					if( error )
+					riwo::error_code assign_error;
+					m_event_handle.assign(monitor_handle, assign_error);
+					if( assign_error )
+					{
+						error = assign_error;
 						::close(monitor_handle);
+					}
 				}
 			}
 		}
@@ -134,7 +142,7 @@ public:
 
 			if( m_event_handle.is_open() )
 			{
-				std::error_code ignored;
+				riwo::error_code ignored;
 				m_event_handle.close(ignored);
 			}
 		}
@@ -281,10 +289,10 @@ public:
 				if( generation == m_generation )
 					waiters.swap(m_waiters);
 			}
-			complete_waiters(std::move(waiters), error);
+			complete_waiters(std::move(waiters), riwo::error_code(error));
 		}
 		std::deque<std::shared_ptr<wait_operation>> failed;
-		std::error_code restart_error;
+		riwo::error_code restart_error;
 		{
 			std::scoped_lock lock(m_event_mutex);
 			m_sync_reading = false;
@@ -328,7 +336,7 @@ public:
 			);
 			return ;
 		}
-		std::error_code start_error;
+		riwo::error_code start_error;
 		bool queued = false;
 		try {
 			std::scoped_lock lock(m_event_mutex);
@@ -431,7 +439,7 @@ public:
 			if( handler )
 			{
 				riwo::post_completion(executor, std::move(handler),
-					std::make_error_code(std::errc::bad_file_descriptor)
+					riwo::make_system_error_code(std::errc::bad_file_descriptor)
 				);
 			}
 			return ;
@@ -462,7 +470,7 @@ private:
 			asio::posix::descriptor_base::wait_read;
 	}
 
-	[[nodiscard]] std::error_code start_monitor_locked() noexcept
+	[[nodiscard]] riwo::error_code start_monitor_locked() noexcept
 	{
 		if( m_monitoring or m_sync_reading or not has_consumers_locked() )
 			return {};
@@ -475,7 +483,7 @@ private:
 		const auto ticket = ++m_monitor_ticket;
 		try {
 			m_event_handle.async_wait(wait_type(),
-			[self = this->shared_from_this(), generation, ticket](std::error_code error) mutable {
+			[self = this->shared_from_this(), generation, ticket](riwo::error_code error) mutable {
 				self->event_ready(generation, ticket, error);
 			});
 		}
@@ -495,11 +503,11 @@ private:
 		m_monitoring = false;
 		++m_monitor_ticket;
 
-		std::error_code ignored;
+		riwo::error_code ignored;
 		m_event_handle.cancel(ignored);
 	}
 
-	void event_ready(uint64_t generation, uint64_t ticket, std::error_code wait_error) noexcept
+	void event_ready(uint64_t generation, uint64_t ticket, riwo::error_code wait_error) noexcept
 	{
 		{
 			std::scoped_lock lock(m_event_mutex);
@@ -547,7 +555,7 @@ private:
 					if( generation == m_generation and ticket == m_monitor_ticket )
 						m_monitoring = false;
 				}
-				fail_waiters(read_error);
+				fail_waiters(riwo::error_code(read_error));
 				return ;
 			}
 			if( not received )
@@ -556,7 +564,7 @@ private:
 			publish_event(event);
 		}
 		std::deque<std::shared_ptr<wait_operation>> failed;
-		std::error_code restart_error;
+		riwo::error_code restart_error;
 		{
 			std::scoped_lock lock(m_event_mutex);
 			if( generation == m_generation and ticket == m_monitor_ticket and
@@ -631,7 +639,7 @@ private:
 			asio::error::make_error_code(asio::error::operation_aborted));
 	}
 
-	void fail_waiters(std::error_code error) noexcept
+	void fail_waiters(riwo::error_code error) noexcept
 	{
 		std::deque<std::shared_ptr<wait_operation>> waiters;
 		{
@@ -641,14 +649,13 @@ private:
 		complete_waiters(std::move(waiters), error);
 	}
 
-	void post_handler(event_handler_t handler, std::error_code error)
+	void post_handler(event_handler_t handler, riwo::error_code error)
 	{
 		if( handler )
 			riwo::post_completion(m_exec, std::move(handler), error);
 	}
 
-	void post_waiter
-	(std::shared_ptr<wait_operation> waiter, std::error_code error)
+	void post_waiter(std::shared_ptr<wait_operation> waiter, riwo::error_code error)
 	{
 		if( not waiter )
 			return ;
@@ -661,7 +668,7 @@ private:
 	}
 
 	static void complete_waiter
-	(std::shared_ptr<wait_operation> waiter, std::error_code error) noexcept
+	(std::shared_ptr<wait_operation> waiter, riwo::error_code error) noexcept
 	{
 		if( not waiter )
 			return ;
@@ -687,7 +694,7 @@ private:
 	}
 
 	static void complete_waiters
-	(std::deque<std::shared_ptr<wait_operation>> waiters, std::error_code error) noexcept
+	(std::deque<std::shared_ptr<wait_operation>> waiters, riwo::error_code error) noexcept
 	{
 		for(auto &waiter : waiters)
 			complete_waiter(std::move(waiter), error);
@@ -785,14 +792,19 @@ basic_gpio<Exec> &basic_gpio<Exec>::operator=(basic_gpio &&other) noexcept
 }
 
 template <riwo::concepts::exec Exec>
-basic_gpio<Exec> &basic_gpio<Exec>::open(const node_t &node, std::error_code &error) noexcept
+template <typename Error>
+basic_gpio<Exec> &basic_gpio<Exec>::open(const node_t &node, Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
 {
+	std::error_code native_error;
 	if( not m_impl )
 	{
-		error = std::make_error_code(std::errc::bad_file_descriptor);
+		native_error = std::make_error_code(std::errc::bad_file_descriptor);
+		error = native_error;
 		return *this;
 	}
-	m_impl->open(node, error);
+	m_impl->open(node, native_error);
+	error = native_error;
 	return *this;
 }
 
@@ -815,12 +827,46 @@ basic_gpio<Exec> &basic_gpio<Exec>::close() noexcept
 }
 
 template <riwo::concepts::exec Exec>
-basic_gpio<Exec> &basic_gpio<Exec>::set(bool value, std::error_code &error) noexcept
+template <typename Error>
+basic_gpio<Exec> &basic_gpio<Exec>::set(bool value, Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
 {
+	std::error_code native_error;
 	if( not m_impl )
-		error = std::make_error_code(std::errc::bad_file_descriptor);
+		native_error = std::make_error_code(std::errc::bad_file_descriptor);
 	else
-		m_impl->set(value, error);
+		m_impl->set(value, native_error);
+	error = native_error;
+	return *this;
+}
+
+template <riwo::concepts::exec Exec>
+template <typename Error>
+basic_gpio<Exec> &basic_gpio<Exec>::rising(Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
+{
+	return set(true, error);
+}
+
+template <riwo::concepts::exec Exec>
+template <typename Error>
+basic_gpio<Exec> &basic_gpio<Exec>::falling(Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
+{
+	return set(false, error);
+}
+
+template <riwo::concepts::exec Exec>
+template <typename Error>
+basic_gpio<Exec> &basic_gpio<Exec>::invert(Error &error) noexcept
+	requires riwo::is_error_code_token_v<Error&>
+{
+	std::error_code native_error;
+	if( not m_impl )
+		native_error = std::make_error_code(std::errc::bad_file_descriptor);
+	else
+		m_impl->invert(native_error);
+	error = native_error;
 	return *this;
 }
 
@@ -835,37 +881,15 @@ basic_gpio<Exec> &basic_gpio<Exec>::set(bool value)
 }
 
 template <riwo::concepts::exec Exec>
-basic_gpio<Exec> &basic_gpio<Exec>::rising(std::error_code &error) noexcept
-{
-	return set(true, error);
-}
-
-template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::rising()
 {
 	return set(true);
 }
 
 template <riwo::concepts::exec Exec>
-basic_gpio<Exec> &basic_gpio<Exec>::falling(std::error_code &error) noexcept
-{
-	return set(false, error);
-}
-
-template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::falling()
 {
 	return set(false);
-}
-
-template <riwo::concepts::exec Exec>
-basic_gpio<Exec> &basic_gpio<Exec>::invert(std::error_code &error) noexcept
-{
-	if( not m_impl )
-		error = std::make_error_code(std::errc::bad_file_descriptor);
-	else
-		m_impl->invert(error);
-	return *this;
 }
 
 template <riwo::concepts::exec Exec>
@@ -909,13 +933,18 @@ auto basic_gpio<Exec>::wait_event(event_t &event, Token &&token)
 {
 	if constexpr( riwo::is_error_code_token_v<Token> )
 	{
+		std::error_code error;
 		if( m_impl )
-			m_impl->wait_event(event, token);
+			m_impl->wait_event(event, error);
 		else
 		{
 			event = {};
-			token = std::make_error_code(std::errc::bad_file_descriptor);
+			error = std::make_error_code(std::errc::bad_file_descriptor);
 		}
+		if constexpr( std::same_as<Token,std::error_code&> )
+			token = error;
+		else
+			token = riwo::error_code(error);
 	}
 	else if constexpr( riwo::is_sync_opt_token_v<Token> )
 	{
@@ -993,7 +1022,6 @@ auto basic_gpio<Exec>::get_executor() noexcept -> executor_t
 }
 
 } //namespace altun::subsys
-
 
 #endif //__linux__
 #endif //ALTUN_LINUX_SUBSYS_DETAIL_GPIO_H

@@ -28,19 +28,19 @@ public:
 
 	~impl()
 	{
-		std::error_code ignored;
+		riwo::error_code ignored;
 		close(ignored);
 	}
 
 	void detach() noexcept
 	{
-		std::error_code ignored;
+		riwo::error_code ignored;
 		close(ignored);
 		m_received = nullptr;
 		m_error = nullptr;
 	}
 
-	void open(std::string_view dev_type, std::error_code &ec) noexcept
+	void open(std::string_view dev_type, riwo::error_code &ec) noexcept
 	{
 		close(ec);
 		if( ec )
@@ -80,14 +80,14 @@ public:
 		);
 		if( result < 0 )
 		{
-			ec = std::error_code(-result, std::system_category());
+			ec = riwo::error_code(-result, riwo::system_category());
 			release_native();
 			return ;
 		}
 		result = udev_monitor_enable_receiving(new_monitor);
 		if( result < 0 )
 		{
-			ec = std::error_code(-result, std::system_category());
+			ec = riwo::error_code(-result, riwo::system_category());
 			release_native();
 			return ;
 		}
@@ -122,19 +122,19 @@ public:
 		catch(...)
 		{
 			ec = riwo::exception_error(std::current_exception());
-			std::error_code ignored;
+			riwo::error_code ignored;
 			close(ignored);
 		}
 	}
 
-	void close(std::error_code &ec) noexcept
+	void close(riwo::error_code &ec) noexcept
 	{
 		++m_generation;
 		ec.clear();
 
 		if( m_handle.is_open() )
 		{
-			std::error_code cancel_error;
+			riwo::error_code cancel_error;
 			ec = m_handle.cancel(cancel_error);
 			ec = m_handle.close(ec);
 
@@ -166,7 +166,7 @@ private:
 
 		while( generation == m_generation and m_handle.is_open() )
 		{
-			std::error_code monitor_error;
+			riwo::error_code monitor_error;
 			co_await m_handle.async_wait(handle_t::wait_read,
 				asio::redirect_error(riwo::use_awaitable, monitor_error)
 			);
@@ -197,7 +197,7 @@ private:
 			if( not m_received )
 				co_return ;
 
-			std::error_code observer_error;
+			riwo::error_code observer_error;
 			try {
 				co_await (*m_received)(std::move(*event));
 			}
@@ -210,15 +210,15 @@ private:
 		co_return ;
 	}
 
-	[[nodiscard]] riwo::awaitable<void> fail_monitor(std::error_code monitor_error)
+	[[nodiscard]] riwo::awaitable<void> fail_monitor(riwo::error_code monitor_error)
 	{
-		std::error_code ignored;
+		riwo::error_code ignored;
 		close(ignored);
 		co_await emit_error(monitor_error);
 		co_return ;
 	}
 
-	[[nodiscard]] riwo::awaitable<void> emit_error(std::error_code event_error) noexcept
+	[[nodiscard]] riwo::awaitable<void> emit_error(riwo::error_code event_error) noexcept
 	{
 		if( not m_error )
 			co_return ;
@@ -230,13 +230,13 @@ private:
 	}
 
 	[[nodiscard]] std::optional<device_event>
-	receive_ready(std::error_code &ec)
+	receive_ready(riwo::error_code &ec)
 	{
 		std::scoped_lock lock(m_native_mutex);
 		ec.clear();
 		if( not m_monitor )
 		{
-			ec = std::make_error_code(std::errc::bad_file_descriptor);
+			ec = riwo::make_system_error_code(std::errc::bad_file_descriptor);
 			return std::nullopt;
 		}
 		errno = 0;
@@ -285,8 +285,8 @@ private:
 		return result;
 	}
 
-	[[nodiscard]] static std::error_code current_system_error() noexcept {
-		return { errno ? errno : EIO, std::system_category() };
+	[[nodiscard]] static riwo::error_code current_system_error() noexcept {
+		return { errno ? errno : EIO, riwo::system_category() };
 	}
 
 private:
@@ -313,12 +313,12 @@ event_core::event_core
 
 event_core::~event_core() = default;
 
-void event_core::open(std::string_view dev_type, std::error_code &error) noexcept
+void event_core::open(std::string_view dev_type, riwo::error_code &error) noexcept
 {
 	m_impl->open(dev_type, error);
 }
 
-void event_core::close(std::error_code &error) noexcept
+void event_core::close(riwo::error_code &error) noexcept
 {
 	m_impl->close(error);
 }

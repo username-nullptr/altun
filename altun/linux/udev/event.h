@@ -63,20 +63,27 @@ public:
 
 	using handle_t = asio::posix::basic_stream_descriptor<executor_t>;
 	using signal_t = riwo::utils::signal<riwo::awaitable<void>(device_event)>;
-	using error_signal_t = riwo::utils::signal<riwo::awaitable<void>(std::error_code)>;
+	using error_signal_t = riwo::utils::signal<riwo::awaitable<void>(riwo::error_code)>;
 
 	explicit basic_event(riwo::concepts::match_sched<Exec> auto &&exec);
 	basic_event() requires riwo::concepts::match_def_exec<Exec>;
 	~basic_event();
 
 public:
-	void open(std::error_code &ec) noexcept;
+	template <typename Error>
+	void open(Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
+	template <typename Error>
+	void open(std::string_view dev_type, Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
+	template <typename Error>
+	void close(Error &error) noexcept
+		requires riwo::is_error_code_token_v<Error&>;
+
 	void open();
-
-	void open(std::string_view dev_type, std::error_code &ec) noexcept;
 	void open(std::string_view dev_type);
-
-	void close(std::error_code &ec) noexcept;
 	void close();
 
 public:

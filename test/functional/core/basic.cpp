@@ -151,7 +151,7 @@ ALTUN_TEST("core", "plugin manager parses object and array configuration forms")
 	ALTUN_REQUIRE(collector != processes.end());
 	ALTUN_REQUIRE_EQ(collector->file_name, std::filesystem::path("./virtual/collector.bin"));
 	ALTUN_REQUIRE_EQ(collector->args.size(), 2U);
-	ALTUN_REQUIRE_EQ(collector->args[0].to_string(), std::string("--interval"));
+	ALTUN_REQUIRE_EQ(collector->args[0].string(), std::string("--interval"));
 	ALTUN_REQUIRE_EQ(collector->envs.at("LOG_LEVEL").to_string(), std::string("debug"));
 	ALTUN_REQUIRE_EQ(collector->envs.at("ALTUN_PLUGIN_GROUP").to_string(), std::string());
 	ALTUN_REQUIRE_EQ(collector->envs.at("ALTUN_PLUGIN_NAME").to_string(), std::string("collector"));

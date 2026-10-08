@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <execinfo.h>
 #include "global.h"
 #include "log.h"
+
+#if defined(__linux__)
+# include <execinfo.h>
+#endif
 
 namespace altun
 {
@@ -13,7 +16,7 @@ const char *version_string() noexcept
 	return ALTUN_VERSION_STR;
 }
 
-#if __linux__
+#if defined(__linux__)
 static void signal_handler(int signo, siginfo_t*, void*)
 {
 	if( signo == SIGINT )

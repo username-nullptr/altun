@@ -327,8 +327,6 @@ add_altun_ctest(altun.cmake.install-consumer
 	"-DTEST_CTEST_COMMAND=${CMAKE_CTEST_COMMAND}"
 	-P "${CMAKE_CURRENT_SOURCE_DIR}/run_install_consumer.cmake"
 )
-configure_altun_ctest_environment(altun.cmake.install-consumer)
-
 set_tests_properties(altun.cmake.install-consumer PROPERTIES
 	LABELS "cmake;install;consumer"
 	RUN_SERIAL TRUE

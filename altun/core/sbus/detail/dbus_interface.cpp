@@ -64,9 +64,35 @@ std::unordered_map<dbus_interface*,std::shared_ptr<dbus_interface>> g_interfaces
 using interface_list = std::vector<std::shared_ptr<dbus_interface>>;
 using interface_list_ptr = std::shared_ptr<const interface_list>;
 
+#if defined(__cpp_lib_atomic_shared_ptr)
 std::atomic g_interface_snapshot {
 	std::make_shared<const interface_list>()
 };
+#else //__cpp_lib_atomic_shared_ptr
+interface_list_ptr g_interface_snapshot = std::make_shared<const interface_list>();
+#endif //__cpp_lib_atomic_shared_ptr
+
+void store_interface_snapshot(interface_list_ptr snapshot) noexcept
+{
+#if defined(__cpp_lib_atomic_shared_ptr)
+	g_interface_snapshot.store(std::move(snapshot), std::memory_order_release);
+#else //__cpp_lib_atomic_shared_ptr
+	std::atomic_store_explicit (
+		&g_interface_snapshot, std::move(snapshot), std::memory_order_release
+	);
+#endif //__cpp_lib_atomic_shared_ptr
+}
+
+[[nodiscard]] interface_list_ptr load_interface_snapshot() noexcept
+{
+#if defined(__cpp_lib_atomic_shared_ptr)
+	return g_interface_snapshot.load(std::memory_order_acquire);
+#else
+	return std::atomic_load_explicit(
+		&g_interface_snapshot, std::memory_order_acquire
+	);
+#endif
+}
 
 void rebuild_interface_snapshot()
 {
@@ -77,7 +103,7 @@ void rebuild_interface_snapshot()
 		RIWO_UNUSED(pointer);
 		snapshot->emplace_back(object);
 	}
-	g_interface_snapshot.store(std::move(snapshot), std::memory_order_release);
+	store_interface_snapshot(interface_list_ptr(std::move(snapshot)));
 }
 
 class runtime
@@ -538,7 +564,7 @@ public:
 
 void bridge_dbus_data_available(std::string_view topic, const void *data, size_t size)
 {
-	auto interfaces = g_interface_snapshot.load(std::memory_order_acquire);
+	auto interfaces = load_interface_snapshot();
 	for(const auto &interface : *interfaces)
 	{
 		dbus_interface::impl::topic_callback_list_ptr topic_callbacks;

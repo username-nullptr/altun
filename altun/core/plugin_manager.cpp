@@ -31,35 +31,19 @@ class RIWO_DECL_HIDDEN process_registry final
 
 public:
 	process_registry() = default;
-
 	~process_registry() noexcept
 	{
-		// Stop every managed child first, then reap them.  Keeping the two phases
-		// separate avoids delaying termination of later children while an earlier
-		// one is being joined.
+		// Process-wide teardown can run after the operating system has already
+		// stopped monitor threads (notably during Windows DLL detach). Never wait
+		// for a monitor from a static destructor; signal the child and release join
+		// ownership so normal running-time cleanup remains asynchronous.
 		for(auto &[name, process] : processes)
 		{
 			RIWO_UNUSED(name);
 			if( process and process->joinable() )
-				process->kill();
-		}
-		for(auto &[name, process] : processes)
-		{
-			RIWO_UNUSED(name);
-			if( not process or not process->joinable() )
-				continue;
-
-			std::error_code error;
-			RIWO_UNUSED(process->join(error));
-			if( process->joinable() )
-			{
-				// A concurrent join can temporarily own the reap operation.  Release
-				// this handle so map destruction can never terminate the application.
 				process->cancel(riwo::utils::process::cancel_option::kill);
-			}
 		}
 	}
-
 	plugin_manager::processes_t processes {};
 };
 

@@ -18,6 +18,7 @@ if (MSVC)
 	endforeach()
 endif ()
 
+
 function(configure_altun_ctest_environment test_name)
 	foreach(variable INCLUDE LIB LIBPATH)
 		if (ALTUN_MSVC_TEST_${variable})
@@ -29,7 +30,20 @@ function(configure_altun_ctest_environment test_name)
 			)
 		endif ()
 	endforeach()
+
+	if (WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND
+		IS_ABSOLUTE "${altun_gnu_runtime_dir}" AND
+		EXISTS "${altun_gnu_runtime_dir}")
+
+		set(environment_value "${altun_gnu_runtime_dir};$ENV{PATH}")
+		string(REPLACE ";" "\\;" environment_value "${environment_value}")
+
+		set_property(TEST ${test_name} APPEND PROPERTY ENVIRONMENT
+			"PATH=${environment_value}"
+		)
+	endif ()
 endfunction()
+
 
 # Some Linux kernels prevent GCC TSan from reserving its shadow-memory range
 # under ASLR. Use a per-process launcher when the host permits it.
@@ -53,6 +67,7 @@ if (ALTUN_ENABLE_TEST_TSAN AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	mark_as_advanced(ALTUN_TEST_SETARCH_EXECUTABLE)
 endif ()
 
+
 function(configure_altun_test_target test_target)
 	altun_limit_heavy_compile(${test_target})
 	target_include_directories(${test_target} PRIVATE ${ALTUN_TEST_SOURCE_DIR})
@@ -74,8 +89,10 @@ function(configure_altun_test_target test_target)
 	endif ()
 endfunction()
 
+
 function(add_altun_ctest test_name)
 	add_test(NAME ${test_name} COMMAND ${ALTUN_TEST_LAUNCHER} ${ARGN})
+	configure_altun_ctest_environment(${test_name})
 endfunction()
 
 function(configure_altun_sanitized_test test_name)
@@ -98,11 +115,13 @@ function(configure_altun_sanitized_test test_name)
 	endif ()
 endfunction()
 
+
 function(add_altun_test_program test_target library)
 	add_executable(${test_target} ${ALTUN_TEST_SOURCE_DIR}/main.cpp ${ARGN})
 	target_link_libraries(${test_target} PRIVATE ${library})
 	configure_altun_test_target(${test_target})
 endfunction()
+
 
 function(add_altun_functional_test name library)
 	set(test_target altun.test.${name})
@@ -119,6 +138,7 @@ function(add_altun_functional_test name library)
 	)
 	configure_altun_sanitized_test(altun.${name})
 endfunction()
+
 
 function(add_altun_stress_test name library)
 	set(test_target altun.test.stress.${name})
@@ -138,6 +158,7 @@ function(add_altun_stress_test name library)
 	)
 	configure_altun_sanitized_test(altun.stress.${name})
 endfunction()
+
 
 # Instrument the library code under test, not just the test executables.
 if (ALTUN_ENABLE_TEST_SANITIZERS OR ALTUN_ENABLE_TEST_TSAN)

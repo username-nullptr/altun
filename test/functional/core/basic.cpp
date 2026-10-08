@@ -152,9 +152,9 @@ ALTUN_TEST("core", "plugin manager parses object and array configuration forms")
 	ALTUN_REQUIRE_EQ(collector->file_name, std::filesystem::path("./virtual/collector.bin"));
 	ALTUN_REQUIRE_EQ(collector->args.size(), 2U);
 	ALTUN_REQUIRE_EQ(collector->args[0].string(), std::string("--interval"));
-	ALTUN_REQUIRE_EQ(collector->envs.at("LOG_LEVEL").to_string(), std::string("debug"));
-	ALTUN_REQUIRE_EQ(collector->envs.at("ALTUN_PLUGIN_GROUP").to_string(), std::string());
-	ALTUN_REQUIRE_EQ(collector->envs.at("ALTUN_PLUGIN_NAME").to_string(), std::string("collector"));
+	ALTUN_REQUIRE_EQ(collector->envs.at("LOG_LEVEL").string(), std::string("debug"));
+	ALTUN_REQUIRE_EQ(collector->envs.at("ALTUN_PLUGIN_GROUP").string(), std::string());
+	ALTUN_REQUIRE_EQ(collector->envs.at("ALTUN_PLUGIN_NAME").string(), std::string("collector"));
 
 	const json grouped_config {
 		{"virtual-group", json::array({
@@ -181,7 +181,7 @@ ALTUN_TEST("core", "plugin manager parses object and array configuration forms")
 		ALTUN_REQUIRE_EQ(grouped_processes[0].name, std::string("worker"));
 		ALTUN_REQUIRE_EQ(grouped_processes[0].file_name,
 			std::filesystem::path("./group-devices/worker.bin"));
-		ALTUN_REQUIRE_EQ(grouped_processes[0].envs.at("ALTUN_PLUGIN_GROUP").to_string(),
+		ALTUN_REQUIRE_EQ(grouped_processes[0].envs.at("ALTUN_PLUGIN_GROUP").string(),
 			std::string("virtual-group"));
 		ALTUN_REQUIRE_EQ(grouped_libraries[0].name, std::string("sensor"));
 		ALTUN_REQUIRE_EQ(grouped_libraries[0].file_name,

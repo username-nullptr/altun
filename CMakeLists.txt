@@ -29,11 +29,11 @@ include(heavy_compile)
 include(options)
 include(dependencies)
 
-add_subdirectory(3rd_party)
-include(3rd_party)
-
 include(test)
 include(CTest)
+
+add_subdirectory(3rd_party)
+include(3rd_party)
 
 if (CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
 	add_definitions(-DALTUN_DEBUG)

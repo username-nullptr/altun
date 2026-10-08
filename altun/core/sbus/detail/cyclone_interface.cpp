@@ -9,10 +9,11 @@
 
 #include <riwo/core/lock_free_queue.h>
 #include <riwo/core/shared_mutex.h>
-#include <riwo/utils/signal_slot.h>
+#include <riwo/core/execution.h>
 
 #include <dds/version.h>
 #include <dds/dds.h>
+
 #include <unordered_set>
 
 namespace altun::sbus { namespace
@@ -189,18 +190,16 @@ private:
 class /* RIWO_DECL_HIDDEN */ global_subscriber : public subscriber_thread
 {
 	RIWO_DISABLE_COPY_MOVE(global_subscriber)
-
-	riwo::circular_lock_free_queue <
-		std::pair<std::string,payload_t>, g_queue_max_size
-	> m_queue {};
+	using callback_t = std::function<void(std::string_view,const payload_t&)>;
 
 public:
-	global_subscriber()
+	explicit global_subscriber(callback_t callback) :
+		m_callback(std::move(callback))
 	{
 		start([this]
 		{
 			while( auto event = m_queue.dequeue() )
-				received(event->first, std::move(event->second));
+				m_callback(event->first, event->second);
 		});
 	}
 
@@ -224,7 +223,12 @@ public:
 		notify();
 	}
 
-	riwo::utils::signal<void(std::string_view,payload_t)> received;
+private:
+	riwo::circular_lock_free_queue <
+		std::pair<std::string,payload_t>, g_queue_max_size
+	> m_queue {};
+
+	callback_t m_callback {};
 };
 
 using global_subscriber_ptr = std::shared_ptr<global_subscriber>;
@@ -232,15 +236,16 @@ using global_subscriber_ptr = std::shared_ptr<global_subscriber>;
 class /* RIWO_DECL_HIDDEN */ subscriber : public subscriber_thread
 {
 	RIWO_DISABLE_COPY_MOVE(subscriber)
-	riwo::circular_lock_free_queue<payload_t,g_queue_max_size> m_queue {};
+	using callback_t = std::function<void(const payload_t&)>;
 
 public:
-	subscriber()
+	explicit subscriber(callback_t callback) :
+		m_callback(std::move(callback))
 	{
 		start([this]
 		{
 			while( auto event = m_queue.dequeue() )
-				received(std::move(*event));
+				m_callback(*event);
 		});
 	}
 
@@ -260,7 +265,9 @@ public:
 		notify();
 	}
 
-	riwo::utils::signal<void(payload_t)> received;
+private:
+	riwo::circular_lock_free_queue<payload_t,g_queue_max_size> m_queue {};
+	callback_t m_callback {};
 };
 
 using subscriber_ptr = std::shared_ptr<subscriber>;
@@ -282,10 +289,10 @@ public:
 	impl() = default;
 
 	[[nodiscard]] std::pair<uint64_t,subscriber_ptr>
-	make_subscriber(std::string_view topic) noexcept
+	make_subscriber(std::string_view topic, std::function<void(const payload_t&)> callback) noexcept
 	{
 		auto id = m_id_seq++;
-		auto obj = std::make_shared<subscriber>();
+		auto obj = std::make_shared<subscriber>(std::move(callback));
 
 		std::unique_lock lock(m_subscribers_lock);
 		auto it = m_subscribers.emplace (
@@ -296,10 +303,11 @@ public:
 		return { id, obj };
 	}
 
-	[[nodiscard]] std::pair<uint64_t,global_subscriber_ptr> make_subscriber() noexcept
+	[[nodiscard]] std::pair<uint64_t,global_subscriber_ptr>
+	make_subscriber(std::function<void(std::string_view, const payload_t&)> callback) noexcept
 	{
 		auto id = m_id_seq++;
-		auto obj = std::make_shared<global_subscriber>();
+		auto obj = std::make_shared<global_subscriber>(std::move(callback));
 
 		std::unique_lock lock(m_global_subscribers_lock);
 		m_global_subscribers.emplace(id, obj);
@@ -397,6 +405,7 @@ riwo::shared_mutex m_objs_lock {};
 
 asio::io_context g_ioc {};
 std::thread g_ioc_thread {};
+std::mutex g_runtime_mutex {};
 
 dds_entity_t g_participant = 0;
 dds_entity_t g_topic = 0;
@@ -411,7 +420,9 @@ struct runtime_guard
 {
 	~runtime_guard()
 	{
+		std::unique_lock lock(g_runtime_mutex);
 		g_ioc.stop();
+
 		if( g_ioc_thread.joinable() )
 			g_ioc_thread.join();
 
@@ -560,36 +571,47 @@ cyclone_interface::~cyclone_interface() = default;
 
 void cyclone_interface::init()
 {
-	altun_log_debug("Altun.Core", "altun.sbus.init ...");
-	g_participant = dds_create_participant(0, nullptr, nullptr);
+	std::unique_lock lock(g_runtime_mutex);
+	if( g_participant > 0 )
+		return ;
 
-	if( g_participant < 0 )
+	altun_log_debug("Altun.Core", "altun.sbus.init ...");
+	auto participant = dds_create_participant(0, nullptr, nullptr);
+
+	if( participant < 0 )
 	{
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_participant: {}",
-			dds_strretcode(-g_participant)
+			dds_strretcode(-participant)
 		);
 		return ;
 	}
-	g_topic = dds_create_topic (
-		g_participant, &altun_sbus_message_desc, "altun_sbus_topic",
+	auto cleanup = [&participant]
+	{
+		if( participant > 0 )
+			dds_delete(participant);
+	};
+	auto topic = dds_create_topic (
+		participant, &altun_sbus_message_desc, "altun_sbus_topic",
 		nullptr, nullptr
 	);
-	if( g_topic < 0 )
+	if( topic < 0 )
 	{
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_topic: {}",
-			dds_strretcode(-g_topic)
+			dds_strretcode(-topic)
 		);
+		cleanup();
 		return ;
 	}
-	g_publisher = dds_create_publisher(g_participant, nullptr, nullptr);
-	if( g_publisher < 0 )
+	auto publisher = dds_create_publisher(participant, nullptr, nullptr);
+	if( publisher < 0 )
 	{
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_publisher: {}",
-			dds_strretcode(-g_publisher)
+			dds_strretcode(-publisher)
 		);
+		cleanup();
 		return ;
 	}
 	auto qos = create_reliable_writer_qos();
@@ -597,55 +619,67 @@ void cyclone_interface::init()
 	{
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_qos failed");
+		cleanup();
 		return ;
 	}
-	g_writer = dds_create_writer(g_publisher, g_topic, qos, nullptr);
+	auto writer = dds_create_writer(publisher, topic, qos, nullptr);
 	dds_delete_qos(qos);
-	if( g_writer < 0 )
+	if( writer < 0 )
 	{
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_writer: {}",
-			dds_strretcode(-g_writer)
+			dds_strretcode(-writer)
 		);
+		cleanup();
 		return ;
 	}
-	g_subscriber = dds_create_subscriber(g_participant, nullptr, nullptr);
-	if( g_subscriber < 0 )
+	auto dds_subscriber = dds_create_subscriber(participant, nullptr, nullptr);
+	if( dds_subscriber < 0 )
 	{
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_subscriber: {}",
-			dds_strretcode(-g_subscriber)
+			dds_strretcode(-dds_subscriber)
 		);
+		cleanup();
 		return ;
 	}
 	auto listener = dds_create_listener(nullptr);
 	if( not listener )
 	{
 		altun_clog_error("Altun.Core",
-			"altun.sbus.init: dds_create_listener failed");
+			"altun.sbus.init: dds_create_listener failed"
+		);
+		cleanup();
 		return ;
 	}
 	dds_lset_data_available(listener, on_data_available);
-
 	qos = create_reliable_reader_qos();
 	if( not qos )
 	{
 		dds_delete_listener(listener);
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_qos failed");
+		cleanup();
 		return ;
 	}
-	g_reader = dds_create_reader(g_subscriber, g_topic, qos, listener);
+	auto reader = dds_create_reader(dds_subscriber, topic, qos, listener);
 	dds_delete_listener(listener);
 	dds_delete_qos(qos);
-	if( g_reader < 0 )
+	if( reader < 0 )
 	{
 		altun_clog_error("Altun.Core",
 			"altun.sbus.init: dds_create_reader: {}",
-			dds_strretcode(-g_reader)
+			dds_strretcode(-reader)
 		);
+		cleanup();
 		return ;
 	}
+	g_participant = participant;
+	g_topic = topic;
+	g_publisher = publisher;
+	g_writer = writer;
+	g_subscriber = dds_subscriber;
+	g_reader = reader;
 	altun_clog_debug("Altun.Core", "altun.sbus.init finished.");
 
 	// Start the event loop in a separate thread.
@@ -689,29 +723,29 @@ void cyclone_interface::publish(std::string_view topic, const void *buffer, size
 	});
 }
 
-uint64_t cyclone_interface::subscribe(std::string_view topic, std::function<void(const void*, size_t)> func)
+uint64_t cyclone_interface::subscribe
+(std::string_view topic, std::function<void(const void*, size_t)> func)
 {
 	std::unique_lock objs_lock(m_objs_lock);
-	auto [id, subr] = m_impl->make_subscriber(topic);
-
-	subr->received.connect (
+	auto [id, subr] = m_impl->make_subscriber(topic,
 	[func = std::move(func)](const payload_t &payload) {
 		func(payload.data(), payload.size());
 	});
+	riwo::ignore_unused(subr);
 	g_obj_map.emplace(this, shared_from_this());
 	g_topic_interfaces[std::string(topic)].emplace(this);
 	return id;
 }
 
-uint64_t cyclone_interface::subscribe(std::function<void(std::string_view topic, const void*, size_t)> func)
+uint64_t cyclone_interface::subscribe
+(std::function<void(std::string_view topic, const void*, size_t)> func)
 {
 	std::unique_lock objs_lock(m_objs_lock);
-	auto [id, subr] = m_impl->make_subscriber();
-
-	subr->received.connect (
+	auto [id, subr] = m_impl->make_subscriber(
 	[func = std::move(func)](std::string_view topic, const payload_t &payload) {
 		func(topic, payload.data(), payload.size());
 	});
+	riwo::ignore_unused(subr);
 	g_obj_map.emplace(this, shared_from_this());
 	g_global_interfaces.emplace(this);
 	return id;

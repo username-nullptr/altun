@@ -122,6 +122,15 @@ add_altun_configure_case(sbus-cyclone-disabled
 		"ALTUN_SBUS_INTERFACE=cyclone"
 		"ALTUN_BUILD_SBUS_CYCLONE=OFF"
 )
+if (ALTUN_BUILD_SBUS_CYCLONE)
+	add_altun_configure_case(sbus-cyclone-enabled SUCCESS
+		OPTIONS
+			"ALTUN_SBUS_INTERFACE=cyclone"
+			"ALTUN_BUILD_SBUS_CYCLONE=ON"
+		COMPONENTS ${altun_available_components}
+	)
+endif ()
+
 add_altun_configure_case(sbus-dbus-disabled
 	ERROR "Unsupported Riwo.Utilities.SoftBus interface: dbus"
 	OPTIONS

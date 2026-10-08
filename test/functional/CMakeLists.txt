@@ -11,7 +11,7 @@ target_compile_definitions(altun.test.core PRIVATE
 add_dependencies(altun.test.core altun.test.plugin altun.test.app)
 set_property(TEST altun.core APPEND PROPERTY LABELS core)
 
-if (ALTUN_SBUS_INTERFACE MATCHES "^(local|udp|dbus|shm|default)$")
+if (ALTUN_SBUS_INTERFACE MATCHES "^(local|udp|dbus|shm|cyclone|default)$")
 	set(test_target altun.test.sbus)
 	add_altun_test_program(${test_target} altun.core core/sbus.cpp)
 	set(altun_sbus_test_command $<TARGET_FILE:${test_target}>)

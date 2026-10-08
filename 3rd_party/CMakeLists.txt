@@ -57,6 +57,20 @@ if (ALTUN_USE_BUNDLED_RIWO)
 	set(BUILD_TESTING OFF)
 	add_subdirectory(riwo)
 
+	if (ALTUN_ENABLE_TEST_SANITIZERS OR ALTUN_ENABLE_TEST_TSAN)
+		# The dependency's test tree stays disabled, but its libraries are part
+		# of the code under test and must use the parent's sanitizer mode.
+		foreach(altun_bundled_riwo_target
+			riwo.core riwo.coro riwo.http riwo.websocket riwo.utils
+		)
+			if (TARGET ${altun_bundled_riwo_target})
+				target_link_libraries(${altun_bundled_riwo_target} PRIVATE
+					altun.test.sanitizer
+				)
+			endif ()
+		endforeach()
+	endif ()
+
 	if (altun_build_testing_was_defined)
 		set(BUILD_TESTING "${altun_saved_build_testing}")
 	else ()

@@ -202,6 +202,13 @@ if (ALTUN_ENABLE_TEST_SANITIZERS OR ALTUN_ENABLE_TEST_TSAN)
 			-fno-omit-frame-pointer
 			-fno-sanitize-recover=all
 		)
+		# Asio's Linux futex slim mutex uses direct futex syscalls that TSan
+		# cannot observe as synchronization. Select Asio's atomic/pthread mutex
+		# implementation so reactor and timer hand-offs have visible happens-
+		# before edges and TSan reports application races rather than internals.
+		target_compile_definitions(altun.test.sanitizer INTERFACE
+			ASIO_DISABLE_FUTEX
+		)
 		target_link_options(altun.test.sanitizer INTERFACE -fsanitize=thread)
 		set(RIWO_ENABLE_TEST_TSAN ON)
 	endif ()

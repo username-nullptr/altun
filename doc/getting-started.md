@@ -60,8 +60,11 @@ ctest --test-dir build-test -R '^empp\.' --output-on-failure
 | `LIBEMPP_BUILD_EXAMPLES` | `OFF` | Build `examples/` |
 | `LIBEMPP_BUILD_STATIC` | `OFF` | Build static instead of shared libraries |
 | `LIBEMPP_ADD_LIBRARY_VERSION` | `ON` | Add version/SOVERSION to shared libraries |
-| `LIBEMPP_USE_EMBEDDED_RIWO` | `ON` | Use the embedded Riwo dependency |
-| `LIBEMPP_RIWO_INSTALL_PREFIX` | empty | Absolute install prefix of an external Riwo package; requires `LIBEMPP_USE_EMBEDDED_RIWO=OFF` |
+| `LIBEMPP_USE_LIBCXX` | `OFF` | Use libc++ with Clang |
+| `LIBEMPP_USE_LLD` | `OFF` | Use lld with Clang |
+| `LIBEMPP_ENABLE_LTO` | `OFF` | Enable LTO with GCC |
+| `LIBEMPP_USE_BUNDLED_RIWO` | `ON` | Use the bundled Riwo dependency |
+| `LIBEMPP_RIWO_INSTALL_PREFIX` | empty | Absolute install prefix of an external Riwo package; requires `LIBEMPP_USE_BUNDLED_RIWO=OFF` |
 | `LIBEMPP_USE_EMBEDDED_NLOHMANN` | `ON` | Use the embedded nlohmann/json dependency |
 | `LIBEMPP_NLOHMANN_INSTALL_PREFIX` | empty | Absolute install prefix of an external nlohmann/json package; requires `LIBEMPP_USE_EMBEDDED_NLOHMANN=OFF` |
 | `LIBEMPP_USE_GPIOD` | `AUTO` | `AUTO`, `ON`, or `OFF` for the GPIO backend |
@@ -125,7 +128,7 @@ prefixes, configure libEMpp with its absolute install prefix:
 
 ```sh
 cmake -S . -B build \
-  -DLIBEMPP_USE_EMBEDDED_RIWO=OFF \
+  -DLIBEMPP_USE_BUNDLED_RIWO=OFF \
   -DLIBEMPP_RIWO_INSTALL_PREFIX=/opt/riwo
 ```
 

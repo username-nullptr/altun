@@ -94,6 +94,7 @@ function(add_libempp_consumer_runtime_test target)
 		else ()
 			set(loader_path_variable LD_LIBRARY_PATH)
 		endif ()
+
 		set_property(TEST ${target} PROPERTY ENVIRONMENT
 			"${loader_path_variable}=${LIBEMPP_LIBRARY_DIR}:$ENV{${loader_path_variable}}"
 		)
@@ -118,6 +119,7 @@ foreach(component IN LISTS libempp_components)
 
 	add_executable(${target} main.cpp)
 	target_compile_features(${target} PRIVATE cxx_std_20)
+
 	target_compile_definitions(${target} PRIVATE
 		"LIBEMPP_CONSUME_${component_upper}=1"
 	)
@@ -132,6 +134,7 @@ endforeach()
 
 add_executable(libempp_consumer_source_targets main.cpp)
 target_compile_features(libempp_consumer_source_targets PRIVATE cxx_std_20)
+
 target_compile_definitions(libempp_consumer_source_targets PRIVATE
 	${libempp_expected_definitions}
 	LIBEMPP_CONSUME_UMBRELLA=1

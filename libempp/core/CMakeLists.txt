@@ -1,18 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 # SPDX-License-Identifier: MIT
 
-set(LIBEMPP_CORE_CONFIG_INCLUDE
-	${LIBEMPP_OUTPUT_DIR}/config_include
-)
-set(LIBEMPP_CORE_CONFIG_INCLUDE
-	${LIBEMPP_CORE_CONFIG_INCLUDE} CACHE PATH
-	"Path to libempp config include directory."
-)
-configure_file (
-	${PROJECT_SOURCE_DIR}/libempp/core/cxx/configs.h.in
-	${LIBEMPP_CORE_CONFIG_INCLUDE}/libempp/core/cxx/configs.h
-	@ONLY
-)
 set(target_name empp.core)
 libempp_add_library(${target_name})
 
@@ -30,14 +18,8 @@ if (LIBEMPP_SBUS_INTERFACE STREQUAL "udp")
 endif ()
 
 target_link_libraries(${target_name} PUBLIC
-	riwo.coro riwo.utils
+	Riwo::coro Riwo::utils empp.nlohmann
 )
-if (NOT LIBEMPP_USE_EMBEDDED_NLOHMANN)
-	target_link_libraries(${target_name} PUBLIC
-		nlohmann_json::nlohmann_json
-	)
-endif ()
-
 if (LIBEMPP_BUILD_SBUS_CYCLONE)
 	find_package(CycloneDDS REQUIRED)
 	idlc_generate (
@@ -74,8 +56,3 @@ if (LIBEMPP_BUILD_SBUS_SHM)
 		target_link_libraries(${target_name} PRIVATE rt)
 	endif ()
 endif ()
-
-install(FILES
-	${LIBEMPP_CORE_CONFIG_INCLUDE}/libempp/core/cxx/configs.h
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libempp/core/cxx
-)

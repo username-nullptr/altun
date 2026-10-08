@@ -32,19 +32,19 @@ if (LIBEMPP_TEST_SANITIZERS)
 	)
 endif ()
 
-set(LIBEMPP_FUNCTIONAL_REPEAT 1 CACHE STRING
+set(LIBEMPP_FUNCTIONAL_REPEAT 3 CACHE STRING
 	"Execution count for each libEMpp functional test case (positive integer)."
 )
 set(LIBEMPP_FUNCTIONAL_SEED 1 CACHE STRING
 	"Base seed for reproducible libEMpp functional tests (non-negative integer)."
 )
-set(LIBEMPP_FUNCTIONAL_TIMEOUT 60 CACHE STRING
+set(LIBEMPP_FUNCTIONAL_TIMEOUT 120 CACHE STRING
 	"CTest timeout in seconds for each libEMpp functional executable."
 )
-set(LIBEMPP_STRESS_SCALE 4 CACHE STRING
+set(LIBEMPP_STRESS_SCALE 5 CACHE STRING
 	"Work multiplier for libEMpp stress tests (positive integer)."
 )
-set(LIBEMPP_STRESS_REPEAT 1 CACHE STRING
+set(LIBEMPP_STRESS_REPEAT 3 CACHE STRING
 	"Fixture recreation count for each libEMpp stress case (positive integer)."
 )
 set(LIBEMPP_STRESS_SEED 1 CACHE STRING
@@ -142,8 +142,10 @@ if (LIBEMPP_ENABLE_TEST_SANITIZERS OR LIBEMPP_ENABLE_TEST_TSAN)
 		)
 	endif ()
 
-	if (ENABLE_LTO)
-		message(FATAL_ERROR "${PRO_NAME}: Disable ENABLE_LTO for sanitizer builds.")
+	if (LIBEMPP_ENABLE_LTO)
+		message(FATAL_ERROR
+			"${PRO_NAME}: Disable LIBEMPP_ENABLE_LTO for sanitizer builds."
+		)
 	endif ()
 
 	include(CheckCXXSourceCompiles)

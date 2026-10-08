@@ -1,25 +1,6 @@
 # SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 # SPDX-License-Identifier: MIT
 
-if (WIN32)
-	set(OS_CPP win)
-	set(IS_CPP winnt)
-elseif (UNIX)
-	if (APPLE)
-		set(OS_CPP apple)
-	else ()
-		set(OS_CPP unix)
-	endif ()
-	set(IS_CPP posix)
-endif()
-
-option(LIBEMPP_BUILD_STATIC
-	"-- ${PRO_NAME}: Build static libraries." OFF
-)
-option(LIBEMPP_ADD_LIBRARY_VERSION
-	"-- ${PRO_NAME}: Add version information to shared library names." ON
-)
-
 
 function(libempp_add_library target_name)
 
@@ -36,6 +17,7 @@ function(libempp_add_library target_name)
 		add_library(${target_name} STATIC ${all_files})
 	else ()
 		add_library(${target_name} SHARED ${all_files})
+
 		if (LIBEMPP_ADD_LIBRARY_VERSION)
 			set_target_properties(${target_name} PROPERTIES
 				VERSION ${PRO_VERSION} SOVERSION ${MAJOR_VERSION}
@@ -48,9 +30,21 @@ function(libempp_add_library target_name)
 	target_compile_definitions(${target_name} PRIVATE ${target_micro}_EXPORTS)
 	target_compile_features(${target_name} PUBLIC cxx_std_20)
 
+	# Public headers require the conforming MSVC preprocessor. Consumers also
+	# need the same C++ standard-library ABI selected for this build.
+	target_compile_options(${target_name} PUBLIC
+		"$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/Zc:preprocessor>"
+	)
+	if (LIBEMPP_USE_LIBCXX)
+		target_compile_options(${target_name} PUBLIC
+			"$<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>"
+		)
+		target_link_options(${target_name} PUBLIC -stdlib=libc++)
+	endif ()
+
 	target_include_directories(${target_name} PUBLIC
 		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-		$<BUILD_INTERFACE:${LIBEMPP_CORE_CONFIG_INCLUDE}>
+		$<BUILD_INTERFACE:${LIBEMPP_CONFIG_INCLUDE}>
 		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
 	target_include_directories(${target_name} PRIVATE
@@ -66,6 +60,7 @@ function(libempp_add_library target_name)
 		ARCHIVE_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/lib
 	)
 	string(REGEX REPLACE "^empp\\." "" target_export_name "${target_name}")
+
 	set_target_properties(${target_name} PROPERTIES
 		EXPORT_NAME ${target_export_name}
 	)
@@ -77,7 +72,6 @@ function(libempp_add_library target_name)
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	)
-
 endfunction ()
 
 

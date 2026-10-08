@@ -11,8 +11,8 @@ endif ()
 string(JOIN "," libempp_consumer_components_arg
 	${libempp_consumer_components}
 )
-
 set(libempp_missing_component linux)
+
 if (LIBEMPP_BUILD_LINUX)
 	set(libempp_missing_component unknown)
 endif ()

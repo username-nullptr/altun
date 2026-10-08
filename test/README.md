@@ -100,6 +100,6 @@ ctest --test-dir build-test \
 | `LIBEMPP_PERFORMANCE_SCALE`, `LIBEMPP_PERFORMANCE_TIMEOUT` | `1`, `180` | Benchmark controls |
 
 ASan/UBSan and TSan are mutually exclusive, require GCC or Clang and
-`BUILD_TESTING=ON`, and cannot be combined with `ENABLE_LTO`. Performance
-tests cannot be combined with either sanitizer mode; invalid combinations are
-rejected during configuration.
+`BUILD_TESTING=ON`, and cannot be combined with `LIBEMPP_ENABLE_LTO`.
+Performance tests cannot be combined with either sanitizer mode; invalid
+combinations are rejected during configuration.

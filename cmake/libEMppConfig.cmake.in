@@ -5,6 +5,43 @@
 
 include(CMakeFindDependencyMacro)
 
+set(libEMpp_VERSION "@PROJECT_VERSION@")
+set(libEMpp_core_FOUND TRUE)
+set(libEMpp_linux_FOUND @LIBEMPP_BUILD_LINUX@)
+
+# Resolve component availability before dependencies so an unavailable module
+# is reported even when an unrelated package is absent from the host.
+set(_libempp_missing_components)
+
+foreach(_libempp_component IN LISTS libEMpp_FIND_COMPONENTS)
+	if (NOT DEFINED libEMpp_${_libempp_component}_FOUND)
+		set(libEMpp_${_libempp_component}_FOUND FALSE)
+	endif ()
+
+	if (NOT libEMpp_${_libempp_component}_FOUND AND
+		libEMpp_FIND_REQUIRED_${_libempp_component})
+		list(APPEND _libempp_missing_components ${_libempp_component})
+	endif ()
+endforeach()
+
+if (_libempp_missing_components)
+	list(JOIN _libempp_missing_components ", " _libempp_missing_components_text)
+	set(libEMpp_NOT_FOUND_MESSAGE
+		"Required libEMpp components are unavailable: "
+		"${_libempp_missing_components_text}"
+	)
+endif ()
+
+set(libEMpp_FOUND TRUE)
+check_required_components(libEMpp)
+
+if (NOT libEMpp_FOUND)
+	unset(_libempp_component)
+	unset(_libempp_missing_components)
+	unset(_libempp_missing_components_text)
+	return()
+endif ()
+
 if (NOT DEFINED LIBEMPP_RIWO_INSTALL_PREFIX)
 	set(LIBEMPP_RIWO_INSTALL_PREFIX "@LIBEMPP_RIWO_INSTALL_PREFIX@")
 endif ()
@@ -63,29 +100,6 @@ endif ()
 
 include("${CMAKE_CURRENT_LIST_DIR}/libEMppTargets.cmake")
 
-set(libEMpp_VERSION "@PROJECT_VERSION@")
-set(libEMpp_core_FOUND TRUE)
-set(libEMpp_linux_FOUND @LIBEMPP_BUILD_LINUX@)
-
-set(_libempp_missing_components)
-foreach(_libempp_component IN LISTS libEMpp_FIND_COMPONENTS)
-	if (NOT DEFINED libEMpp_${_libempp_component}_FOUND)
-		set(libEMpp_${_libempp_component}_FOUND FALSE)
-	endif ()
-	if (NOT libEMpp_${_libempp_component}_FOUND AND
-		libEMpp_FIND_REQUIRED_${_libempp_component})
-		list(APPEND _libempp_missing_components ${_libempp_component})
-	endif ()
-endforeach()
-
-if (_libempp_missing_components)
-	list(JOIN _libempp_missing_components ", " _libempp_missing_components_text)
-	set(libEMpp_NOT_FOUND_MESSAGE
-		"Required libEMpp components are unavailable: "
-		"${_libempp_missing_components_text}"
-	)
-endif ()
-
 # Preserve the source-tree target names for existing add_subdirectory users.
 foreach(_libempp_component core linux)
 	if (TARGET libEMpp::${_libempp_component} AND
@@ -96,8 +110,6 @@ foreach(_libempp_component core linux)
 		)
 	endif ()
 endforeach()
-
-check_required_components(libEMpp)
 
 unset(_libempp_component)
 unset(_libempp_missing_components)

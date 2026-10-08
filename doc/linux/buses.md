@@ -2,17 +2,17 @@
 
 [Linux module](../linux.md) · [Execution model](../io-model.md)
 
-The interfaces in `libempp::bus` support synchronous calls and Riwo completion tokens. Link `empp.linux`.
+The interfaces in `altun::bus` support synchronous calls and Riwo completion tokens. Link `altun.linux`.
 
 ## I²C
 
 `bus::i2c` uses Linux `i2c-dev`, a 7-bit device address, an 8-bit register address by default, and a 30 ms default timeout.
 
 ```cpp
-#include <libempp/linux/bus/i2c.h>
+#include <altun/linux/bus/i2c.h>
 
 std::error_code error;
-libempp::bus::i2c device;
+altun::bus::i2c device;
 device.open({"/dev/i2c-1", 0x48}, error);
 
 std::uint8_t value = 0;
@@ -27,7 +27,7 @@ Use `reg_bit16` for a 16-bit register address. A fixed-size read can return an a
 ```cpp
 auto value = device.read<std::array<std::uint8_t, 4>>(0x00, error);
 auto wide = device.read<std::array<std::uint8_t, 2>,
-    libempp::bus::reg_bit16>(0x0120, error);
+    altun::bus::reg_bit16>(0x0120, error);
 ```
 
 ## SPI
@@ -35,10 +35,10 @@ auto wide = device.read<std::array<std::uint8_t, 2>,
 `bus::spi` uses Linux `spidev`. Defaults are mode 0, 500 kHz, and 8 bits per word.
 
 ```cpp
-#include <libempp/linux/bus/spi.h>
+#include <altun/linux/bus/spi.h>
 
 std::error_code error;
-libempp::bus::spi device;
+altun::bus::spi device;
 device.open({"/dev/spidev0.0", 1'000'000}, error);
 
 std::array<std::uint8_t, 4> tx {0x9f, 0x00, 0x00, 0x00};

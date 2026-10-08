@@ -2,35 +2,35 @@
 
 [Documentation](README.md) · [Build options](getting-started.md)
 
-Link `empp.core`. Include individual headers, or use `<libempp/core.h>` for the whole module.
+Link `altun.core`. Include individual headers, or use `<altun/core.h>` for the whole module.
 
 | Area | Header | Main interface |
 | --- | --- | --- |
-| Version | `core/global.h` | `libempp::version_string()` |
-| Logging | `core/log.h` | `libempp_log_*`, `libempp_clog_*` |
-| Settings | `core/settings.h` | `libempp_default_settings`, `libempp_settings(name)` |
-| Software bus | `core/sbus.h` | `libempp::sbus` |
-| Plugins | `core/plugin_manager.h` | `libempp::plugin_manager` |
+| Version | `core/global.h` | `altun::version_string()` |
+| Logging | `core/log.h` | `altun_log_*`, `altun_clog_*` |
+| Settings | `core/settings.h` | `altun_default_settings`, `altun_settings(name)` |
+| Software bus | `core/sbus.h` | `altun::sbus` |
+| Plugins | `core/plugin_manager.h` | `altun::plugin_manager` |
 
 ## Version and logging
 
 ```cpp
-#include <libempp/core/log.h>
+#include <altun/core/log.h>
 
-libempp_log_info("libEMpp {}", libempp::version_string());
-libempp_clog_warning("sensor", "temperature: {:.1f}", 82.5);
+altun_log_info("altun {}", altun::version_string());
+altun_clog_warning("sensor", "temperature: {:.1f}", 82.5);
 ```
 
-The first family uses the default Riwo logger; `libempp_clog_*` uses a named logger. Format strings use fmt syntax.
+The first family uses the default Riwo logger; `altun_clog_*` uses a named logger. Format strings use fmt syntax.
 
 ## Settings
 
 The settings macros return process-owned Riwo settings instances. Keys use `group/key`; `set()` changes memory and `sync()` writes the loaded file.
 
 ```cpp
-#include <libempp/core/settings.h>
+#include <altun/core/settings.h>
 
-auto &settings = libempp_default_settings;
+auto &settings = altun_default_settings;
 if(auto result = settings.load("service.ini"); not result)
     return 1;
 
@@ -45,19 +45,19 @@ Use `changed` and `loaded` signals when the application needs notifications. See
 
 ## Software bus
 
-`libempp::sbus` exposes Riwo-compatible typed and raw publish/subscribe operations. The build selects one interface; see [SBus build options](getting-started.md#sbus).
+`altun::sbus` exposes Riwo-compatible typed and raw publish/subscribe operations. The build selects one interface; see [SBus build options](getting-started.md#sbus).
 
 ```cpp
-#include <libempp/core/sbus/sbus.h>
+#include <altun/core/sbus/sbus.h>
 
 asio::thread_pool pool(1);
-libempp::sbus::subscriber subscriber(pool);
+altun::sbus::subscriber subscriber(pool);
 subscriber.subscribe("sensor.temperature", [](const void *data, size_t size) {
     // Copy data here if it must outlive the callback.
 });
 
 const double value = 23.5;
-libempp::sbus::publish("sensor.temperature", &value, sizeof(value));
+altun::sbus::publish("sensor.temperature", &value, sizeof(value));
 ```
 
 The `local` backend is in-process; `udp`, `dbus`, `cyclone`, and `shm` provide transport-specific communication. All processes using one shared-memory namespace must use ABI-compatible builds.
@@ -85,12 +85,12 @@ The `local` backend is in-process; `udp`, `dbus`, `cyclone`, and `shm` provide t
 ```
 
 ```cpp
-#include <libempp/core/plugin_manager.h>
+#include <altun/core/plugin_manager.h>
 
-libempp::plugin_manager::set_config_file("plugins.json");
-libempp::plugin_manager::load();
+altun::plugin_manager::set_config_file("plugins.json");
+altun::plugin_manager::load();
 
-auto library = libempp::plugin_manager::library("math");
+auto library = altun::plugin_manager::library("math");
 if(library)
 {
     auto square = (*library)->interface<int(int)>("square");
@@ -100,6 +100,6 @@ if(library)
 return 1;
 ```
 
-Export shared-library entry points with `extern "C"`. Relative plugin paths are resolved from the configuration file's directory. Child processes receive `LIBEMPP_PLUGIN_GROUP` and `LIBEMPP_PLUGIN_NAME`.
+Export shared-library entry points with `extern "C"`. Relative plugin paths are resolved from the configuration file's directory. Child processes receive `ALTUN_PLUGIN_GROUP` and `ALTUN_PLUGIN_NAME`.
 
 Runnable plugin code is in [`examples/core/plugin.cpp`](../examples/core/plugin.cpp) and [`examples/core/plugin_manager.cpp`](../examples/core/plugin_manager.cpp).

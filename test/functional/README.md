@@ -6,11 +6,11 @@ Functional tests exercise public behavior, validation, errors, asynchronous comp
 
 | CTest name | Main coverage |
 | --- | --- |
-| `empp.core` | Version, settings, plugin parsing/loading, and child processes |
-| `empp.sbus` | Selected SBus backend and available interprocess path |
-| `empp.virtual_devices` | Linux storage images, serial PTYs, simulated buses/subsystems, and udev |
-| `empp.block_device` | Validation and optional read-only real block device |
-| `empp.storage_destructive` | Explicitly opted-in removable-media mutation |
+| `altun.core` | Version, settings, plugin parsing/loading, and child processes |
+| `altun.sbus` | Selected SBus backend and available interprocess path |
+| `altun.virtual_devices` | Linux storage images, serial PTYs, simulated buses/subsystems, and udev |
+| `altun.block_device` | Validation and optional read-only real block device |
+| `altun.storage_destructive` | Explicitly opted-in removable-media mutation |
 
 The virtual suite needs no physical board. Real-device environment variables and the destructive-test warning are documented in the [main test guide](../README.md#functional).
 

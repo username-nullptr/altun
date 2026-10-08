@@ -45,32 +45,32 @@ cmake --build build --parallel
 Build examples or functional tests with:
 
 ```sh
-cmake -S . -B build -DLIBEMPP_BUILD_EXAMPLES=ON
+cmake -S . -B build -DALTUN_BUILD_EXAMPLES=ON
 cmake --build build --parallel
 
 cmake -S . -B build-test -DBUILD_TESTING=ON
 cmake --build build-test --parallel
-ctest --test-dir build-test -R '^empp\.' --output-on-failure
+ctest --test-dir build-test -R '^altun\.' --output-on-failure
 ```
 
 ## Main CMake options
 
 | Option | Default | Effect |
 | --- | :---: | --- |
-| `LIBEMPP_BUILD_EXAMPLES` | `OFF` | Build `examples/` |
-| `LIBEMPP_BUILD_STATIC` | `OFF` | Build static instead of shared libraries |
-| `LIBEMPP_ADD_LIBRARY_VERSION` | `ON` | Add version/SOVERSION to shared libraries |
-| `LIBEMPP_USE_LIBCXX` | `OFF` | Use libc++ with Clang |
-| `LIBEMPP_USE_LLD` | `OFF` | Use lld with Clang |
-| `LIBEMPP_ENABLE_LTO` | `OFF` | Enable LTO with GCC |
-| `LIBEMPP_USE_BUNDLED_RIWO` | `ON` | Use the bundled Riwo dependency |
-| `LIBEMPP_RIWO_INSTALL_PREFIX` | empty | Absolute install prefix of an external Riwo package; requires `LIBEMPP_USE_BUNDLED_RIWO=OFF` |
-| `LIBEMPP_USE_EMBEDDED_NLOHMANN` | `ON` | Use the embedded nlohmann/json dependency |
-| `LIBEMPP_NLOHMANN_INSTALL_PREFIX` | empty | Absolute install prefix of an external nlohmann/json package; requires `LIBEMPP_USE_EMBEDDED_NLOHMANN=OFF` |
-| `LIBEMPP_USE_GPIOD` | `AUTO` | `AUTO`, `ON`, or `OFF` for the GPIO backend |
-| `LIBEMPP_USE_PWM_CDEV` | `AUTO` | `AUTO`, `ON`, or `OFF` for the PWM character-device backend |
-| `LIBEMPP_HEAVY_COMPILE_JOBS` | GCC `6`, Clang `8`, other `0` | Limit concurrent memory-heavy compilations; `0` disables the limit |
-| `LIBEMPP_LOW_MEMORY_DEBUG_INFO` | `OFF` | Use `-g1` for GCC Debug builds |
+| `ALTUN_BUILD_EXAMPLES` | `OFF` | Build `examples/` |
+| `ALTUN_BUILD_STATIC` | `OFF` | Build static instead of shared libraries |
+| `ALTUN_ADD_LIBRARY_VERSION` | `ON` | Add version/SOVERSION to shared libraries |
+| `ALTUN_USE_LIBCXX` | `OFF` | Use libc++ with Clang |
+| `ALTUN_USE_LLD` | `OFF` | Use lld with Clang |
+| `ALTUN_ENABLE_LTO` | `OFF` | Enable LTO with GCC |
+| `ALTUN_USE_BUNDLED_RIWO` | `ON` | Use the bundled Riwo dependency |
+| `ALTUN_RIWO_INSTALL_PREFIX` | empty | Absolute install prefix of an external Riwo package; requires `ALTUN_USE_BUNDLED_RIWO=OFF` |
+| `ALTUN_USE_EMBEDDED_NLOHMANN` | `ON` | Use the embedded nlohmann/json dependency |
+| `ALTUN_NLOHMANN_INSTALL_PREFIX` | empty | Absolute install prefix of an external nlohmann/json package; requires `ALTUN_USE_EMBEDDED_NLOHMANN=OFF` |
+| `ALTUN_USE_GPIOD` | `AUTO` | `AUTO`, `ON`, or `OFF` for the GPIO backend |
+| `ALTUN_USE_PWM_CDEV` | `AUTO` | `AUTO`, `ON`, or `OFF` for the PWM character-device backend |
+| `ALTUN_HEAVY_COMPILE_JOBS` | GCC `6`, Clang `8`, other `0` | Limit concurrent memory-heavy compilations; `0` disables the limit |
+| `ALTUN_LOW_MEMORY_DEBUG_INFO` | `OFF` | Use `-g1` for GCC Debug builds |
 
 `AUTO` selects the character-device backend when its dependency or kernel header is available, otherwise sysfs. `ON` makes the character-device backend mandatory. The selected backend is available at runtime through `gpio::backend_name()` and `pwm::backend_name()`.
 
@@ -78,14 +78,14 @@ ctest --test-dir build-test -R '^empp\.' --output-on-failure
 
 | Option | Default | Effect |
 | --- | :---: | --- |
-| `LIBEMPP_SBUS_INTERFACE` | `default` | Select `default`, `local`, `udp`, `dbus`, `cyclone`, or `shm` |
-| `LIBEMPP_BUILD_SBUS_DBUS` | `OFF` | Build the D-Bus transport |
-| `LIBEMPP_BUILD_SBUS_CYCLONE` | `OFF` | Build the CycloneDDS transport |
-| `LIBEMPP_BUILD_SBUS_SHM` | `OFF` | Build the POSIX shared-memory transport |
+| `ALTUN_SBUS_INTERFACE` | `default` | Select `default`, `local`, `udp`, `dbus`, `cyclone`, or `shm` |
+| `ALTUN_BUILD_SBUS_DBUS` | `OFF` | Build the D-Bus transport |
+| `ALTUN_BUILD_SBUS_CYCLONE` | `OFF` | Build the CycloneDDS transport |
+| `ALTUN_BUILD_SBUS_SHM` | `OFF` | Build the POSIX shared-memory transport |
 
 Selecting `dbus`, `cyclone`, or `shm` also requires its corresponding build option. Selecting `udp` requires `RIWO_BUILD_UTILITIES_SBUS_UDP=ON`.
 
-Shared-memory participants use `/libempp-sbus-<uid>` by default. Set the same `LIBEMPP_SBUS_SHM_NAME=/name` in all participating processes to use another namespace.
+Shared-memory participants use `/altun-sbus-<uid>` by default. Set the same `ALTUN_SBUS_SHM_NAME=/name` in all participating processes to use another namespace.
 
 Testing options are listed in the [testing guide](../test/README.md).
 
@@ -94,71 +94,71 @@ Testing options are listed in the [testing guide](../test/README.md).
 Use the source tree directly with:
 
 ```cmake
-add_subdirectory(third_party/libempp)
+add_subdirectory(third_party/altun)
 
 add_executable(my_app main.cpp)
-target_link_libraries(my_app PRIVATE empp.core)
+target_link_libraries(my_app PRIVATE altun.core)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(my_app PRIVATE empp.linux)
+    target_link_libraries(my_app PRIVATE altun.linux)
 endif()
 ```
 
 For an installed package, use the exported namespaced targets:
 
 ```cmake
-find_package(libEMpp 0.6 CONFIG REQUIRED COMPONENTS core)
+find_package(altun 0.6 CONFIG REQUIRED COMPONENTS core)
 
 add_executable(my_app main.cpp)
-target_link_libraries(my_app PRIVATE libEMpp::core)
+target_link_libraries(my_app PRIVATE altun::core)
 ```
 
 On Linux, request and link the `linux` component when needed:
 
 ```cmake
-find_package(libEMpp 0.6 CONFIG REQUIRED COMPONENTS core linux)
-target_link_libraries(my_app PRIVATE libEMpp::linux)
+find_package(altun 0.6 CONFIG REQUIRED COMPONENTS core linux)
+target_link_libraries(my_app PRIVATE altun::linux)
 ```
 
 The package restores its Riwo and platform dependencies automatically and
-also defines `empp.core` and `empp.linux` as compatibility targets.
+also defines `altun.core` and `altun.linux` as compatibility targets.
 
 To build against an already installed Riwo outside the normal CMake search
-prefixes, configure libEMpp with its absolute install prefix:
+prefixes, configure altun with its absolute install prefix:
 
 ```sh
 cmake -S . -B build \
-  -DLIBEMPP_USE_BUNDLED_RIWO=OFF \
-  -DLIBEMPP_RIWO_INSTALL_PREFIX=/opt/riwo
+  -DALTUN_USE_BUNDLED_RIWO=OFF \
+  -DALTUN_RIWO_INSTALL_PREFIX=/opt/riwo
 ```
 
-That prefix is recorded in the installed libEMpp package. A downstream build
-can override it before `find_package(libEMpp)` when Riwo has moved:
+That prefix is recorded in the installed altun package. A downstream build
+can override it before `find_package(altun)` when Riwo has moved:
 
 ```cmake
-set(LIBEMPP_RIWO_INSTALL_PREFIX "/another/riwo/prefix")
-find_package(libEMpp CONFIG REQUIRED)
+set(ALTUN_RIWO_INSTALL_PREFIX "/another/riwo/prefix")
+find_package(altun CONFIG REQUIRED)
 ```
 
 The same pattern selects an external nlohmann/json package:
 
 ```sh
 cmake -S . -B build \
-  -DLIBEMPP_USE_EMBEDDED_NLOHMANN=OFF \
-  -DLIBEMPP_NLOHMANN_INSTALL_PREFIX=/opt/nlohmann-json
+  -DALTUN_USE_EMBEDDED_NLOHMANN=OFF \
+  -DALTUN_NLOHMANN_INSTALL_PREFIX=/opt/nlohmann-json
 ```
 
 The nlohmann/json prefix is also recorded in the installed package and can be
-overridden by setting `LIBEMPP_NLOHMANN_INSTALL_PREFIX` before
-`find_package(libEMpp)`.
+overridden by setting `ALTUN_NLOHMANN_INSTALL_PREFIX` before
+`find_package(altun)`.
 
 ## Install
 
 ```sh
-cmake --install build --prefix /opt/libempp
+cmake --install build --prefix /opt/altun
 ```
 
 Shared or static libraries, headers, enabled examples, and CMake package files
 are installed below `lib/`, `include/`, `examples/`, and
-`lib/cmake/libEMpp/`. When bundled Riwo is enabled, its libraries and package
+`lib/cmake/altun/`. When bundled Riwo is enabled, its libraries and package
 files are installed into the same prefix.

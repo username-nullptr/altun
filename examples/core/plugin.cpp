@@ -3,7 +3,7 @@
 
 #include <riwo/core/cxx/attributes.h>
 
-extern "C" RIWO_DECL_EXPORT int libempp_example_square(int value)
+extern "C" RIWO_DECL_EXPORT int altun_example_square(int value)
 {
 	return value * value;
 }

@@ -3,7 +3,7 @@
 
 #include "../../support/linux/bus.h"
 
-#include <libempp/linux/bus/i2c.h>
+#include <altun/linux/bus/i2c.h>
 
 #include <array>
 #include <cstdint>
@@ -14,7 +14,7 @@
 #include <vector>
 
 using namespace std::chrono_literals;
-using namespace empp_test_support;
+using namespace altun_test_support;
 
 namespace
 {
@@ -31,19 +31,19 @@ concept i2c_detached_array_readable = requires(Device &device) {
 	);
 };
 
-using compile_test_i2c = libempp::bus::i2c;
+using compile_test_i2c = altun::bus::i2c;
 static_assert(i2c_array_readable<compile_test_i2c,std::array<std::uint8_t,1>>);
 static_assert(not i2c_array_readable<compile_test_i2c,std::vector<std::uint8_t>>);
 static_assert(not i2c_detached_array_readable<compile_test_i2c>);
 static_assert(not riwo::concepts::array_buffer<std::array<const std::uint8_t,1>>);
 static_assert(not compile_test_i2c::is_valid_reg_bit_v<
-	static_cast<libempp::bus::i2c_reg_bit>(3)>);
+	static_cast<altun::bus::i2c_reg_bit>(3)>);
 
 } // namespace
 
-EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl simulator")
+ALTUN_TEST("virtual-device", "I2C reads and writes registers through an ioctl simulator")
 {
-	using i2c_type = libempp::bus::basic_i2c<asio::io_context::executor_type>;
+	using i2c_type = altun::bus::basic_i2c<asio::io_context::executor_type>;
 	temporary_file backing_file;
 	asio::io_context context;
 	i2c_type device(context.get_executor());
@@ -54,60 +54,60 @@ EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl sim
 		virtual_i2c_devices.clear();
 	}
 	device.open(i2c_type::node(backing_file.path(), 0x52, 25ms), error);
-	EMPP_REQUIRE(not error);
-	EMPP_REQUIRE(device.is_open());
-	EMPP_REQUIRE_EQ(device.attributes().address, 0x52);
-	EMPP_REQUIRE_EQ(device.attributes().timeout, 25ms);
+	ALTUN_REQUIRE(not error);
+	ALTUN_REQUIRE(device.is_open());
+	ALTUN_REQUIRE_EQ(device.attributes().address, 0x52);
+	ALTUN_REQUIRE_EQ(device.attributes().timeout, 25ms);
 
 	const int descriptor = device.handle().native_handle();
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
 		const auto &state = virtual_i2c_devices.at(descriptor);
-		EMPP_REQUIRE_EQ(state.timeout_units, 3UL);
-		EMPP_REQUIRE_EQ(state.slave_address, 0x52UL);
+		ALTUN_REQUIRE_EQ(state.timeout_units, 3UL);
+		ALTUN_REQUIRE_EQ(state.slave_address, 0x52UL);
 	}
 	const auto empty = device.read<std::array<std::uint8_t,0>>(0x00, error);
-	EMPP_REQUIRE(not error);
-	EMPP_REQUIRE(empty.empty());
+	ALTUN_REQUIRE(not error);
+	ALTUN_REQUIRE(empty.empty());
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
-		EMPP_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).read_count, 0U);
+		ALTUN_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).read_count, 0U);
 	}
 
 	const std::array<std::uint8_t, 2> payload {0xA5, 0x5A};
 	const auto written = device.write(0x2A,
 		riwo::const_buffer(payload.data(), payload.size()), error);
-	EMPP_REQUIRE(not error);
-	EMPP_REQUIRE_EQ(written, 3U);
+	ALTUN_REQUIRE(not error);
+	ALTUN_REQUIRE_EQ(written, 3U);
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
 		const auto &state = virtual_i2c_devices.at(descriptor);
-		EMPP_REQUIRE_EQ(state.message_address, 0x52);
-		EMPP_REQUIRE_EQ(state.written_frame,
+		ALTUN_REQUIRE_EQ(state.message_address, 0x52);
+		ALTUN_REQUIRE_EQ(state.written_frame,
 			(std::vector<std::uint8_t> {0x2A, 0xA5, 0x5A}));
 		virtual_i2c_devices[descriptor].read_data = {0x11, 0x22, 0x33};
 	}
 
 	std::array<std::uint8_t, 3> result {};
-	const auto read = device.read<libempp::bus::reg_bit16>(0x1234,
+	const auto read = device.read<altun::bus::reg_bit16>(0x1234,
 		riwo::mutable_buffer(result.data(), result.size()), error);
-	EMPP_REQUIRE(not error);
-	EMPP_REQUIRE_EQ(read, result.size());
-	EMPP_REQUIRE_EQ(result, (std::array<std::uint8_t, 3> {0x11, 0x22, 0x33}));
+	ALTUN_REQUIRE(not error);
+	ALTUN_REQUIRE_EQ(read, result.size());
+	ALTUN_REQUIRE_EQ(result, (std::array<std::uint8_t, 3> {0x11, 0x22, 0x33}));
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
-		EMPP_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).register_bytes,
+		ALTUN_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).register_bytes,
 			(std::vector<std::uint8_t> {0x12, 0x34}));
 		virtual_i2c_devices[descriptor].read_data = {0x44, 0x55, 0x66};
 	}
 	const auto array_result = device.read<std::array<std::uint8_t,3>,
-		libempp::bus::reg_bit16>(0x5678, error);
-	EMPP_REQUIRE(not error);
-	EMPP_REQUIRE_EQ(array_result,
+		altun::bus::reg_bit16>(0x5678, error);
+	ALTUN_REQUIRE(not error);
+	ALTUN_REQUIRE_EQ(array_result,
 		(std::array<std::uint8_t, 3> {0x44, 0x55, 0x66}));
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
-		EMPP_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).register_bytes,
+		ALTUN_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).register_bytes,
 			(std::vector<std::uint8_t> {0x56, 0x78}));
 		virtual_i2c_devices[descriptor].read_data = {0x77, 0x88};
 	}
@@ -116,11 +116,11 @@ EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl sim
 		0x2B, riwo::use_future
 	);
 	context.run();
-	EMPP_REQUIRE_EQ(future.get(),
+	ALTUN_REQUIRE_EQ(future.get(),
 		(std::array<std::uint8_t, 2> {0x77, 0x88}));
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
-		EMPP_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).register_bytes,
+		ALTUN_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).register_bytes,
 			(std::vector<std::uint8_t> {0x2B}));
 	}
 
@@ -159,86 +159,86 @@ EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl sim
 			static_cast<std::uint8_t>(index + 2),
 			static_cast<std::uint8_t>(index + 3)
 		};
-		EMPP_REQUIRE_EQ(futures[index].get(), expected);
+		ALTUN_REQUIRE_EQ(futures[index].get(), expected);
 	}
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
 		const auto &state = virtual_i2c_devices.at(descriptor);
-		EMPP_REQUIRE(state.read_sequence.empty());
-		EMPP_REQUIRE_EQ(state.read_count, read_count_before + batch_size);
-		EMPP_REQUIRE_EQ(state.register_bytes,
+		ALTUN_REQUIRE(state.read_sequence.empty());
+		ALTUN_REQUIRE_EQ(state.read_count, read_count_before + batch_size);
+		ALTUN_REQUIRE_EQ(state.register_bytes,
 			(std::vector<std::uint8_t> {0x7F}));
 	}
 
 	device.close(error);
-	EMPP_REQUIRE(not error);
-	EMPP_REQUIRE(not device.is_open());
+	ALTUN_REQUIRE(not error);
+	ALTUN_REQUIRE(not device.is_open());
 }
 
-EMPP_TEST("virtual-device", "I2C validates failures before touching hardware")
+ALTUN_TEST("virtual-device", "I2C validates failures before touching hardware")
 {
-	using i2c_type = libempp::bus::basic_i2c<asio::io_context::executor_type>;
+	using i2c_type = altun::bus::basic_i2c<asio::io_context::executor_type>;
 	asio::io_context context;
 	i2c_type device(context.get_executor());
 	std::error_code error;
 	std::uint8_t byte = 0;
 
 	const auto closed_write = device.write(0x01, riwo::const_buffer(&byte, 1), error);
-	EMPP_REQUIRE_EQ(closed_write, 0U);
-	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::bad_file_descriptor));
+	ALTUN_REQUIRE_EQ(closed_write, 0U);
+	ALTUN_REQUIRE_EQ(error, std::make_error_code(std::errc::bad_file_descriptor));
 	const auto closed_read = device.read<std::array<std::uint8_t,2>>(0x01, error);
-	EMPP_REQUIRE_EQ(closed_read, (std::array<std::uint8_t, 2> {}));
-	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::bad_file_descriptor));
+	ALTUN_REQUIRE_EQ(closed_read, (std::array<std::uint8_t, 2> {}));
+	ALTUN_REQUIRE_EQ(error, std::make_error_code(std::errc::bad_file_descriptor));
 	const auto closed_empty = device.read<std::array<std::uint8_t,0>>(0x01, error);
-	EMPP_REQUIRE(closed_empty.empty());
-	EMPP_REQUIRE(not error);
+	ALTUN_REQUIRE(closed_empty.empty());
+	ALTUN_REQUIRE(not error);
 
 	auto closed_future = device.read<std::array<std::uint8_t,2>>(
 		0x01, riwo::use_future
 	);
 	context.run();
-	EMPP_REQUIRE_SYSTEM_ERROR(std::make_error_code(std::errc::bad_file_descriptor),
+	ALTUN_REQUIRE_SYSTEM_ERROR(std::make_error_code(std::errc::bad_file_descriptor),
 		static_cast<void>(closed_future.get()));
 
 	using oversized_buffer = std::array<
 		std::uint8_t, std::numeric_limits<std::uint16_t>::max() + 1ULL
 	>;
 	const auto oversized_read = device.read<oversized_buffer>(0x01, error);
-	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::message_size));
-	EMPP_REQUIRE(std::ranges::all_of(oversized_read,
+	ALTUN_REQUIRE_EQ(error, std::make_error_code(std::errc::message_size));
+	ALTUN_REQUIRE(std::ranges::all_of(oversized_read,
 		[](std::uint8_t value) { return value == 0; }
 	));
 
 	const auto oversized = device.write(0x01,
 		riwo::const_buffer(&byte, std::numeric_limits<std::uint16_t>::max()), error);
-	EMPP_REQUIRE_EQ(oversized, 0U);
-	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::message_size));
+	ALTUN_REQUIRE_EQ(oversized, 0U);
+	ALTUN_REQUIRE_EQ(error, std::make_error_code(std::errc::message_size));
 
 	temporary_file backing_file;
 	device.open(i2c_type::node(backing_file.path(), 0x20), error);
-	EMPP_REQUIRE(not error);
+	ALTUN_REQUIRE(not error);
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
 		virtual_i2c_devices[device.handle().native_handle()].read_data = {0x5A};
 	}
 	const auto recovered = device.read<std::array<std::uint8_t,1>>(0x02, error);
-	EMPP_REQUIRE(not error);
-	EMPP_REQUIRE_EQ(recovered, (std::array<std::uint8_t, 1> {0x5A}));
+	ALTUN_REQUIRE(not error);
+	ALTUN_REQUIRE_EQ(recovered, (std::array<std::uint8_t, 1> {0x5A}));
 	device.close(error);
-	EMPP_REQUIRE(not error);
+	ALTUN_REQUIRE(not error);
 
 	auto handle = i2c_type::make_handle(
 		i2c_type::node("/path/that/is/not/an/i2c-device", 0x20, -1ms),
 		context.get_executor(), error
 	);
-	EMPP_REQUIRE(not handle.is_open());
-	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::invalid_argument));
+	ALTUN_REQUIRE(not handle.is_open());
+	ALTUN_REQUIRE_EQ(error, std::make_error_code(std::errc::invalid_argument));
 }
 
 
-EMPP_TEST("virtual-device", "I2C array read retains operation state after device destruction")
+ALTUN_TEST("virtual-device", "I2C array read retains operation state after device destruction")
 {
-	using i2c_type = libempp::bus::basic_i2c<asio::io_context::executor_type>;
+	using i2c_type = altun::bus::basic_i2c<asio::io_context::executor_type>;
 	using result_type = std::array<std::uint8_t,4>;
 	reset_virtual_i2c_devices();
 
@@ -257,11 +257,11 @@ EMPP_TEST("virtual-device", "I2C array read retains operation state after device
 		future = device.read<result_type>(0x08, riwo::use_future);
 	}
 	context.run();
-	EMPP_REQUIRE_EQ(future.get(),
+	ALTUN_REQUIRE_EQ(future.get(),
 		(result_type {0x10, 0x20, 0x30, 0x40}));
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
-		EMPP_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).read_count, 1U);
+		ALTUN_REQUIRE_EQ(virtual_i2c_devices.at(descriptor).read_count, 1U);
 	}
 }
 

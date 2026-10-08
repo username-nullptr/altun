@@ -5,5 +5,5 @@
 
 int main(int argc, char **argv)
 {
-	return empp_test::run(argc, argv);
+	return altun_test::run(argc, argv);
 }

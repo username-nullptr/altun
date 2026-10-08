@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/storage.h>
+#include <altun/linux/storage.h>
 #include <cerrno>
 #include <iostream>
 #include <system_error>
 
-namespace storage = libempp::storage;
+namespace storage = altun::storage;
 
 void print_filesystem(const riwo::optional<storage::filesystem_info> &info,
 	std::string_view indent)

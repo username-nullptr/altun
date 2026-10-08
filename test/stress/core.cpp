@@ -3,8 +3,8 @@
 
 #include "../test.h"
 
-#include <libempp/core/global.h>
-#include <libempp/core/plugin_manager.h>
+#include <altun/core/global.h>
+#include <altun/core/plugin_manager.h>
 
 #include <array>
 #include <algorithm>
@@ -18,12 +18,12 @@
 namespace
 {
 
-constexpr std::size_t scale = LIBEMPP_STRESS_SCALE;
+constexpr std::size_t scale = ALTUN_STRESS_SCALE;
 static_assert(scale > 0);
 
-EMPP_TEST("core", "plugin descriptor parsing pressure")
+ALTUN_TEST("core", "plugin descriptor parsing pressure")
 {
-	using manager = libempp::plugin_manager;
+	using manager = altun::plugin_manager;
 	using json = manager::json_t;
 	constexpr std::size_t descriptor_count = 32;
 	const std::size_t repetitions = 250 * scale;
@@ -53,27 +53,27 @@ EMPP_TEST("core", "plugin descriptor parsing pressure")
 		manager::parse();
 		const auto processes = manager::process_nodes();
 		const auto libraries = manager::library_nodes();
-		EMPP_REQUIRE_EQ(processes.size(), descriptor_count);
-		EMPP_REQUIRE_EQ(libraries.size(), descriptor_count);
-		EMPP_REQUIRE_EQ(processes.front().name, std::string("worker-0"));
+		ALTUN_REQUIRE_EQ(processes.size(), descriptor_count);
+		ALTUN_REQUIRE_EQ(libraries.size(), descriptor_count);
+		ALTUN_REQUIRE_EQ(processes.front().name, std::string("worker-0"));
 		const auto final_library = std::string("codec-") +
 			std::to_string(descriptor_count - 1);
-		EMPP_REQUIRE(std::ranges::find_if(libraries, [&](const auto &node) {
+		ALTUN_REQUIRE(std::ranges::find_if(libraries, [&](const auto &node) {
 			return node.name == final_library;
 		}) != libraries.end());
 	}
 }
 
-EMPP_TEST("core", "shared library interface concurrency pressure")
+ALTUN_TEST("core", "shared library interface concurrency pressure")
 {
-	riwo::library library(std::filesystem::path(LIBEMPP_TEST_PLUGIN_FILE));
-	EMPP_REQUIRE(library.load());
-	const auto function = library.interface<int(int)>("libempp_test_double");
-	EMPP_REQUIRE(function);
+	riwo::library library(std::filesystem::path(ALTUN_TEST_PLUGIN_FILE));
+	ALTUN_REQUIRE(library.load());
+	const auto function = library.interface<int(int)>("altun_test_double");
+	ALTUN_REQUIRE(function);
 
 	constexpr std::size_t thread_count = 8;
 	const std::size_t calls_per_thread = 25'000 * scale;
-	const auto seed = empp_test::current_seed();
+	const auto seed = altun_test::current_seed();
 	std::atomic_bool corrupt {false};
 	std::atomic_size_t completed {0};
 	std::array<std::thread,thread_count> threads;
@@ -81,12 +81,12 @@ EMPP_TEST("core", "shared library interface concurrency pressure")
 	{
 		threads[thread_index] = std::thread([&, thread_index]
 		{
-			empp_test::random_sequence random(seed ^ (thread_index + 1));
+			altun_test::random_sequence random(seed ^ (thread_index + 1));
 			for(std::size_t index = 0; index < calls_per_thread; ++index)
 			{
 				const auto value = static_cast<int>(random.bounded(200'001)) - 100'000;
 				if((*function)(value) != value * 2 or
-					std::string_view(libempp::version_string()).empty())
+					std::string_view(altun::version_string()).empty())
 				{
 					corrupt.store(true, std::memory_order_relaxed);
 				}
@@ -97,9 +97,9 @@ EMPP_TEST("core", "shared library interface concurrency pressure")
 	for(auto &thread : threads)
 		thread.join();
 
-	EMPP_REQUIRE_EQ(completed.load(std::memory_order_acquire), thread_count);
-	EMPP_REQUIRE(not corrupt.load(std::memory_order_relaxed));
-	EMPP_REQUIRE(library.unload());
+	ALTUN_REQUIRE_EQ(completed.load(std::memory_order_acquire), thread_count);
+	ALTUN_REQUIRE(not corrupt.load(std::memory_order_relaxed));
+	ALTUN_REQUIRE(library.unload());
 }
 
 } // namespace

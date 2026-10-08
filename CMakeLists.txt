@@ -8,7 +8,7 @@ set(MINOR_VERSION 7)
 set(PATCH_VERSION 0)
 
 set(PRO_VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION})
-set(PRO_NAME libEMpp)
+set(PRO_NAME Altun)
 
 project(${PRO_NAME} VERSION ${PRO_VERSION} LANGUAGES C CXX)
 
@@ -16,10 +16,10 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 add_definitions (
-	-DLIBEMPP_MAJOR_VERSION=${MAJOR_VERSION}
-	-DLIBEMPP_MINOR_VERSION=${MINOR_VERSION}
-	-DLIBEMPP_PATCH_VERSION=${PATCH_VERSION}
-	-DLIBEMPP_VERSION_STR="${PRO_VERSION}-dev"
+	-DALTUN_MAJOR_VERSION=${MAJOR_VERSION}
+	-DALTUN_MINOR_VERSION=${MINOR_VERSION}
+	-DALTUN_PATCH_VERSION=${PATCH_VERSION}
+	-DALTUN_VERSION_STR="${PRO_VERSION}-dev"
 )
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -36,29 +36,29 @@ include(test)
 include(CTest)
 
 if (CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
-	add_definitions(-DLIBEMPP_DEBUG)
+	add_definitions(-DALTUN_DEBUG)
 endif ()
 
 include_directories(.)
-add_subdirectory(libempp)
+add_subdirectory(altun)
 
 # Generate the installed package only after every provider and exported target
 # has been resolved.  External providers choose their concrete imported target
 # names while configuring 3rd_party, so generating this file earlier leaves
-# empty target names in libEMppConfig.cmake.
+# empty target names in altunConfig.cmake.
 include(provider)
 
 if (BUILD_TESTING)
 	add_subdirectory(test)
 endif ()
 
-if (LIBEMPP_BUILD_EXAMPLES)
+if (ALTUN_BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif ()
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES libempp.h)
-install(FILES libempp.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES altun.h)
+install(FILES altun.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-install(DIRECTORY libempp/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libempp/
+install(DIRECTORY altun/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/altun/
 	FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )

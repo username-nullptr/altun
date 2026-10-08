@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: MIT
 
 # Third-party include paths and usage requirements are provided by the
-# Riwo targets and empp.nlohmann target created in 3rd_party/CMakeLists.txt.
+# Riwo targets and altun.nlohmann target created in 3rd_party/CMakeLists.txt.

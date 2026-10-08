@@ -2,7 +2,7 @@
 
 The documentation follows the public source layout. Start with [Building and integration](getting-started.md), then open the module that owns the header you use.
 
-## Core: `libempp/core/`
+## Core: `altun/core/`
 
 | Public area | Header | Guide |
 | --- | --- | --- |
@@ -11,9 +11,9 @@ The documentation follows the public source layout. Start with [Building and int
 | Software bus | `sbus.h`, `sbus/*` | [Core](core.md#software-bus) |
 | Plugins and child processes | `plugin_manager.h` | [Core](core.md#plugins) |
 
-Link these interfaces with `empp.core`.
+Link these interfaces with `altun.core`.
 
-## Linux: `libempp/linux/`
+## Linux: `altun/linux/`
 
 | Source area | Public interface | Guide |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Link these interfaces with `empp.core`.
 | `subsys/` | Backlights, LEDs, GPIO, and PWM | [Hardware control](linux/hardware-control.md) |
 | `serial_port_binding.h` | Hot-pluggable serial ports | [Serial-port binding](linux/serial-port-binding.md) |
 
-All Linux interfaces link with `empp.linux`. The module overview covers [dependencies, backend selection, and device checks](linux.md).
+All Linux interfaces link with `altun.linux`. The module overview covers [dependencies, backend selection, and device checks](linux.md).
 
 ## Shared conventions
 
@@ -31,4 +31,4 @@ All Linux interfaces link with `empp.linux`. The module overview covers [depende
 - [Examples](../examples/README.md): programs that exercise each public area.
 - [Tests](../test/README.md): test targets, labels, sanitizers, and opt-in hardware tests.
 
-Aggregate headers are available as `<libempp/core.h>`, `<libempp/linux.h>`, and `<libempp.h>`. `<libempp/linux.h>` does not include `<libempp/linux/serial_port_binding.h>`; include that header explicitly when needed.
+Aggregate headers are available as `<altun/core.h>`, `<altun/linux.h>`, and `<altun.h>`. `<altun/linux.h>` does not include `<altun/linux/serial_port_binding.h>`; include that header explicitly when needed.

@@ -6,9 +6,9 @@ Stress tests check correctness under concurrency, bulk asynchronous work, and re
 
 | CTest name | Coverage |
 | --- | --- |
-| `empp.stress.core` | Plugin descriptors, concurrent library interfaces, and version queries |
-| `empp.stress.linux` | Multiple virtual devices and concurrent I²C/SPI operations |
+| `altun.stress.core` | Plugin descriptors, concurrent library interfaces, and version queries |
+| `altun.stress.linux` | Multiple virtual devices and concurrent I²C/SPI operations |
 
-`LIBEMPP_STRESS_SCALE` controls work within a fixture; `LIBEMPP_STRESS_REPEAT` controls fixture reconstruction; `LIBEMPP_STRESS_SEED` reproduces scheduling.
+`ALTUN_STRESS_SCALE` controls work within a fixture; `ALTUN_STRESS_REPEAT` controls fixture reconstruction; `ALTUN_STRESS_SEED` reproduces scheduling.
 
 New stress cases must report reproduction parameters, clean up threads and unfinished operations deterministically, and avoid physical-hardware timing dependencies.

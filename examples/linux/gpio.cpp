@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/subsys/gpio.h>
+#include <altun/linux/subsys/gpio.h>
 
 #include <iostream>
 #include <limits>
@@ -16,9 +16,9 @@ unsigned long parse_decimal(const char *text, unsigned long max)
 	return value;
 }
 
-libempp::subsys::gpio::edge_t parse_edge(std::string_view text)
+altun::subsys::gpio::edge_t parse_edge(std::string_view text)
 {
-	using edge = libempp::subsys::gpio::edge_t;
+	using edge = altun::subsys::gpio::edge_t;
 	if( text == "rising" )
 		return edge::rising;
 	if( text == "falling" )
@@ -39,7 +39,7 @@ int main(int argc, const char *argv[])
 	}
 
 	try {
-		using gpio = libempp::subsys::basic_gpio<asio::io_context::executor_type>;
+		using gpio = altun::subsys::basic_gpio<asio::io_context::executor_type>;
 		asio::io_context context;
 		gpio::node_t node;
 		node.chip = argv[1];

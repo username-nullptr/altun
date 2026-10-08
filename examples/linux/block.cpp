@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/storage/block_device.h>
+#include <altun/linux/storage/block_device.h>
 #include <algorithm>
 #include <iostream>
 #include <cstddef>
@@ -14,7 +14,7 @@ int main(int argc, const char *argv[])
 		std::cerr << "Usage: block <device>\n";
 		return 1;
 	}
-	auto opened = libempp::storage::block_device::open(argv[1]);
+	auto opened = altun::storage::block_device::open(argv[1]);
 	if( not opened )
 	{
 		std::cerr << "Block device failed: " << opened.error().message() << '\n';
@@ -40,7 +40,7 @@ int main(int argc, const char *argv[])
 		<< (geometry.read_only ? "yes" : "no") << '\n';
 
 	const auto first_block_size = static_cast<size_t>(std::min (
-		geometry.capacity_bytes, static_cast<libempp::storage::block_device::capacity_t>(
+		geometry.capacity_bytes, static_cast<altun::storage::block_device::capacity_t>(
 			geometry.logical_block_size
 		)
 	));

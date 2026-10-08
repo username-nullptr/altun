@@ -2,7 +2,7 @@
 
 [Documentation](README.md)
 
-libEMpp asynchronous APIs follow Asio and Riwo conventions. Executor-bound types expose `executor_type`, `executor_t`, and `get_executor()`; convenience aliases use the default Riwo execution context.
+altun asynchronous APIs follow Asio and Riwo conventions. Executor-bound types expose `executor_type`, `executor_t`, and `get_executor()`; convenience aliases use the default Riwo execution context.
 
 ## Completion and lifetime
 
@@ -21,7 +21,7 @@ When several threads run one context, bind the object and all access to the same
 ```cpp
 asio::io_context context;
 auto strand = asio::make_strand(context);
-libempp::bus::basic_i2c<decltype(strand)> sensor(strand);
+altun::bus::basic_i2c<decltype(strand)> sensor(strand);
 
 asio::co_spawn(strand, [&]() -> riwo::awaitable<void> {
     std::array<std::uint8_t, 2> value {};

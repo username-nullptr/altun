@@ -17,6 +17,7 @@
 **/*install
 **/install*
 **/*install*
+!test/cmake/run_install_consumer.cmake
 **/*txt.user*
 **/release*
 **/Release*

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/bus/spi.h>
+#include <altun/linux/bus/spi.h>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -38,7 +38,7 @@ int main(int argc, const char *argv[])
 		}
 		std::vector<uint8_t> received(transmitted.size());
 		std::error_code error;
-		libempp::bus::spi device;
+		altun::bus::spi device;
 
 		device.open({argv[1], speed}, error);
 		if( error )

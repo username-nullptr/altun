@@ -2,7 +2,7 @@
 
 [Linux module](../linux.md) · [Documentation](../README.md)
 
-Storage APIs live in `libempp::storage`, link with `empp.linux`, and return `riwo::sys_expected<T>`. A successful lookup with no result uses `riwo::optional<T>`.
+Storage APIs live in `altun::storage`, link with `altun.linux`, and return `riwo::sys_expected<T>`. A successful lookup with no result uses `riwo::optional<T>`.
 
 | Header | Capability | Writes storage? |
 | --- | --- | :---: |
@@ -18,9 +18,9 @@ Storage APIs live in `libempp::storage`, link with `empp.linux`, and return `riw
 Use `device_info` for real devices so mutating operations can validate major/minor numbers, sysfs path, and serial identity. Path overloads are useful for regular image files.
 
 ```cpp
-#include <libempp/linux/storage.h>
+#include <altun/linux/storage.h>
 
-namespace storage = libempp::storage;
+namespace storage = altun::storage;
 
 auto selected = storage::resolve_device("/dev/disk/by-id/example");
 if(not selected)

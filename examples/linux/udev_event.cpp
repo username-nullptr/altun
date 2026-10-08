@@ -1,19 +1,19 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/udev/event.h>
+#include <altun/linux/udev/event.h>
 #include <iostream>
 
-using block_events = libempp::udev::event<libempp::subsys_enum::block>;
+using block_events = altun::udev::event<altun::subsys_enum::block>;
 
 int main(int argc, const char *argv[])
 {
 	block_events events;
 	std::error_code error;
 
-	events.received.connect([](const libempp::udev::device_event &event)
+	events.received.connect([](const altun::udev::device_event &event)
 	{
-		std::cout << libempp::udev::string(event.action)
+		std::cout << altun::udev::string(event.action)
 			<< "  " << (event.dev_node.empty() ? event.sys_path : event.dev_node)
 			<< '\n';
 	});

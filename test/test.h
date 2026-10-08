@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#ifndef LIBEMPP_TEST_H
-#define LIBEMPP_TEST_H
+#ifndef ALTUN_TEST_H
+#define ALTUN_TEST_H
 
 #include <atomic>
 #include <charconv>
@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace empp_test
+namespace altun_test
 {
 
 class temporary_directory
@@ -36,7 +36,7 @@ public:
 		static std::atomic_uint64_t sequence {0};
 		const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
 		m_path = std::filesystem::temp_directory_path() /
-			("libempp-test-" + std::to_string(stamp) + '-' +
+			("altun-test-" + std::to_string(stamp) + '-' +
 			 std::to_string(sequence.fetch_add(1)));
 		std::filesystem::create_directories(m_path);
 	}
@@ -261,17 +261,17 @@ template <typename Integer>
 	run_options options;
 	options.seed = static_cast<std::uint64_t>(
 		std::chrono::steady_clock::now().time_since_epoch().count());
-	if(const auto *value = std::getenv("LIBEMPP_TEST_CASE"); value and *value)
+	if(const auto *value = std::getenv("ALTUN_TEST_CASE"); value and *value)
 		options.cases.emplace_back(value);
-	if(const auto *value = std::getenv("LIBEMPP_TEST_REPEAT"); value and *value)
+	if(const auto *value = std::getenv("ALTUN_TEST_REPEAT"); value and *value)
 	{
-		options.repeat = parse_integer<std::size_t>(value, "LIBEMPP_TEST_REPEAT");
+		options.repeat = parse_integer<std::size_t>(value, "ALTUN_TEST_REPEAT");
 		if(options.repeat == 0)
-			throw std::invalid_argument("LIBEMPP_TEST_REPEAT must be positive");
+			throw std::invalid_argument("ALTUN_TEST_REPEAT must be positive");
 	}
-	if(const auto *value = std::getenv("LIBEMPP_TEST_SEED"); value and *value)
-		options.seed = parse_integer<std::uint64_t>(value, "LIBEMPP_TEST_SEED");
-	if(const auto *value = std::getenv("LIBEMPP_TEST_FAIL_FAST"); value and *value)
+	if(const auto *value = std::getenv("ALTUN_TEST_SEED"); value and *value)
+		options.seed = parse_integer<std::uint64_t>(value, "ALTUN_TEST_SEED");
+	if(const auto *value = std::getenv("ALTUN_TEST_FAIL_FAST"); value and *value)
 		options.fail_fast = std::string_view(value) != "0";
 	return options;
 }
@@ -457,28 +457,28 @@ inline int run(int argc, const char *const argv[]) noexcept
 	}
 }
 
-} // namespace empp_test
+} // namespace altun_test
 
-#define EMPP_TEST_CONCAT_IMPL(left, right) left##right
-#define EMPP_TEST_CONCAT(left, right) EMPP_TEST_CONCAT_IMPL(left, right)
+#define ALTUN_TEST_CONCAT_IMPL(left, right) left##right
+#define ALTUN_TEST_CONCAT(left, right) ALTUN_TEST_CONCAT_IMPL(left, right)
 
-#define EMPP_TEST(suite_name, test_name) \
-	static void EMPP_TEST_CONCAT(empp_test_function_, __LINE__)(); \
-	static ::empp_test::registrar EMPP_TEST_CONCAT(empp_test_registrar_, __LINE__)( \
-		suite_name, test_name, &EMPP_TEST_CONCAT(empp_test_function_, __LINE__) \
+#define ALTUN_TEST(suite_name, test_name) \
+	static void ALTUN_TEST_CONCAT(altun_test_function_, __LINE__)(); \
+	static ::altun_test::registrar ALTUN_TEST_CONCAT(altun_test_registrar_, __LINE__)( \
+		suite_name, test_name, &ALTUN_TEST_CONCAT(altun_test_function_, __LINE__) \
 	); \
-	static void EMPP_TEST_CONCAT(empp_test_function_, __LINE__)()
+	static void ALTUN_TEST_CONCAT(altun_test_function_, __LINE__)()
 
-#define EMPP_REQUIRE(expression) \
-	::empp_test::require(static_cast<bool>(expression), #expression)
+#define ALTUN_REQUIRE(expression) \
+	::altun_test::require(static_cast<bool>(expression), #expression)
 
-#define EMPP_REQUIRE_EQ(actual, expected) \
-	::empp_test::require_equal((actual), (expected), #actual, #expected)
+#define ALTUN_REQUIRE_EQ(actual, expected) \
+	::altun_test::require_equal((actual), (expected), #actual, #expected)
 
-#define EMPP_REQUIRE_THROWS(exception_type, expression) \
-	::empp_test::require_throws<exception_type>([&] { expression; }, #expression)
+#define ALTUN_REQUIRE_THROWS(exception_type, expression) \
+	::altun_test::require_throws<exception_type>([&] { expression; }, #expression)
 
-#define EMPP_REQUIRE_SYSTEM_ERROR(error_code, expression) \
-	::empp_test::require_system_error((error_code), [&] { expression; }, #expression)
+#define ALTUN_REQUIRE_SYSTEM_ERROR(error_code, expression) \
+	::altun_test::require_system_error((error_code), [&] { expression; }, #expression)
 
-#endif // LIBEMPP_TEST_H
+#endif // ALTUN_TEST_H

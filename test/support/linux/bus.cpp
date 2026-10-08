@@ -34,7 +34,7 @@ constexpr unsigned long test_pwm_ioctl_set_exact_waveform =
 
 } // namespace
 
-using namespace empp_test_support;
+using namespace altun_test_support;
 
 extern "C" int ioctl(int descriptor, unsigned long request, ...) noexcept
 {

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/subsys/pwm.h>
+#include <altun/linux/subsys/pwm.h>
 #include <iostream>
 #include <limits>
 #include <thread>
@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
 		if( duty > period )
 			riwo::out_of_range::loc_throw("PWM value");
 
-		libempp::subsys::pwm output ({
+		altun::subsys::pwm output ({
 			argv[1], static_cast<uint8_t>(channel)
 		});
 		output.set(static_cast<uint32_t>(period), static_cast<uint32_t>(duty))

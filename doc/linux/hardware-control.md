@@ -2,7 +2,7 @@
 
 [Linux module](../linux.md) · [Execution model](../io-model.md)
 
-These interfaces are in `libempp::subsys` and link with `empp.linux`.
+These interfaces are in `altun::subsys` and link with `altun.linux`.
 
 | Interface | Resource | Backend |
 | --- | --- | --- |
@@ -16,13 +16,13 @@ GPIO and PWM backends are selected at build time; see [Backend selection](../lin
 ## Backlight and LED
 
 ```cpp
-#include <libempp/linux/subsys/backlight.h>
-#include <libempp/linux/subsys/led.h>
+#include <altun/linux/subsys/backlight.h>
+#include <altun/linux/subsys/led.h>
 
-libempp::subsys::backlight display({"intel_backlight"});
+altun::subsys::backlight display({"intel_backlight"});
 display.set_brightness(500).enable();
 
-libempp::subsys::led status({"status:red:system"});
+altun::subsys::led status({"status:red:system"});
 status.set_brightness(status.max_brightness());
 if(status.supports_triggers())
     status.set_trigger("heartbeat");
@@ -35,9 +35,9 @@ Backlight brightness cannot exceed `max_brightness()`. LED triggers must appear 
 One `gpio` object requests one chip-relative line:
 
 ```cpp
-#include <libempp/linux/subsys/gpio.h>
+#include <altun/linux/subsys/gpio.h>
 
-using gpio = libempp::subsys::gpio;
+using gpio = altun::subsys::gpio;
 gpio::node_t node;
 node.chip = "gpiochip0";
 node.line = 17;
@@ -53,9 +53,9 @@ auto value = output.get(); // riwo::sys_expected<bool>
 `gpio_group` manages several lines on one chip; `gpio_manager` manages groups across chips. Both support lookup by line/index or unique alias and provide batch `set()`, `rising()`, `falling()`, `invert()`, and `get()` operations.
 
 ```cpp
-#include <libempp/linux/subsys/gpio_manager.h>
+#include <altun/linux/subsys/gpio_manager.h>
 
-using manager = libempp::subsys::gpio_manager;
+using manager = altun::subsys::gpio_manager;
 using direction = manager::gpio_t::direction_t;
 
 manager gpios {
@@ -92,9 +92,9 @@ The application must keep the executor running. Inspect the compiled backend wit
 Period and duty cycle are nanoseconds, and duty cycle must not exceed period.
 
 ```cpp
-#include <libempp/linux/subsys/pwm.h>
+#include <altun/linux/subsys/pwm.h>
 
-libempp::subsys::pwm output({"pwmchip0", 0});
+altun::subsys::pwm output({"pwmchip0", 0});
 output.set(20'000'000, 1'500'000).enable();
 // ...
 output.disable();

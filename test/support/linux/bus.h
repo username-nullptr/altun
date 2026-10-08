@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#ifndef LIBEMPP_TEST_LINUX_BUS_TEST_SUPPORT_H
-#define LIBEMPP_TEST_LINUX_BUS_TEST_SUPPORT_H
+#ifndef ALTUN_TEST_LINUX_BUS_TEST_SUPPORT_H
+#define ALTUN_TEST_LINUX_BUS_TEST_SUPPORT_H
 
 #include "../../test.h"
 
@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <vector>
 
-namespace empp_test_support
+namespace altun_test_support
 {
 
 struct virtual_i2c_device
@@ -71,11 +71,11 @@ public:
 	temporary_file()
 	{
 		std::array<char, 32> pattern {};
-		const std::string value = "/tmp/libempp-bus-XXXXXX";
+		const std::string value = "/tmp/altun-bus-XXXXXX";
 		std::ranges::copy(value, pattern.begin());
 		const int descriptor = ::mkstemp(pattern.data());
 		if(descriptor < 0)
-			empp_test::fail("mkstemp failed");
+			altun_test::fail("mkstemp failed");
 		::close(descriptor);
 		m_path = pattern.data();
 	}
@@ -113,6 +113,6 @@ inline void reset_virtual_pwm_devices()
 	virtual_pwm_devices.clear();
 }
 
-} // namespace empp_test_support
+} // namespace altun_test_support
 
-#endif // LIBEMPP_TEST_LINUX_BUS_TEST_SUPPORT_H
+#endif // ALTUN_TEST_LINUX_BUS_TEST_SUPPORT_H

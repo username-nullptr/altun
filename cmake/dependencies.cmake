@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Xiaoqiang <username_nullptr@163.com>
 # SPDX-License-Identifier: MIT
 
-function(libempp_validate_dependency_prefix dependency option_name)
+function(altun_validate_dependency_prefix dependency option_name)
 	set(prefix "${${option_name}}")
 
 	if (NOT prefix)
@@ -22,7 +22,7 @@ function(libempp_validate_dependency_prefix dependency option_name)
 endfunction()
 
 
-function(libempp_validate_msvc_imported_targets package root_option)
+function(altun_validate_msvc_imported_targets package root_option)
 	if (NOT MSVC)
 		return()
 	endif ()

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 
-function(libempp_add_library target_name)
+function(altun_add_library target_name)
 
 	file(GLOB_RECURSE ${target_name}_sources "*.cpp" "*.c" "*.ixx")
 	file(GLOB_RECURSE ${target_name}_headers "*.hpp" "*.h" "*.ipp")
@@ -13,12 +13,12 @@ function(libempp_add_library target_name)
 	)
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${all_files})
 
-	if (LIBEMPP_BUILD_STATIC)
+	if (ALTUN_BUILD_STATIC)
 		add_library(${target_name} STATIC ${all_files})
 	else ()
 		add_library(${target_name} SHARED ${all_files})
 
-		if (LIBEMPP_ADD_LIBRARY_VERSION)
+		if (ALTUN_ADD_LIBRARY_VERSION)
 			set_target_properties(${target_name} PROPERTIES
 				VERSION ${PRO_VERSION} SOVERSION ${MAJOR_VERSION}
 			)
@@ -35,7 +35,7 @@ function(libempp_add_library target_name)
 	target_compile_options(${target_name} PUBLIC
 		"$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/Zc:preprocessor>"
 	)
-	if (LIBEMPP_USE_LIBCXX)
+	if (ALTUN_USE_LIBCXX)
 		target_compile_options(${target_name} PUBLIC
 			"$<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>"
 		)
@@ -44,7 +44,7 @@ function(libempp_add_library target_name)
 
 	target_include_directories(${target_name} PUBLIC
 		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-		$<BUILD_INTERFACE:${LIBEMPP_CONFIG_INCLUDE}>
+		$<BUILD_INTERFACE:${ALTUN_CONFIG_INCLUDE}>
 		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
 	target_include_directories(${target_name} PRIVATE
@@ -55,19 +55,19 @@ function(libempp_add_library target_name)
 	endif ()
 
 	set_target_properties(${target_name} PROPERTIES
-		LIBRARY_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/bin
-		RUNTIME_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/bin
-		ARCHIVE_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/lib
+		LIBRARY_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/bin
+		RUNTIME_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/bin
+		ARCHIVE_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/lib
 	)
-	string(REGEX REPLACE "^empp\\." "" target_export_name "${target_name}")
+	string(REGEX REPLACE "^altun\\." "" target_export_name "${target_name}")
 
 	set_target_properties(${target_name} PROPERTIES
 		EXPORT_NAME ${target_export_name}
 	)
-	add_library(libEMpp::${target_export_name} ALIAS ${target_name})
+	add_library(altun::${target_export_name} ALIAS ${target_name})
 
 	install(TARGETS ${target_name}
-		EXPORT libEMppTargets
+		EXPORT altunTargets
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -75,7 +75,7 @@ function(libempp_add_library target_name)
 endfunction ()
 
 
-function(libempp_add_executable target_name)
+function(altun_add_executable target_name)
 
 	file(GLOB_RECURSE ${target_name}_sources "*.cpp" "*.c" "*.ixx")
 	file(GLOB_RECURSE ${target_name}_headers "*.hpp" "*.h" "*.ipp")
@@ -94,9 +94,9 @@ function(libempp_add_executable target_name)
 	endif ()
 
 	set_target_properties(${target_name} PROPERTIES
-		LIBRARY_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/bin
-		RUNTIME_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/bin
-		ARCHIVE_OUTPUT_DIRECTORY ${LIBEMPP_OUTPUT_DIR}/lib
+		LIBRARY_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/bin
+		RUNTIME_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/bin
+		ARCHIVE_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/lib
 	)
 	install(TARGETS ${target_name} DESTINATION ${CMAKE_INSTALL_BINDIR})
 

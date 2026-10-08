@@ -5,7 +5,7 @@
 ```sh
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
-  -DLIBEMPP_BUILD_EXAMPLES=ON
+  -DALTUN_BUILD_EXAMPLES=ON
 cmake --build build --parallel
 ```
 
@@ -21,11 +21,11 @@ Programs are written to `build/output/examples/<module>/`.
 
 ```sh
 ./build/output/examples/core/log
-./build/output/examples/core/settings /tmp/libempp-example.ini
+./build/output/examples/core/settings /tmp/altun-example.ini
 ./build/output/examples/core/plugin_manager
 ```
 
-`settings` writes the selected file. Without an argument it uses `libempp-example.ini` in the working directory.
+`settings` writes the selected file. Without an argument it uses `altun-example.ini` in the working directory.
 
 ## Linux
 

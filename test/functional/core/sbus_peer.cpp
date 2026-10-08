@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/core/sbus/sbus.h>
+#include <altun/core/sbus/sbus.h>
 
 #include <charconv>
 #include <chrono>
@@ -38,14 +38,14 @@ int main(int argc, char **argv)
 		}
 	}
 	asio::thread_pool pool(1);
-	libempp::sbus::subscriber subscriber(pool);
+	altun::sbus::subscriber subscriber(pool);
 	std::mutex mutex;
 	std::condition_variable changed;
 	bool received = false;
 	size_t received_count = 0;
 	bool valid = true;
 
-	subscriber.subscribe("libempp.test.sbus.interprocess",
+	subscriber.subscribe("altun.test.sbus.interprocess",
 	[&](const void *data, size_t size)
 	{
 		if( crash_on_message )

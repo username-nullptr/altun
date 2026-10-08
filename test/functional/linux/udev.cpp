@@ -3,8 +3,8 @@
 
 #include "../../test.h"
 
-#include <libempp/linux/serial_port_binding.h>
-#include <libempp/linux/udev/enumeration.h>
+#include <altun/linux/serial_port_binding.h>
+#include <altun/linux/udev/enumeration.h>
 
 #include <algorithm>
 #include <array>
@@ -14,9 +14,9 @@
 #include <type_traits>
 #include <utility>
 
-EMPP_TEST("virtual-device", "subsystem names and invalid udev objects are safe")
+ALTUN_TEST("virtual-device", "subsystem names and invalid udev objects are safe")
 {
-	using libempp::subsys::enumeration;
+	using altun::subsys::enumeration;
 	const std::array subsystem_names {
 		std::pair {enumeration::usb, std::string_view("usb")},
 		std::pair {enumeration::tty, std::string_view("tty")},
@@ -29,24 +29,24 @@ EMPP_TEST("virtual-device", "subsystem names and invalid udev objects are safe")
 	};
 	for(const auto &[value, name] : subsystem_names)
 	{
-		EMPP_REQUIRE(libempp::subsys::check(value, false));
-		EMPP_REQUIRE_EQ(std::string_view(libempp::subsys::string(value)), name);
-		EMPP_REQUIRE_EQ(libempp::subsys::from_string(name), value);
+		ALTUN_REQUIRE(altun::subsys::check(value, false));
+		ALTUN_REQUIRE_EQ(std::string_view(altun::subsys::string(value)), name);
+		ALTUN_REQUIRE_EQ(altun::subsys::from_string(name), value);
 	}
-	EMPP_REQUIRE(not libempp::subsys::check(enumeration::none, false));
-	EMPP_REQUIRE_EQ(libempp::subsys::from_string("not-a-subsystem"), enumeration::none);
-	EMPP_REQUIRE_THROWS(std::invalid_argument,
-		static_cast<void>(libempp::subsys::string(enumeration::none)));
-	EMPP_REQUIRE_EQ(std::string_view(libempp::udev::prop_key::dev_type), "DEVTYPE");
-	EMPP_REQUIRE_EQ(std::string_view(libempp::udev::prop_key::id_serial_short),
+	ALTUN_REQUIRE(not altun::subsys::check(enumeration::none, false));
+	ALTUN_REQUIRE_EQ(altun::subsys::from_string("not-a-subsystem"), enumeration::none);
+	ALTUN_REQUIRE_THROWS(std::invalid_argument,
+		static_cast<void>(altun::subsys::string(enumeration::none)));
+	ALTUN_REQUIRE_EQ(std::string_view(altun::udev::prop_key::dev_type), "DEVTYPE");
+	ALTUN_REQUIRE_EQ(std::string_view(altun::udev::prop_key::id_serial_short),
 		"ID_SERIAL_SHORT");
-	EMPP_REQUIRE_EQ(std::string_view(libempp::udev::prop_key::id_path), "ID_PATH");
-	EMPP_REQUIRE_EQ(std::string_view(libempp::udev::prop_key::id_fs_type),
+	ALTUN_REQUIRE_EQ(std::string_view(altun::udev::prop_key::id_path), "ID_PATH");
+	ALTUN_REQUIRE_EQ(std::string_view(altun::udev::prop_key::id_fs_type),
 		"ID_FS_TYPE");
-	EMPP_REQUIRE_EQ(std::string_view(libempp::udev::prop_key::id_input_keyboard),
+	ALTUN_REQUIRE_EQ(std::string_view(altun::udev::prop_key::id_input_keyboard),
 		"ID_INPUT_KEYBOARD");
-	EMPP_REQUIRE_EQ(std::string_view(libempp::udev::prop_key::interface), "INTERFACE");
-	using libempp::udev::event_action;
+	ALTUN_REQUIRE_EQ(std::string_view(altun::udev::prop_key::interface), "INTERFACE");
+	using altun::udev::event_action;
 	const std::array action_names {
 		std::pair {event_action::add, std::string_view("add")},
 		std::pair {event_action::remove, std::string_view("remove")},
@@ -59,33 +59,33 @@ EMPP_TEST("virtual-device", "subsystem names and invalid udev objects are safe")
 	};
 	for(const auto &[value, name] : action_names)
 	{
-		EMPP_REQUIRE_EQ(libempp::udev::string(value), name);
-		EMPP_REQUIRE_EQ(libempp::udev::event_action_from_string(name), value);
+		ALTUN_REQUIRE_EQ(altun::udev::string(value), name);
+		ALTUN_REQUIRE_EQ(altun::udev::event_action_from_string(name), value);
 	}
-	EMPP_REQUIRE_EQ(libempp::udev::string(event_action::unknown),
+	ALTUN_REQUIRE_EQ(altun::udev::string(event_action::unknown),
 		std::string_view("unknown"));
-	EMPP_REQUIRE_EQ(libempp::udev::event_action_from_string("not-an-action"),
+	ALTUN_REQUIRE_EQ(altun::udev::event_action_from_string("not-an-action"),
 		event_action::unknown);
 
-	libempp::udev::device_event event;
-	EMPP_REQUIRE(not event.is_valid());
-	EMPP_REQUIRE(not event.property("missing"));
-	event.action = libempp::udev::event_action::add;
+	altun::udev::device_event event;
+	ALTUN_REQUIRE(not event.is_valid());
+	ALTUN_REQUIRE(not event.property("missing"));
+	event.action = altun::udev::event_action::add;
 	event.sys_path = "/sys/devices/virtual/test";
 	event.dev_node = "/dev/test";
-	event.properties.emplace(libempp::udev::prop_key::id_model, "USB_Serial_Adapter");
-	EMPP_REQUIRE(event.is_valid());
-	EMPP_REQUIRE(event.matches({}));
-	EMPP_REQUIRE_EQ(event.property(libempp::udev::prop_key::id_model),
+	event.properties.emplace(altun::udev::prop_key::id_model, "USB_Serial_Adapter");
+	ALTUN_REQUIRE(event.is_valid());
+	ALTUN_REQUIRE(event.matches({}));
+	ALTUN_REQUIRE_EQ(event.property(altun::udev::prop_key::id_model),
 		std::optional<std::string_view>("USB_Serial_Adapter"));
-	EMPP_REQUIRE(event.matches({
-		{libempp::udev::prop_key::id_model, "USB_Serial*"}
+	ALTUN_REQUIRE(event.matches({
+		{altun::udev::prop_key::id_model, "USB_Serial*"}
 	}));
-	EMPP_REQUIRE(not event.matches({
-		{libempp::udev::prop_key::id_model, "NVMe*"}
+	ALTUN_REQUIRE(not event.matches({
+		{altun::udev::prop_key::id_model, "NVMe*"}
 	}));
 
-	using event_type = libempp::udev::basic_event<
+	using event_type = altun::udev::basic_event<
 		enumeration::tty, asio::io_context::executor_type
 	>;
 	static_assert(not std::is_reference_v<decltype(event_type::received)>);
@@ -95,7 +95,7 @@ EMPP_TEST("virtual-device", "subsystem names and invalid udev objects are safe")
 	event_type events(event_context.get_executor());
 	bool observed = false;
 	bool monitor_failed = false;
-	events.received.connect([&observed](const libempp::udev::device_event&) {
+	events.received.connect([&observed](const altun::udev::device_event&) {
 		observed = true;
 	});
 	events.error.connect([&monitor_failed](const std::error_code&) {
@@ -109,60 +109,60 @@ EMPP_TEST("virtual-device", "subsystem names and invalid udev objects are safe")
 		event_context.poll();
 		std::error_code close_error;
 		events.close(close_error);
-		EMPP_REQUIRE(not close_error);
+		ALTUN_REQUIRE(not close_error);
 		event_context.restart();
 		event_context.run();
-		EMPP_REQUIRE(not observed);
-		EMPP_REQUIRE(not monitor_failed);
+		ALTUN_REQUIRE(not observed);
+		ALTUN_REQUIRE(not monitor_failed);
 	}
 
-	using tty_device = libempp::udev::enumeration<enumeration::tty>;
+	using tty_device = altun::udev::enumeration<enumeration::tty>;
 	tty_device invalid;
-	EMPP_REQUIRE(not invalid.is_valid());
-	EMPP_REQUIRE(invalid.path().empty());
-	EMPP_REQUIRE(invalid.native() == nullptr);
-	EMPP_REQUIRE(not invalid.property(libempp::udev::prop_key::dev_name));
+	ALTUN_REQUIRE(not invalid.is_valid());
+	ALTUN_REQUIRE(invalid.path().empty());
+	ALTUN_REQUIRE(invalid.native() == nullptr);
+	ALTUN_REQUIRE(not invalid.property(altun::udev::prop_key::dev_name));
 
-	libempp::serial_port_binding::device_t serial_device(invalid);
-	EMPP_REQUIRE(serial_device.port.empty());
+	altun::serial_port_binding::device_t serial_device(invalid);
+	ALTUN_REQUIRE(serial_device.port.empty());
 
-	const auto matches = tty_device::list("LIBEMPP_TEST_IMPOSSIBLE_PROPERTY", "never");
-	EMPP_REQUIRE(matches.empty());
+	const auto matches = tty_device::list("ALTUN_TEST_IMPOSSIBLE_PROPERTY", "never");
+	ALTUN_REQUIRE(matches.empty());
 
-	using net_device = libempp::udev::enumeration<enumeration::net>;
+	using net_device = altun::udev::enumeration<enumeration::net>;
 	const auto network_devices = net_device::list();
-	EMPP_REQUIRE(not network_devices.empty());
+	ALTUN_REQUIRE(not network_devices.empty());
 	const auto loopback = std::ranges::find_if(network_devices,
 		[](const auto &device) {
-			const auto interface = device.property(libempp::udev::prop_key::interface);
+			const auto interface = device.property(altun::udev::prop_key::interface);
 			return interface and interface->to_string() == "lo";
 		});
-	EMPP_REQUIRE(loopback != network_devices.end());
+	ALTUN_REQUIRE(loopback != network_devices.end());
 	net_device copied_loopback(*loopback);
-	EMPP_REQUIRE(copied_loopback.is_valid());
-	EMPP_REQUIRE_EQ(copied_loopback.path(), loopback->path());
+	ALTUN_REQUIRE(copied_loopback.is_valid());
+	ALTUN_REQUIRE_EQ(copied_loopback.path(), loopback->path());
 
 	net_device assigned_loopback;
 	assigned_loopback = copied_loopback;
-	EMPP_REQUIRE(assigned_loopback.is_valid());
-	EMPP_REQUIRE_EQ(assigned_loopback.path(), loopback->path());
+	ALTUN_REQUIRE(assigned_loopback.is_valid());
+	ALTUN_REQUIRE_EQ(assigned_loopback.path(), loopback->path());
 
 	net_device moved_loopback(std::move(copied_loopback));
-	EMPP_REQUIRE(moved_loopback.is_valid());
-	EMPP_REQUIRE(not copied_loopback.is_valid());
+	ALTUN_REQUIRE(moved_loopback.is_valid());
+	ALTUN_REQUIRE(not copied_loopback.is_valid());
 
-	using backlight_device = libempp::udev::enumeration<enumeration::backlight>;
+	using backlight_device = altun::udev::enumeration<enumeration::backlight>;
 	const auto backlights = backlight_device::list(
-		"LIBEMPP_TEST_IMPOSSIBLE_PROPERTY", "never"
+		"ALTUN_TEST_IMPOSSIBLE_PROPERTY", "never"
 	);
-	EMPP_REQUIRE(backlights.empty());
+	ALTUN_REQUIRE(backlights.empty());
 
 	// A property rule owns an asynchronous udev monitor. Destroying the rule
 	// must cancel the pending descriptor wait so the executor can drain.
-	using binding_type = libempp::basic_serial_port_binding<asio::io_context::executor_type>;
+	using binding_type = altun::basic_serial_port_binding<asio::io_context::executor_type>;
 	asio::io_context monitor_context;
 	binding_type binding(monitor_context.get_executor());
-	auto rule = binding.make_rule("LIBEMPP_TEST_IMPOSSIBLE_PROPERTY", "never");
+	auto rule = binding.make_rule("ALTUN_TEST_IMPOSSIBLE_PROPERTY", "never");
 	rule->open();
 	monitor_context.poll();
 	rule.reset();

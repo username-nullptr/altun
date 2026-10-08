@@ -2,44 +2,44 @@
 # SPDX-License-Identifier: MIT
 
 cmake_minimum_required(VERSION 3.15)
-project(libempp_install_consumer LANGUAGES CXX)
+project(altun_install_consumer LANGUAGES CXX)
 
-if (LIBEMPP_REQUEST_MISSING_COMPONENT)
-	find_package(libEMpp CONFIG QUIET COMPONENTS
-		${LIBEMPP_REQUEST_MISSING_COMPONENT}
+if (ALTUN_REQUEST_MISSING_COMPONENT)
+	find_package(altun CONFIG QUIET COMPONENTS
+		${ALTUN_REQUEST_MISSING_COMPONENT}
 	)
-	if (libEMpp_FOUND)
+	if (altun_FOUND)
 		message(FATAL_ERROR
-			"libEMpp unexpectedly provides component "
-			"'${LIBEMPP_REQUEST_MISSING_COMPONENT}'."
+			"altun unexpectedly provides component "
+			"'${ALTUN_REQUEST_MISSING_COMPONENT}'."
 		)
 	endif ()
 
 	message(STATUS
-		"libEMpp correctly rejected component "
-		"'${LIBEMPP_REQUEST_MISSING_COMPONENT}'."
+		"altun correctly rejected component "
+		"'${ALTUN_REQUEST_MISSING_COMPONENT}'."
 	)
 	return()
 endif ()
 
-if (NOT LIBEMPP_EXPECTED_COMPONENTS)
-	message(FATAL_ERROR "LIBEMPP_EXPECTED_COMPONENTS is required.")
+if (NOT ALTUN_EXPECTED_COMPONENTS)
+	message(FATAL_ERROR "ALTUN_EXPECTED_COMPONENTS is required.")
 endif ()
 
-string(REPLACE "," ";" libempp_components
-	"${LIBEMPP_EXPECTED_COMPONENTS}"
+string(REPLACE "," ";" altun_components
+	"${ALTUN_EXPECTED_COMPONENTS}"
 )
 
-find_package(libEMpp ${LIBEMPP_EXPECTED_VERSION} EXACT CONFIG REQUIRED
-	COMPONENTS ${libempp_components}
+find_package(altun ${ALTUN_EXPECTED_VERSION} EXACT CONFIG REQUIRED
+	COMPONENTS ${altun_components}
 )
 enable_testing()
 
-set(libempp_source_targets)
-set(libempp_expected_definitions)
+set(altun_source_targets)
+set(altun_expected_definitions)
 
-if (WIN32 AND LIBEMPP_RUNTIME_DIR)
-	file(GLOB libempp_runtime_dlls "${LIBEMPP_RUNTIME_DIR}/*.dll")
+if (WIN32 AND ALTUN_RUNTIME_DIR)
+	file(GLOB altun_runtime_dlls "${ALTUN_RUNTIME_DIR}/*.dll")
 
 	# Keep the test independent of the caller's PATH and copy the runtime that
 	# belongs to the compiler used for this standalone consumer.
@@ -64,21 +64,23 @@ if (WIN32 AND LIBEMPP_RUNTIME_DIR)
 				NOT EXISTS "${runtime_path}")
 				set(runtime_path "${compiler_runtime_dir}/${runtime_name}")
 			endif ()
+
 			if (IS_ABSOLUTE "${runtime_path}" AND EXISTS "${runtime_path}")
-				list(APPEND libempp_runtime_dlls "${runtime_path}")
+				list(APPEND altun_runtime_dlls "${runtime_path}")
 			endif ()
 		endforeach()
-		list(REMOVE_DUPLICATES libempp_runtime_dlls)
+
+		list(REMOVE_DUPLICATES altun_runtime_dlls)
 	endif ()
 endif ()
 
-function(add_libempp_consumer_runtime_test target)
+function(add_altun_consumer_runtime_test target)
 	# CMake 3.15 predates TARGET_RUNTIME_DLLS and CTest's
 	# ENVIRONMENT_MODIFICATION property.
-	if (libempp_runtime_dlls)
+	if (altun_runtime_dlls)
 		add_custom_command(TARGET ${target} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different
-				${libempp_runtime_dlls} "$<TARGET_FILE_DIR:${target}>"
+				${altun_runtime_dlls} "$<TARGET_FILE_DIR:${target}>"
 			COMMAND_EXPAND_LISTS
 		)
 	endif ()
@@ -88,7 +90,7 @@ function(add_libempp_consumer_runtime_test target)
 	# The install tree is intentionally outside the system loader's configured
 	# prefixes. Make all co-installed shared dependencies discoverable without
 	# changing their production RPATH policy.
-	if (UNIX AND LIBEMPP_LIBRARY_DIR)
+	if (UNIX AND ALTUN_LIBRARY_DIR)
 		if (APPLE)
 			set(loader_path_variable DYLD_LIBRARY_PATH)
 		else ()
@@ -96,50 +98,50 @@ function(add_libempp_consumer_runtime_test target)
 		endif ()
 
 		set_property(TEST ${target} PROPERTY ENVIRONMENT
-			"${loader_path_variable}=${LIBEMPP_LIBRARY_DIR}:$ENV{${loader_path_variable}}"
+			"${loader_path_variable}=${ALTUN_LIBRARY_DIR}:$ENV{${loader_path_variable}}"
 		)
 	endif ()
 endfunction()
 
-foreach(component IN LISTS libempp_components)
-	if (NOT libEMpp_${component}_FOUND)
+foreach(component IN LISTS altun_components)
+	if (NOT altun_${component}_FOUND)
 		message(FATAL_ERROR "Component '${component}' was not reported as found.")
 	endif ()
 
-	if (NOT TARGET libEMpp::${component})
-		message(FATAL_ERROR "Missing imported target libEMpp::${component}.")
+	if (NOT TARGET altun::${component})
+		message(FATAL_ERROR "Missing imported target altun::${component}.")
 	endif ()
 
-	if (NOT TARGET empp.${component})
-		message(FATAL_ERROR "Missing compatibility target empp.${component}.")
+	if (NOT TARGET altun.${component})
+		message(FATAL_ERROR "Missing compatibility target altun.${component}.")
 	endif ()
 
 	string(TOUPPER "${component}" component_upper)
-	set(target libempp_consumer_${component})
+	set(target altun_consumer_${component})
 
 	add_executable(${target} main.cpp)
 	target_compile_features(${target} PRIVATE cxx_std_20)
 
 	target_compile_definitions(${target} PRIVATE
-		"LIBEMPP_CONSUME_${component_upper}=1"
+		"ALTUN_CONSUME_${component_upper}=1"
 	)
-	target_link_libraries(${target} PRIVATE libEMpp::${component})
-	add_libempp_consumer_runtime_test(${target})
+	target_link_libraries(${target} PRIVATE altun::${component})
+	add_altun_consumer_runtime_test(${target})
 
-	list(APPEND libempp_source_targets empp.${component})
-	list(APPEND libempp_expected_definitions
-		"LIBEMPP_CONSUME_${component_upper}=1"
+	list(APPEND altun_source_targets altun.${component})
+	list(APPEND altun_expected_definitions
+		"ALTUN_CONSUME_${component_upper}=1"
 	)
 endforeach()
 
-add_executable(libempp_consumer_source_targets main.cpp)
-target_compile_features(libempp_consumer_source_targets PRIVATE cxx_std_20)
+add_executable(altun_consumer_source_targets main.cpp)
+target_compile_features(altun_consumer_source_targets PRIVATE cxx_std_20)
 
-target_compile_definitions(libempp_consumer_source_targets PRIVATE
-	${libempp_expected_definitions}
-	LIBEMPP_CONSUME_UMBRELLA=1
+target_compile_definitions(altun_consumer_source_targets PRIVATE
+	${altun_expected_definitions}
+	ALTUN_CONSUME_UMBRELLA=1
 )
-target_link_libraries(libempp_consumer_source_targets PRIVATE
-	${libempp_source_targets}
+target_link_libraries(altun_consumer_source_targets PRIVATE
+	${altun_source_targets}
 )
-add_libempp_consumer_runtime_test(libempp_consumer_source_targets)
+add_altun_consumer_runtime_test(altun_consumer_source_targets)

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 #if defined(_WIN32)
-# define EMPP_TEST_EXPORT __declspec(dllexport)
+# define ALTUN_TEST_EXPORT __declspec(dllexport)
 #else
-# define EMPP_TEST_EXPORT __attribute__((visibility("default")))
+# define ALTUN_TEST_EXPORT __attribute__((visibility("default")))
 #endif
 
-extern "C" EMPP_TEST_EXPORT int libempp_test_double(int value)
+extern "C" ALTUN_TEST_EXPORT int altun_test_double(int value)
 {
 	return value * 2;
 }

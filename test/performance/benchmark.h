@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#ifndef LIBEMPP_TEST_PERFORMANCE_BENCHMARK_H
-#define LIBEMPP_TEST_PERFORMANCE_BENCHMARK_H
+#ifndef ALTUN_TEST_PERFORMANCE_BENCHMARK_H
+#define ALTUN_TEST_PERFORMANCE_BENCHMARK_H
 
 #include <algorithm>
 #include <chrono>
@@ -15,14 +15,14 @@
 #include <string_view>
 #include <vector>
 
-namespace empp_test::performance
+namespace altun_test::performance
 {
 
-#ifndef LIBEMPP_PERFORMANCE_SCALE
-# define LIBEMPP_PERFORMANCE_SCALE 1
+#ifndef ALTUN_PERFORMANCE_SCALE
+# define ALTUN_PERFORMANCE_SCALE 1
 #endif
 
-inline constexpr size_t scale = LIBEMPP_PERFORMANCE_SCALE;
+inline constexpr size_t scale = ALTUN_PERFORMANCE_SCALE;
 static_assert(scale > 0);
 
 using clock = std::chrono::steady_clock;
@@ -99,6 +99,6 @@ inline duration percentile(std::vector<duration> values, double quantile)
 	return values[std::min(values.size() - 1, index == 0 ? 0 : index - 1)];
 }
 
-} //namespace empp_test::performance
+} //namespace altun_test::performance
 
-#endif //LIBEMPP_TEST_PERFORMANCE_BENCHMARK_H
+#endif //ALTUN_TEST_PERFORMANCE_BENCHMARK_H

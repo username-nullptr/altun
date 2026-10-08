@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/subsys/led.h>
+#include <altun/linux/subsys/led.h>
 
 #include <iostream>
 #include <limits>
@@ -27,7 +27,7 @@ int main(int argc, const char *argv[])
 		const auto brightness = static_cast<uint32_t>(parse_decimal(
 			argv[2], std::numeric_limits<uint32_t>::max()
 		));
-		libempp::subsys::led output({argv[1]});
+		altun::subsys::led output({argv[1]});
 		if( brightness > output.max_brightness() )
 		{
 			std::cerr << "Brightness exceeds maximum "

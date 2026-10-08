@@ -2,23 +2,23 @@
 
 [Linux module](../linux.md) · [Execution model](../io-model.md)
 
-`libempp::serial_port_binding` finds tty devices by udev properties or an explicit path, tracks hot-plug changes, and exposes serial I/O through signals. Include `<libempp/linux/serial_port_binding.h>` explicitly and link `empp.linux`.
+`altun::serial_port_binding` finds tty devices by udev properties or an explicit path, tracks hot-plug changes, and exposes serial I/O through signals. Include `<altun/linux/serial_port_binding.h>` explicitly and link `altun.linux`.
 
 ## Configure and open
 
 ```cpp
-#include <libempp/linux/serial_port_binding.h>
+#include <altun/linux/serial_port_binding.h>
 
-libempp::serial_port_options options;
+altun::serial_port_options options;
 options.baud_rate = 115200;
-options.data_bits = libempp::serial_port_options::data_bits_8;
-options.stop_bits = libempp::serial_port_options::stop_bits_1;
-options.parity = libempp::serial_port_options::parity_t::none;
-options.flow_control = libempp::serial_port_options::flow_control_t::none;
+options.data_bits = altun::serial_port_options::data_bits_8;
+options.stop_bits = altun::serial_port_options::stop_bits_1;
+options.parity = altun::serial_port_options::parity_t::none;
+options.flow_control = altun::serial_port_options::flow_control_t::none;
 
-libempp::serial_port_binding binding;
+altun::serial_port_binding binding;
 binding.received.connect(
-    [](const libempp::serial_port_binding::io_context_ptr &context) {
+    [](const altun::serial_port_binding::io_context_ptr &context) {
         auto payload = context->take_payload<std::string>();
         std::error_code error;
         context->write("ACK\n", error);
@@ -26,7 +26,7 @@ binding.received.connect(
 );
 
 auto rule = binding.make_rule(
-    libempp::udev::prop_key::id_model,
+    altun::udev::prop_key::id_model,
     "USB_Serial*",
     options
 );
@@ -40,7 +40,7 @@ Property maps use AND matching. An explicit device path bypasses property matchi
 
 ```cpp
 auto rule = binding.make_rule(
-    libempp::serial_port_binding::device_t("/dev/ttyUSB0"),
+    altun::serial_port_binding::device_t("/dev/ttyUSB0"),
     options
 );
 ```

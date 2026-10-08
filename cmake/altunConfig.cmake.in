@@ -1,0 +1,115 @@
+# SPDX-FileCopyrightText: 2026 Xiaoqiang <username_nullptr@163.com>
+# SPDX-License-Identifier: MIT
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+set(altun_VERSION "@PROJECT_VERSION@")
+set(altun_core_FOUND TRUE)
+set(altun_linux_FOUND @ALTUN_BUILD_LINUX@)
+
+# Resolve component availability before dependencies so an unavailable module
+# is reported even when an unrelated package is absent from the host.
+set(_altun_missing_components)
+
+foreach(_altun_component IN LISTS altun_FIND_COMPONENTS)
+	if (NOT DEFINED altun_${_altun_component}_FOUND)
+		set(altun_${_altun_component}_FOUND FALSE)
+	endif ()
+
+	if (NOT altun_${_altun_component}_FOUND AND
+		altun_FIND_REQUIRED_${_altun_component})
+		list(APPEND _altun_missing_components ${_altun_component})
+	endif ()
+endforeach()
+
+if (_altun_missing_components)
+	list(JOIN _altun_missing_components ", " _altun_missing_components_text)
+	set(altun_NOT_FOUND_MESSAGE
+		"Required altun components are unavailable: ${_altun_missing_components_text}"
+	)
+endif ()
+
+set(altun_FOUND TRUE)
+check_required_components(altun)
+
+if (NOT altun_FOUND)
+	unset(_altun_component)
+	unset(_altun_missing_components)
+	unset(_altun_missing_components_text)
+	return()
+endif ()
+
+if (NOT DEFINED ALTUN_RIWO_INSTALL_PREFIX)
+	set(ALTUN_RIWO_INSTALL_PREFIX "@ALTUN_RIWO_INSTALL_PREFIX@")
+endif ()
+
+if (ALTUN_RIWO_INSTALL_PREFIX)
+	find_dependency(Riwo CONFIG REQUIRED COMPONENTS coro utils
+		PATHS "${ALTUN_RIWO_INSTALL_PREFIX}"
+		NO_DEFAULT_PATH
+	)
+else ()
+	find_dependency(Riwo CONFIG REQUIRED COMPONENTS coro utils
+		HINTS "${PACKAGE_PREFIX_DIR}"
+	)
+endif ()
+
+if (NOT @ALTUN_USE_EMBEDDED_NLOHMANN@)
+	if (NOT DEFINED ALTUN_NLOHMANN_INSTALL_PREFIX)
+		set(ALTUN_NLOHMANN_INSTALL_PREFIX
+			"@ALTUN_NLOHMANN_INSTALL_PREFIX@"
+		)
+	endif ()
+
+	if (ALTUN_NLOHMANN_INSTALL_PREFIX)
+		find_dependency(nlohmann_json CONFIG REQUIRED
+			PATHS "${ALTUN_NLOHMANN_INSTALL_PREFIX}"
+			NO_DEFAULT_PATH
+		)
+	else ()
+		find_dependency(nlohmann_json CONFIG REQUIRED)
+	endif ()
+endif ()
+
+if (@ALTUN_PACKAGE_NEEDS_CYCLONEDDS@)
+	find_dependency(CycloneDDS)
+endif ()
+
+if (@ALTUN_BUILD_LINUX@ OR @ALTUN_PACKAGE_NEEDS_DBUS@)
+	find_dependency(PkgConfig)
+endif ()
+
+if (@ALTUN_BUILD_LINUX@)
+	pkg_check_modules(ALTUN_UDEV REQUIRED IMPORTED_TARGET libudev)
+endif ()
+
+if (@ALTUN_PACKAGE_NEEDS_BLKID@)
+	pkg_check_modules(ALTUN_BLKID REQUIRED IMPORTED_TARGET blkid)
+endif ()
+
+if (@ALTUN_PACKAGE_NEEDS_GPIOD@)
+	pkg_check_modules(ALTUN_GPIOD REQUIRED IMPORTED_TARGET libgpiod)
+endif ()
+
+if (@ALTUN_PACKAGE_NEEDS_DBUS@)
+	pkg_check_modules(ALTUN_DBUS REQUIRED IMPORTED_TARGET dbus-1)
+endif ()
+
+include("${CMAKE_CURRENT_LIST_DIR}/altunTargets.cmake")
+
+# Preserve the source-tree target names for existing add_subdirectory users.
+foreach(_altun_component core linux)
+	if (TARGET altun::${_altun_component} AND
+		NOT TARGET altun.${_altun_component})
+		add_library(altun.${_altun_component} INTERFACE IMPORTED)
+		set_property(TARGET altun.${_altun_component} PROPERTY
+			INTERFACE_LINK_LIBRARIES altun::${_altun_component}
+		)
+	endif ()
+endforeach()
+
+unset(_altun_component)
+unset(_altun_missing_components)
+unset(_altun_missing_components_text)

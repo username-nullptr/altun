@@ -16,7 +16,7 @@
 #include <fcntl.h>
 #include <poll.h>
 
-#ifdef LIBEMPP_TEST_GPIOD_V1
+#ifdef ALTUN_TEST_GPIOD_V1
 
 struct gpiod_chip
 {
@@ -66,9 +66,9 @@ extern "C" gpiod_chip *gpiod_chip_open(const char *path) noexcept
 		return nullptr;
 	}
 	const std::string_view path_view(path);
-	if(path_view == "/dev/libempp-test-virtual-gpiochip")
+	if(path_view == "/dev/altun-test-virtual-gpiochip")
 		return &virtual_chips[0];
-	if(path_view == "/dev/libempp-test-virtual-gpiochip-2")
+	if(path_view == "/dev/altun-test-virtual-gpiochip-2")
 		return &virtual_chips[1];
 
 	errno = ENOENT;
@@ -224,14 +224,14 @@ extern "C" int gpiod_line_event_read(gpiod_line *line,
 	return 0;
 }
 
-#endif // LIBEMPP_TEST_GPIOD_V1
+#endif // ALTUN_TEST_GPIOD_V1
 
-namespace empp_test_support
+namespace altun_test_support
 {
 
 bool virtual_gpio_available() noexcept
 {
-#ifdef LIBEMPP_TEST_GPIOD_V1
+#ifdef ALTUN_TEST_GPIOD_V1
 	return true;
 #else
 	return false;
@@ -240,7 +240,7 @@ bool virtual_gpio_available() noexcept
 
 void reset_virtual_gpio() noexcept
 {
-#ifdef LIBEMPP_TEST_GPIOD_V1
+#ifdef ALTUN_TEST_GPIOD_V1
 	std::scoped_lock lock(virtual_gpio_mutex);
 	for(auto &chip : virtual_lines)
 	{
@@ -255,7 +255,7 @@ void reset_virtual_gpio() noexcept
 
 void push_virtual_gpio_event(bool rising)
 {
-#ifdef LIBEMPP_TEST_GPIOD_V1
+#ifdef ALTUN_TEST_GPIOD_V1
 	std::scoped_lock lock(virtual_gpio_mutex);
 	auto &line = virtual_lines[0][7];
 	if(line.event_pipe[1] < 0)
@@ -271,7 +271,7 @@ void push_virtual_gpio_event(bool rising)
 
 void wait_for_virtual_gpio_waiter()
 {
-#ifdef LIBEMPP_TEST_GPIOD_V1
+#ifdef ALTUN_TEST_GPIOD_V1
 	using namespace std::chrono_literals;
 	std::unique_lock lock(virtual_gpio_mutex);
 	if(not virtual_gpio_ready.wait_for(lock, 2s, [] {
@@ -281,4 +281,4 @@ void wait_for_virtual_gpio_waiter()
 #endif
 }
 
-} // namespace empp_test_support
+} // namespace altun_test_support

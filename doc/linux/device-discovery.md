@@ -14,19 +14,19 @@ Supported subsystems are `usb`, `tty`, `net`, `block`, `backlight`, `led`, `gpio
 ## Enumerate
 
 ```cpp
-#include <libempp/linux/udev/enumeration.h>
+#include <altun/linux/udev/enumeration.h>
 
 using tty_device =
-    libempp::udev::enumeration<libempp::subsys_enum::tty>;
+    altun::udev::enumeration<altun::subsys_enum::tty>;
 
 auto devices = tty_device::list(
-    libempp::udev::prop_key::id_model,
+    altun::udev::prop_key::id_model,
     "USB_Serial*"
 );
 
 for(const auto &device : devices)
 {
-    if(auto name = device.property(libempp::udev::prop_key::dev_name))
+    if(auto name = device.property(altun::udev::prop_key::dev_name))
         std::cout << name->to_string() << '\n';
 }
 ```
@@ -35,8 +35,8 @@ Property values accept wildcards. A property map uses AND matching:
 
 ```cpp
 auto devices = tty_device::list({
-    {libempp::udev::prop_key::id_vendor_id, "1a86"},
-    {libempp::udev::prop_key::id_model_id, "7523"}
+    {altun::udev::prop_key::id_vendor_id, "1a86"},
+    {altun::udev::prop_key::id_model_id, "7523"}
 });
 ```
 
@@ -45,14 +45,14 @@ auto devices = tty_device::list({
 ## Monitor
 
 ```cpp
-#include <libempp/linux/udev/event.h>
+#include <altun/linux/udev/event.h>
 
 using block_events =
-    libempp::udev::event<libempp::subsys_enum::block>;
+    altun::udev::event<altun::subsys_enum::block>;
 
 block_events events;
-events.received.connect([](const libempp::udev::device_event &event) {
-    std::cout << libempp::udev::string(event.action)
+events.received.connect([](const altun::udev::device_event &event) {
+    std::cout << altun::udev::string(event.action)
               << ' ' << event.dev_node << '\n';
 });
 events.error.connect([](const std::error_code &error) {

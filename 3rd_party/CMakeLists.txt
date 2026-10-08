@@ -1,17 +1,17 @@
 # SPDX-FileCopyrightText: 2026 Xiaoqiang <username_nullptr@163.com>
 # SPDX-License-Identifier: MIT
 
-option(LIBEMPP_USE_BUNDLED_RIWO
+option(ALTUN_USE_BUNDLED_RIWO
 	"-- ${PRO_NAME}: Use the bundled Riwo dependency." ON
 )
-set(LIBEMPP_RIWO_INSTALL_PREFIX "" CACHE PATH
+set(ALTUN_RIWO_INSTALL_PREFIX "" CACHE PATH
 	"Install prefix of an external Riwo package."
 )
-if (LIBEMPP_USE_BUNDLED_RIWO)
-	if (LIBEMPP_RIWO_INSTALL_PREFIX)
+if (ALTUN_USE_BUNDLED_RIWO)
+	if (ALTUN_RIWO_INSTALL_PREFIX)
 		message(FATAL_ERROR
-			"${PRO_NAME}: LIBEMPP_RIWO_INSTALL_PREFIX is only valid when "
-			"LIBEMPP_USE_BUNDLED_RIWO=OFF."
+			"${PRO_NAME}: ALTUN_RIWO_INSTALL_PREFIX is only valid when "
+			"ALTUN_USE_BUNDLED_RIWO=OFF."
 		)
 	endif ()
 
@@ -27,11 +27,11 @@ if (LIBEMPP_USE_BUNDLED_RIWO)
 		)
 	endif ()
 
-	set(RIWO_BUILD_STATIC ${LIBEMPP_BUILD_STATIC})
-	set(RIWO_ADD_LIBRARY_VERSION ${LIBEMPP_ADD_LIBRARY_VERSION})
-	set(RIWO_USE_LIBCXX ${LIBEMPP_USE_LIBCXX})
-	set(RIWO_USE_LLD ${LIBEMPP_USE_LLD})
-	set(RIWO_ENABLE_LTO ${LIBEMPP_ENABLE_LTO})
+	set(RIWO_BUILD_STATIC ${ALTUN_BUILD_STATIC})
+	set(RIWO_ADD_LIBRARY_VERSION ${ALTUN_ADD_LIBRARY_VERSION})
+	set(RIWO_USE_LIBCXX ${ALTUN_USE_LIBCXX})
+	set(RIWO_USE_LLD ${ALTUN_USE_LLD})
+	set(RIWO_ENABLE_LTO ${ALTUN_ENABLE_LTO})
 
 	set(RIWO_BUILD_CORO ON)
 	set(RIWO_BUILD_HTTP OFF)
@@ -47,18 +47,18 @@ if (LIBEMPP_USE_BUNDLED_RIWO)
 
 	# Riwo is a dependency here. Preserve the parent test selection while
 	# preventing the dependency's own test tree from entering this build.
-	set(libempp_build_testing_was_defined OFF)
+	set(altun_build_testing_was_defined OFF)
 
 	if (DEFINED BUILD_TESTING)
-		set(libempp_build_testing_was_defined ON)
-		set(libempp_saved_build_testing "${BUILD_TESTING}")
+		set(altun_build_testing_was_defined ON)
+		set(altun_saved_build_testing "${BUILD_TESTING}")
 	endif ()
 
 	set(BUILD_TESTING OFF)
 	add_subdirectory(riwo)
 
-	if (libempp_build_testing_was_defined)
-		set(BUILD_TESTING "${libempp_saved_build_testing}")
+	if (altun_build_testing_was_defined)
+		set(BUILD_TESTING "${altun_saved_build_testing}")
 	else ()
 		unset(BUILD_TESTING)
 	endif ()
@@ -66,27 +66,27 @@ if (LIBEMPP_USE_BUNDLED_RIWO)
 	message(STATUS "${PRO_NAME}: Use bundled Riwo.")
 
 else ()
-	libempp_validate_dependency_prefix(Riwo LIBEMPP_RIWO_INSTALL_PREFIX)
+	altun_validate_dependency_prefix(Riwo ALTUN_RIWO_INSTALL_PREFIX)
 
-	if (LIBEMPP_RIWO_INSTALL_PREFIX)
+	if (ALTUN_RIWO_INSTALL_PREFIX)
 		find_package(Riwo CONFIG REQUIRED COMPONENTS coro utils
-			PATHS "${LIBEMPP_RIWO_INSTALL_PREFIX}"
+			PATHS "${ALTUN_RIWO_INSTALL_PREFIX}"
 			NO_DEFAULT_PATH
 		)
 	else ()
 		find_package(Riwo CONFIG REQUIRED COMPONENTS coro utils)
 	endif ()
 
-	libempp_validate_msvc_imported_targets(Riwo
-		LIBEMPP_RIWO_INSTALL_PREFIX
+	altun_validate_msvc_imported_targets(Riwo
+		ALTUN_RIWO_INSTALL_PREFIX
 		Riwo::core Riwo::coro Riwo::utils
 	)
-	foreach(libempp_riwo_target
+	foreach(altun_riwo_target
 		Riwo::core Riwo::coro Riwo::utils
 		riwo.core riwo.coro riwo.utils
 	)
-		if (TARGET ${libempp_riwo_target})
-			set_property(TARGET ${libempp_riwo_target} PROPERTY
+		if (TARGET ${altun_riwo_target})
+			set_property(TARGET ${altun_riwo_target} PROPERTY
 				IMPORTED_GLOBAL TRUE
 			)
 		endif ()
@@ -95,26 +95,26 @@ else ()
 	message(STATUS "${PRO_NAME}: Use external Riwo ${Riwo_VERSION}.")
 endif ()
 
-option(LIBEMPP_USE_EMBEDDED_NLOHMANN
+option(ALTUN_USE_EMBEDDED_NLOHMANN
 	"-- ${PRO_NAME}: Use the embedded nlohmann/json dependency." ON
 )
-set(LIBEMPP_NLOHMANN_INSTALL_PREFIX "" CACHE PATH
+set(ALTUN_NLOHMANN_INSTALL_PREFIX "" CACHE PATH
 	"Install prefix of an external nlohmann/json package."
 )
-add_library(empp.nlohmann INTERFACE)
-add_library(libEMpp::nlohmann ALIAS empp.nlohmann)
+add_library(altun.nlohmann INTERFACE)
+add_library(altun::nlohmann ALIAS altun.nlohmann)
 
-set_target_properties(empp.nlohmann PROPERTIES EXPORT_NAME nlohmann)
+set_target_properties(altun.nlohmann PROPERTIES EXPORT_NAME nlohmann)
 
-if (LIBEMPP_USE_EMBEDDED_NLOHMANN)
-	if (LIBEMPP_NLOHMANN_INSTALL_PREFIX)
+if (ALTUN_USE_EMBEDDED_NLOHMANN)
+	if (ALTUN_NLOHMANN_INSTALL_PREFIX)
 		message(FATAL_ERROR
-			"${PRO_NAME}: LIBEMPP_NLOHMANN_INSTALL_PREFIX is only valid when "
-			"LIBEMPP_USE_EMBEDDED_NLOHMANN=OFF."
+			"${PRO_NAME}: ALTUN_NLOHMANN_INSTALL_PREFIX is only valid when "
+			"ALTUN_USE_EMBEDDED_NLOHMANN=OFF."
 		)
 	endif ()
 
-	target_include_directories(empp.nlohmann SYSTEM INTERFACE
+	target_include_directories(altun.nlohmann SYSTEM INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nlohmann.json>
 		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	)
@@ -122,13 +122,13 @@ if (LIBEMPP_USE_EMBEDDED_NLOHMANN)
 	message(STATUS "${PRO_NAME}: Use embedded nlohmann/json.")
 
 else ()
-	libempp_validate_dependency_prefix(nlohmann/json
-		LIBEMPP_NLOHMANN_INSTALL_PREFIX
+	altun_validate_dependency_prefix(nlohmann/json
+		ALTUN_NLOHMANN_INSTALL_PREFIX
 	)
 
-	if (LIBEMPP_NLOHMANN_INSTALL_PREFIX)
+	if (ALTUN_NLOHMANN_INSTALL_PREFIX)
 		find_package(nlohmann_json CONFIG REQUIRED
-			PATHS "${LIBEMPP_NLOHMANN_INSTALL_PREFIX}"
+			PATHS "${ALTUN_NLOHMANN_INSTALL_PREFIX}"
 			NO_DEFAULT_PATH
 		)
 	else ()
@@ -138,7 +138,7 @@ else ()
 	set_property(TARGET nlohmann_json::nlohmann_json PROPERTY
 		IMPORTED_GLOBAL TRUE
 	)
-	target_link_libraries(empp.nlohmann INTERFACE
+	target_link_libraries(altun.nlohmann INTERFACE
 		nlohmann_json::nlohmann_json
 	)
 	message(STATUS
@@ -146,4 +146,4 @@ else ()
 	)
 endif ()
 
-install(TARGETS empp.nlohmann EXPORT libEMppTargets)
+install(TARGETS altun.nlohmann EXPORT altunTargets)

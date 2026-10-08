@@ -3,9 +3,9 @@
 
 #include "benchmark.h"
 
-#include <libempp/core/sbus/detail/cyclone_interface.h>
-#include <libempp/core/sbus/detail/dbus_interface.h>
-#include <libempp/core/sbus/detail/shm_interface.h>
+#include <altun/core/sbus/detail/cyclone_interface.h>
+#include <altun/core/sbus/detail/dbus_interface.h>
+#include <altun/core/sbus/detail/shm_interface.h>
 #include <riwo/utils/process.h>
 #include <riwo/utils/sbus.h>
 
@@ -25,9 +25,9 @@ namespace
 {
 
 using namespace std::chrono_literals;
-using empp_test::performance::clock;
-using empp_test::performance::duration;
-using empp_test::performance::result;
+using altun_test::performance::clock;
+using altun_test::performance::duration;
+using altun_test::performance::result;
 
 constexpr uint64_t message_magic = 0x5342555350455246ULL;
 constexpr uint64_t stop_run = std::numeric_limits<uint64_t>::max();
@@ -52,19 +52,19 @@ template <typename Interface>
 struct transport_traits;
 
 template <>
-struct transport_traits<libempp::sbus::dbus_interface>
+struct transport_traits<altun::sbus::dbus_interface>
 {
 	static constexpr std::string_view name = "dbus";
 };
 
 template <>
-struct transport_traits<libempp::sbus::cyclone_interface>
+struct transport_traits<altun::sbus::cyclone_interface>
 {
 	static constexpr std::string_view name = "cyclone";
 };
 
 template <>
-struct transport_traits<libempp::sbus::shm_interface>
+struct transport_traits<altun::sbus::shm_interface>
 {
 	static constexpr std::string_view name = "shm";
 };
@@ -207,7 +207,7 @@ std::vector<duration> measure_latency(
 
 size_t local_message_count(size_t payload_size)
 {
-	const auto scale = empp_test::performance::scale;
+	const auto scale = altun_test::performance::scale;
 	if( payload_size <= 32 )
 		return 4'000 * scale;
 	if( payload_size <= 1'024 )
@@ -219,7 +219,7 @@ size_t local_message_count(size_t payload_size)
 
 size_t ipc_message_count(size_t payload_size)
 {
-	const auto scale = empp_test::performance::scale;
+	const auto scale = altun_test::performance::scale;
 	if( payload_size <= 32 )
 		return 1'000 * scale;
 	if( payload_size <= 1'024 )
@@ -236,7 +236,7 @@ public:
 	{
 		const auto stamp = clock::now().time_since_epoch().count();
 		m_path = std::filesystem::temp_directory_path() /
-			("libempp-sbus-performance-" + std::to_string(stamp));
+			("altun-sbus-performance-" + std::to_string(stamp));
 		std::filesystem::create_directories(m_path);
 	}
 
@@ -330,7 +330,7 @@ public:
 		m_ready_file(m_directory.path() / "ready")
 	{
 		const auto started = m_process.start(
-			LIBEMPP_PERFORMANCE_SBUS_EXECUTABLE,
+			ALTUN_PERFORMANCE_SBUS_EXECUTABLE,
 			"--peer", transport_traits<Interface>::name,
 			m_ready_file.string(), m_request_topic, m_response_topic
 		);
@@ -384,7 +384,7 @@ class transport_benchmark
 public:
 	transport_benchmark() :
 		m_subscriber(m_pool),
-		m_prefix("libempp.performance.sbus." +
+		m_prefix("altun.performance.sbus." +
 			std::string(transport_traits<Interface>::name) + "." +
 			std::to_string(clock::now().time_since_epoch().count())),
 		m_local_topic(m_prefix + ".local"),
@@ -478,26 +478,26 @@ private:
 			}
 			results.push_back({std::string(transport_traits<Interface>::name),
 				std::string(scope), "publish-throughput", payload_size, count,
-				empp_test::performance::median(std::move(publish_samples))});
+				altun_test::performance::median(std::move(publish_samples))});
 			results.push_back({std::string(transport_traits<Interface>::name),
 				std::string(scope), "end-to-end-throughput", payload_size, count,
-				empp_test::performance::median(std::move(end_to_end_samples))});
+				altun_test::performance::median(std::move(end_to_end_samples))});
 		}
 
 		const auto latency_count = (ipc ? 100U : 200U) *
-			empp_test::performance::scale;
+			altun_test::performance::scale;
 		auto latency = measure_latency<Interface>(
 			target, topic, payload_sizes.front(), latency_count, next_run()
 		);
 		results.push_back({std::string(transport_traits<Interface>::name),
 			std::string(scope), "latency-p50", payload_sizes.front(), 1,
-			empp_test::performance::percentile(latency, 0.50)});
+			altun_test::performance::percentile(latency, 0.50)});
 		results.push_back({std::string(transport_traits<Interface>::name),
 			std::string(scope), "latency-p95", payload_sizes.front(), 1,
-			empp_test::performance::percentile(latency, 0.95)});
+			altun_test::performance::percentile(latency, 0.95)});
 		results.push_back({std::string(transport_traits<Interface>::name),
 			std::string(scope), "latency-p99", payload_sizes.front(), 1,
-			empp_test::performance::percentile(std::move(latency), 0.99)});
+			altun_test::performance::percentile(std::move(latency), 0.99)});
 	}
 
 	asio::thread_pool m_pool {1};
@@ -581,11 +581,11 @@ void print_comparison(
 			throw std::runtime_error("SBus benchmark result keys do not match");
 
 		const auto dbus_cost =
-			empp_test::performance::nanoseconds_per_operation(dbus_value);
+			altun_test::performance::nanoseconds_per_operation(dbus_value);
 		const auto cyclone_cost =
-			empp_test::performance::nanoseconds_per_operation(cyclone_value);
+			altun_test::performance::nanoseconds_per_operation(cyclone_value);
 		const auto shm_cost =
-			empp_test::performance::nanoseconds_per_operation(shm_value);
+			altun_test::performance::nanoseconds_per_operation(shm_value);
 		std::cout << std::fixed << std::setprecision(2)
 			<< "[COMPARE] scope=" << dbus_value.scope
 			<< " metric=" << dbus_value.metric
@@ -610,11 +610,11 @@ int run_worker(const std::filesystem::path &output)
 int run_child(const std::string &transport, const std::filesystem::path &output)
 {
 	if( transport == "dbus" )
-		return run_worker<libempp::sbus::dbus_interface>(output);
+		return run_worker<altun::sbus::dbus_interface>(output);
 	if( transport == "cyclone" )
-		return run_worker<libempp::sbus::cyclone_interface>(output);
+		return run_worker<altun::sbus::cyclone_interface>(output);
 	if( transport == "shm" )
-		return run_worker<libempp::sbus::shm_interface>(output);
+		return run_worker<altun::sbus::shm_interface>(output);
 	throw std::invalid_argument("unknown SBus transport: " + transport);
 }
 
@@ -626,13 +626,13 @@ int run_peer_child(
 )
 {
 	if( transport == "dbus" )
-		return run_peer<libempp::sbus::dbus_interface>(
+		return run_peer<altun::sbus::dbus_interface>(
 			ready_file, request_topic, response_topic);
 	if( transport == "cyclone" )
-		return run_peer<libempp::sbus::cyclone_interface>(
+		return run_peer<altun::sbus::cyclone_interface>(
 			ready_file, request_topic, response_topic);
 	if( transport == "shm" )
-		return run_peer<libempp::sbus::shm_interface>(
+		return run_peer<altun::sbus::shm_interface>(
 			ready_file, request_topic, response_topic);
 	throw std::invalid_argument("unknown SBus transport: " + transport);
 }
@@ -644,7 +644,7 @@ std::vector<result> launch_worker(
 {
 	riwo::utils::process worker;
 	const auto started = worker.start(
-		LIBEMPP_PERFORMANCE_SBUS_EXECUTABLE,
+		ALTUN_PERFORMANCE_SBUS_EXECUTABLE,
 		"--benchmark", transport, output.string()
 	);
 	if( not started )
@@ -660,11 +660,11 @@ std::vector<result> launch_worker(
 
 void isolate_shm_namespace()
 {
-	const char *configured = std::getenv("LIBEMPP_SBUS_SHM_NAME");
+	const char *configured = std::getenv("ALTUN_SBUS_SHM_NAME");
 	if( not configured )
 		return;
 	const auto name = std::string(configured) + '-' + std::to_string(getpid());
-	if( setenv("LIBEMPP_SBUS_SHM_NAME", name.c_str(), 1) != 0 )
+	if( setenv("ALTUN_SBUS_SHM_NAME", name.c_str(), 1) != 0 )
 		throw std::runtime_error("failed to isolate SBus shared-memory namespace");
 }
 
@@ -676,11 +676,11 @@ int run_comparison()
 	const auto cyclone = launch_worker("cyclone", directory.path() / "cyclone.tsv");
 	const auto shm = launch_worker("shm", directory.path() / "shm.tsv");
 	for(const auto &value : dbus)
-		empp_test::performance::print_result(value);
+		altun_test::performance::print_result(value);
 	for(const auto &value : cyclone)
-		empp_test::performance::print_result(value);
+		altun_test::performance::print_result(value);
 	for(const auto &value : shm)
-		empp_test::performance::print_result(value);
+		altun_test::performance::print_result(value);
 	print_comparison(dbus, cyclone, shm);
 	return 0;
 }

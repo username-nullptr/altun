@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Build options](getting-started.md)
 
-`empp.linux` is built only on Linux and publicly depends on `empp.core` and `libudev`; storage also uses `libblkid` internally.
+`altun.linux` is built only on Linux and publicly depends on `altun.core` and `libudev`; storage also uses `libblkid` internally.
 
 | Source area | Guide | Resource |
 | --- | --- | --- |
@@ -12,7 +12,7 @@
 | `linux/subsys/` | [Hardware control](linux/hardware-control.md) | sysfs, GPIO/PWM character devices |
 | `linux/serial_port_binding.h` | [Serial-port binding](linux/serial-port-binding.md) | `/dev/tty*` and udev |
 
-`<libempp/linux.h>` aggregates storage, subsystem, udev, and bus headers. Include `<libempp/linux/serial_port_binding.h>` separately.
+`<altun/linux.h>` aggregates storage, subsystem, udev, and bus headers. Include `<altun/linux/serial_port_binding.h>` separately.
 
 ## Backend selection
 
@@ -20,8 +20,8 @@ GPIO and PWM select one backend at CMake configuration time:
 
 | Option | `AUTO` | `ON` | `OFF` |
 | --- | --- | --- | --- |
-| `LIBEMPP_USE_GPIOD` | Use detected libgpiod, otherwise sysfs | Require libgpiod | Use sysfs |
-| `LIBEMPP_USE_PWM_CDEV` | Use detected PWM waveform UAPI, otherwise sysfs | Require the UAPI | Use sysfs |
+| `ALTUN_USE_GPIOD` | Use detected libgpiod, otherwise sysfs | Require libgpiod | Use sysfs |
+| `ALTUN_USE_PWM_CDEV` | Use detected PWM waveform UAPI, otherwise sysfs | Require the UAPI | Use sysfs |
 
 Both libgpiod 1.x and 2.x are supported. Inspect the selected backend with `gpio::backend_name()` or `pwm::backend_name()`.
 

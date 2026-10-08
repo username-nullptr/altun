@@ -1,41 +1,39 @@
 // SPDX-FileCopyrightText: 2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#if LIBEMPP_CONSUME_UMBRELLA
-# include <libempp.h>
+#if ALTUN_CONSUME_UMBRELLA
+# include <altun.h>
 #endif
 
-#if LIBEMPP_CONSUME_CORE
-# include <libempp/core.h>
+#if ALTUN_CONSUME_CORE
+# include <altun/core.h>
 #endif
 
-#if LIBEMPP_CONSUME_LINUX
-# include <libempp/linux.h>
-# include <libempp/linux/storage/error.h>
+#if ALTUN_CONSUME_LINUX
+# include <altun/linux.h>
+# include <altun/linux/storage/error.h>
 #endif
 
-#include <libempp/core/global.h>
-
+#include <altun/core/global.h>
 #include <string_view>
 
 int main()
 {
-	const std::string_view version = libempp::version_string();
+	const std::string_view version = altun::version_string();
 	if(version.empty())
 		return 1;
 
-#if LIBEMPP_CONSUME_LINUX
-	// Exercise a symbol implemented in empp.linux so the test validates the
+#if ALTUN_CONSUME_LINUX
+	// Exercise a symbol implemented in altun.linux so the test validates the
 	// installed library and its transitive Core dependency, not headers alone.
-	const auto error = libempp::storage::make_error_code(
-		libempp::storage::errc::command_failed
+	const auto error = altun::storage::make_error_code(
+		altun::storage::errc::command_failed
 	);
 	if(error.value() != 1 or
-		std::string_view(error.category().name()) != "libempp.storage")
+		std::string_view(error.category().name()) != "altun.storage")
 	{
 		return 2;
 	}
 #endif
-
 	return 0;
 }

@@ -4,8 +4,8 @@
 #include "../test.h"
 #include "../support/linux/bus.h"
 
-#include <libempp/linux/bus/i2c.h>
-#include <libempp/linux/bus/spi.h>
+#include <altun/linux/bus/i2c.h>
+#include <altun/linux/bus/spi.h>
 
 #include <array>
 #include <cstddef>
@@ -16,12 +16,12 @@
 #include <utility>
 #include <vector>
 
-using namespace empp_test_support;
+using namespace altun_test_support;
 
 namespace
 {
 
-constexpr std::size_t scale = LIBEMPP_STRESS_SCALE;
+constexpr std::size_t scale = ALTUN_STRESS_SCALE;
 constexpr std::size_t device_count = 8;
 constexpr std::size_t worker_count = 4;
 static_assert(scale > 0);
@@ -36,9 +36,9 @@ void run_workers(Context &context)
 		worker.join();
 }
 
-EMPP_TEST("linux", "I2C asynchronous device pressure")
+ALTUN_TEST("linux", "I2C asynchronous device pressure")
 {
-	using device_type = libempp::bus::basic_i2c<asio::io_context::executor_type>;
+	using device_type = altun::bus::basic_i2c<asio::io_context::executor_type>;
 	using buffer_type = std::array<std::uint8_t,8>;
 	const std::size_t operations_per_device = 1'000 * scale;
 
@@ -70,7 +70,7 @@ EMPP_TEST("linux", "I2C asynchronous device pressure")
 	};
 	std::vector<pending_read> reads;
 	reads.reserve(device_count * operations_per_device);
-	empp_test::random_sequence random;
+	altun_test::random_sequence random;
 	for(std::size_t operation = 0; operation < operations_per_device; ++operation)
 	{
 		const auto offset = random.bounded(devices.size());
@@ -88,20 +88,20 @@ EMPP_TEST("linux", "I2C asynchronous device pressure")
 	{
 		const auto value = read.result.get();
 		for(const auto byte : value)
-			EMPP_REQUIRE_EQ(byte, read.expected);
+			ALTUN_REQUIRE_EQ(byte, read.expected);
 	}
 	for(const auto &device : devices)
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
-		EMPP_REQUIRE_EQ(
+		ALTUN_REQUIRE_EQ(
 			virtual_i2c_devices.at(device->handle().native_handle()).read_count,
 			operations_per_device);
 	}
 }
 
-EMPP_TEST("linux", "SPI asynchronous device pressure")
+ALTUN_TEST("linux", "SPI asynchronous device pressure")
 {
-	using device_type = libempp::bus::basic_spi<asio::io_context::executor_type>;
+	using device_type = altun::bus::basic_spi<asio::io_context::executor_type>;
 	using buffer_type = std::array<std::uint8_t,8>;
 	const std::size_t operations_per_device = 1'000 * scale;
 
@@ -132,7 +132,7 @@ EMPP_TEST("linux", "SPI asynchronous device pressure")
 	};
 	std::vector<pending_read> reads;
 	reads.reserve(device_count * operations_per_device);
-	empp_test::random_sequence random;
+	altun_test::random_sequence random;
 	for(std::size_t operation = 0; operation < operations_per_device; ++operation)
 	{
 		const auto offset = random.bounded(devices.size());
@@ -149,12 +149,12 @@ EMPP_TEST("linux", "SPI asynchronous device pressure")
 	{
 		const auto value = read.result.get();
 		for(const auto byte : value)
-			EMPP_REQUIRE_EQ(byte, read.expected);
+			ALTUN_REQUIRE_EQ(byte, read.expected);
 	}
 	for(const auto &device : devices)
 	{
 		std::scoped_lock lock(virtual_ioctl_mutex);
-		EMPP_REQUIRE_EQ(
+		ALTUN_REQUIRE_EQ(
 			virtual_spi_devices.at(device->handle().native_handle()).read_count,
 			operations_per_device);
 	}

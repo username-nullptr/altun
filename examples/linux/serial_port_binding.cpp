@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/serial_port_binding.h>
+#include <altun/linux/serial_port_binding.h>
 #include <iostream>
 #include <limits>
 
@@ -12,7 +12,7 @@ int main(int argc, const char *argv[])
 		std::cerr << "Usage: serial_port_binding <model-pattern> [baud-rate]\n";
 		return 1;
 	}
-	libempp::serial_port_options options;
+	altun::serial_port_options options;
 	if(argc > 2)
 	{
 		try {
@@ -30,30 +30,30 @@ int main(int argc, const char *argv[])
 			return 1;
 		}
 	}
-	libempp::serial_port_binding binding;
+	altun::serial_port_binding binding;
 	binding.opened.connect([](std::string_view port) {
-		libempp_log_info("Opened {}", port);
+		altun_log_info("Opened {}", port);
 	});
 	binding.closed.connect([](std::string_view port, const std::error_code &error) {
-		libempp_log_info("Closed {}: {}", port, error.message());
+		altun_log_info("Closed {}: {}", port, error.message());
 	});
 	binding.error.connect([](std::string_view port, const std::error_code &error) {
-		libempp_log_error("{}: {}", port, error.message());
+		altun_log_error("{}: {}", port, error.message());
 	});
-	binding.received.connect([](const libempp::serial_port_binding::io_context_ptr &context)
+	binding.received.connect([](const altun::serial_port_binding::io_context_ptr &context)
 	{
 		auto payload = context->take_payload<std::string>();
-		libempp_log_info("{} received {} byte(s): {}",
+		altun_log_info("{} received {} byte(s): {}",
 			context->port(), payload.size(), payload
 		);
 		std::error_code error;
 		context->write("ACK\n", error);
 		if(error)
-			libempp_log_error("Reply failed: {}", error.message());
+			altun_log_error("Reply failed: {}", error.message());
 	});
 
 	auto rule = binding.make_rule (
-		libempp::udev::prop_key::id_model, argv[1], options
+		altun::udev::prop_key::id_model, argv[1], options
 	);
 	rule->open();
 	return riwo::exec();

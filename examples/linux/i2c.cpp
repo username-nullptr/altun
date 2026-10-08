@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025-2026 Xiaoqiang <username_nullptr@163.com>
 // SPDX-License-Identifier: MIT
 
-#include <libempp/linux/bus/i2c.h>
+#include <altun/linux/bus/i2c.h>
 #include <stdexcept>
 #include <iostream>
 
@@ -26,7 +26,7 @@ int main(int argc, const char *argv[])
 		const auto reg = static_cast<uint8_t>(parse_number(argv[3], 0xff));
 
 		std::error_code error;
-		libempp::bus::i2c device;
+		altun::bus::i2c device;
 
 		device.open({argv[1], address}, error);
 		if(error)

@@ -176,7 +176,7 @@ public:
 			if( not read_attribute(m_period_descriptor, text, error) )
 				return close();
 
-			const auto period = libgs::strtls::to_uint32(text);
+			const auto period = riwo::strtls::to_uint32(text);
 			if( not period )
 			{
 				error = std::make_error_code(std::errc::invalid_argument);
@@ -187,7 +187,7 @@ public:
 			if( not read_attribute(m_duty_descriptor, text, error) )
 				return close();
 
-			const auto duty_cycle = libgs::strtls::to_uint32(text);
+			const auto duty_cycle = riwo::strtls::to_uint32(text);
 			if( not duty_cycle )
 			{
 				error = std::make_error_code(std::errc::invalid_argument);
@@ -198,7 +198,7 @@ public:
 			if( not read_attribute(m_enable_descriptor, text, error) )
 				return close();
 
-			const auto enabled = libgs::strtls::to_bool(text);
+			const auto enabled = riwo::strtls::to_bool(text);
 			if( not enabled )
 			{
 				error = std::make_error_code(std::errc::invalid_argument);

@@ -11,10 +11,10 @@
 namespace libempp::subsys
 {
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_gpio_manager<Exec>::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 private:
 	using group_ptr = std::unique_ptr<group_t>;
@@ -32,8 +32,8 @@ private:
 	};
 
 public:
-	explicit impl(libgs::concepts::match_sched<Exec> auto &&exec) :
-		m_exec(libgs::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
+	explicit impl(riwo::concepts::match_sched<Exec> auto &&exec) :
+		m_exec(riwo::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
 
 	~impl() {
 		close();
@@ -85,7 +85,7 @@ public:
 			m_nodes.push_back(std::move(staged_node));
 		}
 		catch(...) {
-			error = libgs::exception_error(std::current_exception());
+			error = riwo::exception_error(std::current_exception());
 		}
 	}
 
@@ -160,7 +160,7 @@ public:
 		}
 		catch(...)
 		{
-			error = libgs::exception_error(std::current_exception());
+			error = riwo::exception_error(std::current_exception());
 			return ;
 		}
 		m_groups = std::move(staged);
@@ -181,9 +181,9 @@ public:
 		close(result);
 	}
 
-	void close(const libgs::concepts::text_p<char> auto &alias) noexcept
+	void close(const riwo::concepts::text_p<char> auto &alias) noexcept
 	{
-		const auto alias_view = libgs::strtls::to_view(alias);
+		const auto alias_view = riwo::strtls::to_view(alias);
 		if( alias_view.empty() )
 			return ;
 
@@ -199,7 +199,7 @@ public:
 		if( auto *result = find_group(chip) )
 			return *result;
 
-		libgs::out_of_range::loc_throw (
+		riwo::out_of_range::loc_throw (
 			"libempp::subsys::basic_gpio_manager<Exec>::group: chip not found"
 		);
 		// return xxx;
@@ -210,7 +210,7 @@ public:
 		if( const auto *result = find_group(chip) )
 			return *result;
 
-		libgs::out_of_range::loc_throw (
+		riwo::out_of_range::loc_throw (
 			"libempp::subsys::basic_gpio_manager<Exec>::group: chip not found"
 		);
 		// return xxx;
@@ -225,7 +225,7 @@ public:
 		if( auto *result = find(index) )
 			return *result;
 
-		libgs::out_of_range::loc_throw (
+		riwo::out_of_range::loc_throw (
 			"libempp::subsys::basic_gpio_manager<Exec>::at: index not found"
 		);
 		// return xxx;
@@ -236,30 +236,30 @@ public:
 		if( const auto *result = find(index) )
 			return *result;
 
-		libgs::out_of_range::loc_throw (
+		riwo::out_of_range::loc_throw (
 			"libempp::subsys::basic_gpio_manager<Exec>::at: index not found"
 		);
 		// return xxx;
 	}
 
-	[[nodiscard]] gpio_t &at(const libgs::concepts::text_p<char> auto &alias)
+	[[nodiscard]] gpio_t &at(const riwo::concepts::text_p<char> auto &alias)
 	{
 		if( auto *result = find(alias) )
 			return *result;
 
-		libgs::out_of_range::loc_throw (
+		riwo::out_of_range::loc_throw (
 			"libempp::subsys::basic_gpio_manager<Exec>::at: alias not found"
 		);
 		// return xxx;
 	}
 
 	[[nodiscard]] const gpio_t &at(
-		const libgs::concepts::text_p<char> auto &alias) const
+		const riwo::concepts::text_p<char> auto &alias) const
 	{
 		if( const auto *result = find(alias) )
 			return *result;
 
-		libgs::out_of_range::loc_throw (
+		riwo::out_of_range::loc_throw (
 			"libempp::subsys::basic_gpio_manager<Exec>::at: alias not found"
 		);
 		// return xxx;
@@ -269,7 +269,7 @@ public:
 		return find(index);
 	}
 
-	[[nodiscard]] bool contains(const libgs::concepts::text_p<char> auto &alias) const noexcept {
+	[[nodiscard]] bool contains(const riwo::concepts::text_p<char> auto &alias) const noexcept {
 		return find(alias);
 	}
 
@@ -282,7 +282,7 @@ public:
 			error = missing_key_error();
 	}
 
-	void set(const libgs::concepts::text_p<char> auto &alias, bool value, std::error_code &error) noexcept
+	void set(const riwo::concepts::text_p<char> auto &alias, bool value, std::error_code &error) noexcept
 	{
 		if( auto *output = find(alias) )
 			output->set(value, error);
@@ -328,7 +328,7 @@ public:
 		set(true, error);
 	}
 
-	void rising(const libgs::concepts::text_p<char> auto &alias, std::error_code &error) noexcept {
+	void rising(const riwo::concepts::text_p<char> auto &alias, std::error_code &error) noexcept {
 		set(alias, true, error);
 	}
 
@@ -348,7 +348,7 @@ public:
 		set(false, error);
 	}
 
-	void falling(const libgs::concepts::text_p<char> auto &alias, std::error_code &error) noexcept {
+	void falling(const riwo::concepts::text_p<char> auto &alias, std::error_code &error) noexcept {
 		set(alias, false, error);
 	}
 
@@ -360,7 +360,7 @@ public:
 			error = missing_key_error();
 	}
 
-	void invert(const libgs::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
+	void invert(const riwo::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
 	{
 		if( auto *output = find(alias) )
 			output->invert(error);
@@ -382,27 +382,27 @@ public:
 		}
 	}
 
-	[[nodiscard]] libgs::sys_expected<bool> get(const index_t &index) const noexcept
+	[[nodiscard]] riwo::sys_expected<bool> get(const index_t &index) const noexcept
 	{
 		if( const auto *input = find(index) )
 			return input->get();
-		return libgs::sys_unexpected(missing_key_error());
+		return riwo::sys_unexpected(missing_key_error());
 	}
 
-	[[nodiscard]] libgs::sys_expected<bool>
-	get(const libgs::concepts::text_p<char> auto &alias) const noexcept
+	[[nodiscard]] riwo::sys_expected<bool>
+	get(const riwo::concepts::text_p<char> auto &alias) const noexcept
 	{
 		if( const auto *input = find(alias) )
 			return input->get();
-		return libgs::sys_unexpected(missing_key_error());
+		return riwo::sys_unexpected(missing_key_error());
 	}
 
-	[[nodiscard]] libgs::sys_expected<index_values_t> get() const noexcept
+	[[nodiscard]] riwo::sys_expected<index_values_t> get() const noexcept
 	{
 		index_values_t result;
 		if( m_nodes.empty() )
 		{
-			return libgs::sys_unexpected (
+			return riwo::sys_unexpected (
 				std::make_error_code(std::errc::bad_file_descriptor)
 			);
 		}
@@ -413,14 +413,14 @@ public:
 				auto current = find(index)->get();
 
 				if( not current )
-					return libgs::sys_unexpected(current.error());
+					return riwo::sys_unexpected(current.error());
 				result.emplace(index, *current);
 			}
 		}
 		catch(...)
 		{
-			return libgs::sys_unexpected (
-				libgs::exception_error(std::current_exception())
+			return riwo::sys_unexpected (
+				riwo::exception_error(std::current_exception())
 			);
 		}
 		return result;
@@ -494,7 +494,7 @@ private:
 		return result and result->contains(index.line) ? &result->at(index.line) : nullptr;
 	}
 
-	[[nodiscard]] gpio_t *find(const libgs::concepts::text_p<char> auto &alias) noexcept
+	[[nodiscard]] gpio_t *find(const riwo::concepts::text_p<char> auto &alias) noexcept
 	{
 		for(auto &entry : m_groups)
 		{
@@ -504,7 +504,7 @@ private:
 		return nullptr;
 	}
 
-	[[nodiscard]] const gpio_t *find(const libgs::concepts::text_p<char> auto &alias) const noexcept
+	[[nodiscard]] const gpio_t *find(const riwo::concepts::text_p<char> auto &alias) const noexcept
 	{
 		for(const auto &entry : m_groups)
 		{
@@ -544,7 +544,7 @@ private:
 		}
 		catch(...)
 		{
-			error = libgs::exception_error(std::current_exception());
+			error = riwo::exception_error(std::current_exception());
 			return ;
 		}
 		auto output = outputs.begin();
@@ -584,7 +584,7 @@ private:
 		}
 		catch(...)
 		{
-			error = libgs::exception_error(std::current_exception());
+			error = riwo::exception_error(std::current_exception());
 			return ;
 		}
 		for(const auto &key : keys)
@@ -647,71 +647,71 @@ private:
 	nodes_t m_nodes {};
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Exec0>
 basic_gpio_manager<Exec>::basic_gpio_manager(const nodes_t &nodes, Exec0 &&exec) requires (
 	not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio_manager> and
-	libgs::concepts::match_sched<Exec0,executor_t>
+	riwo::concepts::match_sched<Exec0,executor_t>
 ) : m_impl(std::make_shared<impl>(std::forward<decltype(exec)>(exec)))
 {
 	open(nodes);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec>::basic_gpio_manager(const nodes_t &nodes)
-	requires libgs::concepts::match_def_exec<executor_t> :
-	basic_gpio_manager(nodes, libgs::io_context())
+	requires riwo::concepts::match_def_exec<executor_t> :
+	basic_gpio_manager(nodes, riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Exec0>
 basic_gpio_manager<Exec>::basic_gpio_manager(std::initializer_list<node_t> nodes, Exec0 &&exec) requires (
 	not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio_manager> and
-	libgs::concepts::match_sched<Exec0,executor_t>
+	riwo::concepts::match_sched<Exec0,executor_t>
 ) : basic_gpio_manager(nodes_t(nodes), std::forward<decltype(exec)>(exec))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec>::basic_gpio_manager(std::initializer_list<node_t> nodes)
-	requires libgs::concepts::match_def_exec<executor_t> :
-	basic_gpio_manager(nodes_t(nodes), libgs::io_context())
+	requires riwo::concepts::match_def_exec<executor_t> :
+	basic_gpio_manager(nodes_t(nodes), riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Exec0>
 basic_gpio_manager<Exec>::basic_gpio_manager(Exec0 &&exec) requires (
 	not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio_manager> and
-	libgs::concepts::match_sched<Exec0,executor_t>
+	riwo::concepts::match_sched<Exec0,executor_t>
 ) : m_impl(std::make_shared<impl>(std::forward<decltype(exec)>(exec)))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec>::basic_gpio_manager()
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_gpio_manager(libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_gpio_manager(riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec>::~basic_gpio_manager() = default;
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec>::basic_gpio_manager(basic_gpio_manager &&other) noexcept :
 	m_impl(std::move(other.m_impl))
 {
 	other.m_impl = std::make_shared<impl>(m_impl->get_executor());
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::operator=(basic_gpio_manager &&other) noexcept
 {
 	if( this == &other )
@@ -721,28 +721,28 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::operator=(basic_gpio_manager
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open(const node_t &node, std::error_code &error) noexcept
 {
 	m_impl->open(node, error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open(const node_t &node)
 {
 	std::error_code error;
 	open(node, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::open"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open
 (const nodes_t &nodes, std::error_code &error) noexcept
 {
@@ -750,21 +750,21 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open(const nodes_t &nodes)
 {
 	std::error_code error;
 	open(nodes, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::open"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open
 (std::initializer_list<node_t> nodes, std::error_code &error) noexcept
 {
@@ -774,120 +774,120 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open
 	catch(...)
 	{
 		close();
-		error = libgs::exception_error(std::current_exception());
+		error = riwo::exception_error(std::current_exception());
 		return *this;
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::open(std::initializer_list<node_t> nodes)
 {
 	return open(nodes_t(nodes));
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::close(const index_t &index) noexcept
 {
 	m_impl->close(index);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::close
-(const libgs::concepts::text_p<char> auto &alias) noexcept
+(const riwo::concepts::text_p<char> auto &alias) noexcept
 {
 	m_impl->close(alias);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::close() noexcept
 {
 	m_impl->close();
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::group(const std::filesystem::path &chip) -> group_t&
 {
 	return m_impl->group(chip);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::group(const std::filesystem::path &chip) const -> const group_t&
 {
 	return m_impl->group(chip);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::at(const index_t &index) -> gpio_t&
 {
 	return m_impl->at(index);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::at(const index_t &index) const -> const gpio_t&
 {
 	return m_impl->at(index);
 }
 
-template <libgs::concepts::exec Exec>
-auto basic_gpio_manager<Exec>::at(const libgs::concepts::text_p<char> auto &alias) -> gpio_t&
+template <riwo::concepts::exec Exec>
+auto basic_gpio_manager<Exec>::at(const riwo::concepts::text_p<char> auto &alias) -> gpio_t&
 {
 	return m_impl->at(alias);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::at
-(const libgs::concepts::text_p<char> auto &alias) const -> const gpio_t&
+(const riwo::concepts::text_p<char> auto &alias) const -> const gpio_t&
 {
 	return m_impl->at(alias);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::operator[](const index_t &index) -> gpio_t&
 {
 	return at(index);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::operator[](const index_t &index) const -> const gpio_t&
 {
 	return at(index);
 }
 
-template <libgs::concepts::exec Exec>
-auto basic_gpio_manager<Exec>::operator[](const libgs::concepts::text_p<char> auto &alias) -> gpio_t&
+template <riwo::concepts::exec Exec>
+auto basic_gpio_manager<Exec>::operator[](const riwo::concepts::text_p<char> auto &alias) -> gpio_t&
 {
 	return at(alias);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::operator[]
-(const libgs::concepts::text_p<char> auto &alias) const -> const gpio_t&
+(const riwo::concepts::text_p<char> auto &alias) const -> const gpio_t&
 {
 	return at(alias);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_gpio_manager<Exec>::contains_chip(const std::filesystem::path &chip) const noexcept
 {
 	return m_impl->contains_chip(chip);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_gpio_manager<Exec>::contains(const index_t &index) const noexcept
 {
 	return m_impl->contains(index);
 }
 
-template <libgs::concepts::exec Exec>
-bool basic_gpio_manager<Exec>::contains(const libgs::concepts::text_p<char> auto &alias) const noexcept
+template <riwo::concepts::exec Exec>
+bool basic_gpio_manager<Exec>::contains(const riwo::concepts::text_p<char> auto &alias) const noexcept
 {
 	return m_impl->contains(alias);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
 (const index_t &index, bool value, std::error_code &error) noexcept
 {
@@ -895,21 +895,21 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set(const index_t &index, bool value)
 {
 	std::error_code error;
 	set(index, value, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::set"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
 (const index_values_t &values, std::error_code &error) noexcept
 {
@@ -917,21 +917,21 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set(const index_values_t &values)
 {
 	std::error_code error;
 	set(values, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::set"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
 (const alias_values_t &values, std::error_code &error) noexcept
 {
@@ -939,65 +939,65 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set(const alias_values_t &values)
 {
 	std::error_code error;
 	set(values, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::set"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set(bool value, std::error_code &error) noexcept
 {
 	m_impl->set(value, error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set(bool value)
 {
 	std::error_code error;
 	set(value, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::set"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
-(const libgs::concepts::text_p<char> auto &alias, bool value, std::error_code &error) noexcept
+(const riwo::concepts::text_p<char> auto &alias, bool value, std::error_code &error) noexcept
 {
 	m_impl->set(alias, value, error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::set
-(const libgs::concepts::text_p<char> auto &alias, bool value)
+(const riwo::concepts::text_p<char> auto &alias, bool value)
 {
 	std::error_code error;
 	set(alias, value, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::set"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising
 (index_t index, std::error_code &error) noexcept
 {
@@ -1005,21 +1005,21 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising(index_t index)
 {
 	std::error_code error;
 	rising(std::move(index), error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::rising"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising
 (const indexes_t &indexes, std::error_code &error) noexcept
 {
@@ -1027,21 +1027,21 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising(const indexes_t &indexes)
 {
 	std::error_code error;
 	rising(indexes, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::rising"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising
 (const aliases_t &aliases, std::error_code &error) noexcept
 {
@@ -1049,85 +1049,85 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising(const aliases_t &aliases)
 {
 	std::error_code error;
 	rising(aliases, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::rising"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising(std::error_code &error) noexcept
 {
 	m_impl->rising(error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising()
 {
 	std::error_code error;
 	rising(error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::rising"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising
-(const libgs::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
+(const riwo::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
 {
 	m_impl->rising(alias, error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
-basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising(const libgs::concepts::text_p<char> auto &alias)
+template <riwo::concepts::exec Exec>
+basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::rising(const riwo::concepts::text_p<char> auto &alias)
 {
 	std::error_code error;
 	rising(alias, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::rising"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling(index_t index, std::error_code &error) noexcept
 {
 	m_impl->falling(index, error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling(index_t index)
 {
 	std::error_code error;
 	falling(std::move(index), error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::falling"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling
 (const indexes_t &indexes, std::error_code &error) noexcept
 {
@@ -1135,21 +1135,21 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling(const indexes_t &indexes)
 {
 	std::error_code error;
 	falling(indexes, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::falling"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling
 (const aliases_t &aliases, std::error_code &error) noexcept
 {
@@ -1157,65 +1157,65 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling(const aliases_t &aliases)
 {
 	std::error_code error;
 	falling(aliases, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::falling"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling(std::error_code &error) noexcept
 {
 	m_impl->falling(error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling()
 {
 	std::error_code error;
 	falling(error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::falling"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling
-(const libgs::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
+(const riwo::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
 {
 	m_impl->falling(alias, error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::falling
-(const libgs::concepts::text_p<char> auto &alias)
+(const riwo::concepts::text_p<char> auto &alias)
 {
 	std::error_code error;
 	falling(alias, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::falling"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert
 (const index_t &index, std::error_code &error) noexcept
 {
@@ -1223,98 +1223,98 @@ basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert(const index_t &index)
 {
 	std::error_code error;
 	invert(index, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::invert"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert(std::error_code &error) noexcept
 {
 	m_impl->invert(error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert()
 {
 	std::error_code error;
 	invert(error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::invert"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert
-(const libgs::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
+(const riwo::concepts::text_p<char> auto &alias, std::error_code &error) noexcept
 {
 	m_impl->invert(alias, error);
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
-basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert(const libgs::concepts::text_p<char> auto &alias)
+template <riwo::concepts::exec Exec>
+basic_gpio_manager<Exec> &basic_gpio_manager<Exec>::invert(const riwo::concepts::text_p<char> auto &alias)
 {
 	std::error_code error;
 	invert(alias, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error,
+		riwo::system_error::loc_throw(error,
 			"libempp::subsys::basic_gpio_manager<Exec>::invert"
 		);
 	}
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
-auto basic_gpio_manager<Exec>::get() const noexcept -> libgs::sys_expected<index_values_t>
+template <riwo::concepts::exec Exec>
+auto basic_gpio_manager<Exec>::get() const noexcept -> riwo::sys_expected<index_values_t>
 {
 	return m_impl->get();
 }
 
-template <libgs::concepts::exec Exec>
-libgs::sys_expected<bool> basic_gpio_manager<Exec>::get(const index_t &index) const noexcept
+template <riwo::concepts::exec Exec>
+riwo::sys_expected<bool> basic_gpio_manager<Exec>::get(const index_t &index) const noexcept
 {
 	return m_impl->get(index);
 }
 
-template <libgs::concepts::exec Exec>
-libgs::sys_expected<bool> basic_gpio_manager<Exec>::get
-(const libgs::concepts::text_p<char> auto &alias) const noexcept
+template <riwo::concepts::exec Exec>
+riwo::sys_expected<bool> basic_gpio_manager<Exec>::get
+(const riwo::concepts::text_p<char> auto &alias) const noexcept
 {
 	return m_impl->get(alias);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio_manager<Exec>::operator index_values_t() const
 {
-	return libgs::expected_value_or_throw(get());
+	return riwo::expected_value_or_throw(get());
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::operator*() const -> index_values_t
 {
-	return libgs::expected_value_or_throw(get());
+	return riwo::expected_value_or_throw(get());
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::operator~() const -> index_values_t
 {
-	auto values = libgs::expected_value_or_throw(get());
+	auto values = riwo::expected_value_or_throw(get());
 	for(auto &[index, value] : values)
 	{
 		(void)index;
@@ -1323,43 +1323,43 @@ auto basic_gpio_manager<Exec>::operator~() const -> index_values_t
 	return values;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::chips() const -> chips_t
 {
 	return m_impl->chips();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::nodes() const -> nodes_t
 {
 	return m_impl->nodes();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 std::size_t basic_gpio_manager<Exec>::group_count() const noexcept
 {
 	return m_impl->group_count();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 std::size_t basic_gpio_manager<Exec>::size() const noexcept
 {
 	return m_impl->size();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_gpio_manager<Exec>::empty() const noexcept
 {
 	return m_impl->empty();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_gpio_manager<Exec>::is_open() const noexcept
 {
 	return m_impl->is_open();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio_manager<Exec>::get_executor() noexcept -> executor_t
 {
 	return m_impl->get_executor();

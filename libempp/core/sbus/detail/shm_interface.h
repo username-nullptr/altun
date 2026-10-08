@@ -13,7 +13,7 @@ namespace libempp::sbus
 class LIBEMPP_CORE_API shm_interface final :
 	public std::enable_shared_from_this<shm_interface>
 {
-	LIBGS_DISABLE_COPY_MOVE(shm_interface)
+	RIWO_DISABLE_COPY_MOVE(shm_interface)
 
 public:
 	friend void bridge_shm_data_available (

@@ -3,8 +3,8 @@
 
 #include "event.h"
 
-#include <libgs/core/algorithm/misc.h>
-#include <libgs/core/async_expected.h>
+#include <riwo/core/algorithm/misc.h>
+#include <riwo/core/async_expected.h>
 
 #include <algorithm>
 #include <unistd.h>
@@ -15,9 +15,9 @@ namespace libempp::udev
 namespace detail
 {
 
-class LIBGS_DECL_HIDDEN event_core::impl : public std::enable_shared_from_this<impl>
+class RIWO_DECL_HIDDEN event_core::impl : public std::enable_shared_from_this<impl>
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	using handle_t = asio::posix::basic_stream_descriptor<>;
@@ -70,7 +70,7 @@ public:
 		}
 		catch(...)
 		{
-			ec = libgs::exception_error(std::current_exception());
+			ec = riwo::exception_error(std::current_exception());
 			release_native();
 			return ;
 		}
@@ -117,11 +117,11 @@ public:
 
 		const auto generation = m_generation;
 		try {
-			libgs::dispatch(m_exec, event_work(generation));
+			riwo::dispatch(m_exec, event_work(generation));
 		}
 		catch(...)
 		{
-			ec = libgs::exception_error(std::current_exception());
+			ec = riwo::exception_error(std::current_exception());
 			std::error_code ignored;
 			close(ignored);
 		}
@@ -159,16 +159,16 @@ public:
 	}
 
 private:
-	[[nodiscard]] libgs::awaitable<void> event_work(size_t generation)
+	[[nodiscard]] riwo::awaitable<void> event_work(size_t generation)
 	{
 		auto self = this->shared_from_this();
-		LIBGS_UNUSED(self);
+		RIWO_UNUSED(self);
 
 		while( generation == m_generation and m_handle.is_open() )
 		{
 			std::error_code monitor_error;
 			co_await m_handle.async_wait(handle_t::wait_read,
-				asio::redirect_error(libgs::use_awaitable, monitor_error)
+				asio::redirect_error(riwo::use_awaitable, monitor_error)
 			);
 			if( monitor_error )
 			{
@@ -184,7 +184,7 @@ private:
 				event = receive_ready(monitor_error);
 			}
 			catch(...) {
-				monitor_error = libgs::exception_error(std::current_exception());
+				monitor_error = riwo::exception_error(std::current_exception());
 			}
 			if( monitor_error )
 			{
@@ -202,7 +202,7 @@ private:
 				co_await (*m_received)(std::move(*event));
 			}
 			catch(...) {
-				observer_error = libgs::exception_error(std::current_exception());
+				observer_error = riwo::exception_error(std::current_exception());
 			}
 			if( observer_error )
 				co_await emit_error(observer_error);
@@ -210,7 +210,7 @@ private:
 		co_return ;
 	}
 
-	[[nodiscard]] libgs::awaitable<void> fail_monitor(std::error_code monitor_error)
+	[[nodiscard]] riwo::awaitable<void> fail_monitor(std::error_code monitor_error)
 	{
 		std::error_code ignored;
 		close(ignored);
@@ -218,7 +218,7 @@ private:
 		co_return ;
 	}
 
-	[[nodiscard]] libgs::awaitable<void> emit_error(std::error_code event_error) noexcept
+	[[nodiscard]] riwo::awaitable<void> emit_error(std::error_code event_error) noexcept
 	{
 		if( not m_error )
 			co_return ;
@@ -346,7 +346,7 @@ bool device_event::matches(const properties_t &rules) const
 	{
 		const auto &[key, expected] = rule;
 		const auto value = property(key);
-		return value and libgs::wildcard_match(expected, *value) >= 0;
+		return value and riwo::wildcard_match(expected, *value) >= 0;
 	});
 }
 

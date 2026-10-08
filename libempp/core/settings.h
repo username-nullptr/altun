@@ -5,10 +5,10 @@
 #define LIBEMPP_CORE_SETTINGS_H
 
 #include <libempp/core/global.h>
-#include <libgs/utils/settings.h>
+#include <riwo/utils/settings.h>
 
 #define libempp_settings(...) \
-	libgs::utils::settings::instance(__VA_ARGS__)
+	riwo::utils::settings::instance(__VA_ARGS__)
 
 #define libempp_default_settings \
 	libempp_settings()

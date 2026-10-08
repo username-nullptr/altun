@@ -24,7 +24,7 @@ concept spi_array_readable = requires(Device &device) {
 
 template <typename Device>
 concept spi_detached_array_readable = requires(Device &device) {
-	device.template read<std::array<std::uint8_t,1>>(libgs::detached);
+	device.template read<std::array<std::uint8_t,1>>(riwo::detached);
 };
 
 using compile_test_spi = libempp::bus::spi;
@@ -75,7 +75,7 @@ EMPP_TEST("virtual-device", "SPI configures and transfers through an ioctl simul
 
 	const std::array<std::uint8_t, 3> payload {0x9F, 0x00, 0x00};
 	const auto written = device.write(
-		libgs::const_buffer(payload.data(), payload.size()), error
+		riwo::const_buffer(payload.data(), payload.size()), error
 	);
 	EMPP_REQUIRE(not error);
 	EMPP_REQUIRE_EQ(written, payload.size());
@@ -93,7 +93,7 @@ EMPP_TEST("virtual-device", "SPI configures and transfers through an ioctl simul
 
 	std::array<std::uint8_t, 3> received {};
 	const auto read = device.read(
-		libgs::mutable_buffer(received.data(), received.size()), error
+		riwo::mutable_buffer(received.data(), received.size()), error
 	);
 	EMPP_REQUIRE(not error);
 	EMPP_REQUIRE_EQ(read, received.size());
@@ -114,8 +114,8 @@ EMPP_TEST("virtual-device", "SPI configures and transfers through an ioctl simul
 		virtual_spi_devices[descriptor].read_data = {0x00, 0x02};
 	}
 	const auto transferred = device.transfer(
-		libgs::const_buffer(command.data(), command.size()),
-		libgs::mutable_buffer(response.data(), response.size()), error
+		riwo::const_buffer(command.data(), command.size()),
+		riwo::mutable_buffer(response.data(), response.size()), error
 	);
 	EMPP_REQUIRE(not error);
 	EMPP_REQUIRE_EQ(transferred, command.size());
@@ -133,9 +133,9 @@ EMPP_TEST("virtual-device", "SPI configures and transfers through an ioctl simul
 		virtual_spi_devices[descriptor].read_data = {0xAA, 0x55};
 	}
 	auto future = device.transfer(
-		libgs::const_buffer(async_command.data(), async_command.size()),
-		libgs::mutable_buffer(async_response.data(), async_response.size()),
-		libgs::use_future
+		riwo::const_buffer(async_command.data(), async_command.size()),
+		riwo::mutable_buffer(async_response.data(), async_response.size()),
+		riwo::use_future
 	);
 	context.run();
 	EMPP_REQUIRE_EQ(future.get(), async_command.size());
@@ -144,8 +144,8 @@ EMPP_TEST("virtual-device", "SPI configures and transfers through an ioctl simul
 
 	context.restart();
 	std::array<std::uint8_t, 2> detached_payload {0x12, 0x34};
-	device.write(libgs::const_buffer(detached_payload.data(), detached_payload.size()),
-		libgs::detached);
+	device.write(riwo::const_buffer(detached_payload.data(), detached_payload.size()),
+		riwo::detached);
 	detached_payload.fill(0);
 	context.run();
 	{
@@ -156,7 +156,7 @@ EMPP_TEST("virtual-device", "SPI configures and transfers through an ioctl simul
 	}
 
 	context.restart();
-	auto read_future = device.read<std::array<std::uint8_t,2>>(libgs::use_future);
+	auto read_future = device.read<std::array<std::uint8_t,2>>(riwo::use_future);
 	context.run();
 	EMPP_REQUIRE_EQ(read_future.get(),
 		(std::array<std::uint8_t, 2> {0xDE, 0xAD}));
@@ -182,7 +182,7 @@ EMPP_TEST("virtual-device", "SPI configures and transfers through an ioctl simul
 	std::vector<std::future<batch_buffer>> futures;
 	futures.reserve(batch_size);
 	for(std::size_t index = 0; index < batch_size; ++index)
-		futures.push_back(device.read<batch_buffer>(libgs::use_future));
+		futures.push_back(device.read<batch_buffer>(riwo::use_future));
 	context.run();
 	for(std::size_t index = 0; index < batch_size; ++index)
 	{
@@ -214,7 +214,7 @@ EMPP_TEST("virtual-device", "SPI validates failures before touching hardware")
 	std::error_code error;
 	std::uint8_t byte = 0;
 
-	const auto closed_write = device.write(libgs::const_buffer(&byte, 1), error);
+	const auto closed_write = device.write(riwo::const_buffer(&byte, 1), error);
 	EMPP_REQUIRE_EQ(closed_write, 0U);
 	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::bad_file_descriptor));
 	const auto closed_read = device.read<std::array<std::uint8_t,2>>(error);
@@ -224,7 +224,7 @@ EMPP_TEST("virtual-device", "SPI validates failures before touching hardware")
 	EMPP_REQUIRE(closed_empty.empty());
 	EMPP_REQUIRE(not error);
 
-	auto closed_future = device.read<std::array<std::uint8_t,2>>(libgs::use_future);
+	auto closed_future = device.read<std::array<std::uint8_t,2>>(riwo::use_future);
 	context.run();
 	EMPP_REQUIRE_SYSTEM_ERROR(std::make_error_code(std::errc::bad_file_descriptor),
 		static_cast<void>(closed_future.get()));
@@ -244,8 +244,8 @@ EMPP_TEST("virtual-device", "SPI validates failures before touching hardware")
 
 	std::array<std::uint8_t, 2> response {};
 	const auto mismatched = device.transfer(
-		libgs::const_buffer(&byte, 1),
-		libgs::mutable_buffer(response.data(), response.size()), error
+		riwo::const_buffer(&byte, 1),
+		riwo::mutable_buffer(response.data(), response.size()), error
 	);
 	EMPP_REQUIRE_EQ(mismatched, 0U);
 	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::invalid_argument));
@@ -275,7 +275,7 @@ EMPP_TEST("virtual-device", "SPI array read retains operation state after device
 			std::scoped_lock lock(virtual_ioctl_mutex);
 			virtual_spi_devices[descriptor].read_data = {0xA0, 0xB0, 0xC0, 0xD0};
 		}
-		future = device.read<result_type>(libgs::use_future);
+		future = device.read<result_type>(riwo::use_future);
 	}
 	context.run();
 	EMPP_REQUIRE_EQ(future.get(),

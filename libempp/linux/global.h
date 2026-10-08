@@ -5,7 +5,7 @@
 #define LIBEMPP_LINUX_GLOBAL_H
 
 #include <libempp/core/cxx/configs.h>
-#include <libgs/core/global.h>
+#include <riwo/core/global.h>
 
 #ifndef __linux__
 # error "This module is only available for Linux."
@@ -14,9 +14,9 @@
 # if LIBEMPP_BUILD_STATIC
 #  define LIBEMPP_LINUX_API
 # elif defined(empp_linux_EXPORTS)
-#  define LIBEMPP_LINUX_API  LIBGS_DECL_EXPORT
+#  define LIBEMPP_LINUX_API  RIWO_DECL_EXPORT
 # else //empp_linux_EXPORTS
-#  define LIBEMPP_LINUX_API  LIBGS_DECL_IMPORT
+#  define LIBEMPP_LINUX_API  RIWO_DECL_IMPORT
 # endif //empp_linux_EXPORTS
 
 # define LIBEMPP_LINUX_VAPI

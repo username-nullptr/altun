@@ -4,7 +4,7 @@
 #include "../../test.h"
 
 #include <libempp/core/sbus/sbus.h>
-#include <libgs/utils/process.h>
+#include <riwo/utils/process.h>
 
 #include <array>
 #include <chrono>
@@ -97,7 +97,7 @@ EMPP_TEST("core.sbus", "selected transport carries binary messages between proce
 	for(size_t index = 0; index < payload.size(); ++index)
 		payload[index] = static_cast<char>((index * 31U) & 0xffU);
 
-	libgs::utils::process peer;
+	riwo::utils::process peer;
 	const auto started = peer.start(
 		LIBEMPP_TEST_SBUS_PEER_FILE, ready_file.string(), result_file.string()
 	);
@@ -127,7 +127,7 @@ EMPP_TEST("core.sbus", "selected transport drains an ordered interprocess burst"
 	const auto ready_file = directory.path() / "ready";
 	const auto result_file = directory.path() / "result";
 
-	libgs::utils::process peer;
+	riwo::utils::process peer;
 	const auto started = peer.start(
 		LIBEMPP_TEST_SBUS_PEER_FILE, ready_file.string(), result_file.string(),
 		std::to_string(message_count)
@@ -161,7 +161,7 @@ EMPP_TEST("core.sbus", "shared memory reclaims a crashed reader when the ring fi
 	const auto ready_file = directory.path() / "ready";
 	const auto result_file = directory.path() / "result";
 
-	libgs::utils::process peer;
+	riwo::utils::process peer;
 	const auto started = peer.start(
 		LIBEMPP_TEST_SBUS_PEER_FILE, ready_file.string(), result_file.string(), "crash"
 	);

@@ -7,36 +7,36 @@
 namespace libempp::sbus
 {
 
-template <libgs::concepts::any_string_p...Args>
+template <riwo::concepts::any_string_p...Args>
 void publish(std::string_view topic, Args&&...args) requires (sizeof...(Args) > 0)
 {
-	libgs::utils::sbus::publish<interface>(topic, std::forward<Args>(args)...);
+	riwo::utils::sbus::publish<interface>(topic, std::forward<Args>(args)...);
 }
 
-template <libgs::utils::sbus::concepts::unregistered_type_p...Args>
+template <riwo::utils::sbus::concepts::unregistered_type_p...Args>
 void publish(std::string_view topic, Args&&...args) requires (sizeof...(Args) > 0)
 {
-	libgs::utils::sbus::publish<interface>(topic, std::forward<Args>(args)...);
+	riwo::utils::sbus::publish<interface>(topic, std::forward<Args>(args)...);
 }
 
-template <libgs::utils::sbus::concepts::topic_type...Args>
+template <riwo::utils::sbus::concepts::topic_type...Args>
 void publish(Args&&...args) requires (sizeof...(Args) > 0)
 {
-	libgs::utils::sbus::publish<interface>(std::forward<Args>(args)...);
+	riwo::utils::sbus::publish<interface>(std::forward<Args>(args)...);
 }
 
-template <libgs::concepts::match_sched<subscriber::executor_t> Exec0, typename...Args>
+template <riwo::concepts::match_sched<subscriber::executor_t> Exec0, typename...Args>
 std::pair<subscriber,uint64_t> subscribe(Exec0 &&exec, Args&&...args) requires requires
-	{ libgs::utils::sbus::subscribe<subscriber>(std::forward<Exec0>(exec), std::forward<Args>(args)...); }
+	{ riwo::utils::sbus::subscribe<subscriber>(std::forward<Exec0>(exec), std::forward<Args>(args)...); }
 {
-	return libgs::utils::sbus::subscribe<subscriber>(std::forward<Exec0>(exec), std::forward<Args>(args)...);
+	return riwo::utils::sbus::subscribe<subscriber>(std::forward<Exec0>(exec), std::forward<Args>(args)...);
 }
 
 template <typename...Args>
 std::pair<subscriber,uint64_t> subscribe(Args&&...args) requires requires
-	{ libgs::utils::sbus::subscribe<subscriber>(std::forward<Args>(args)...); }
+	{ riwo::utils::sbus::subscribe<subscriber>(std::forward<Args>(args)...); }
 {
-	return libgs::utils::sbus::subscribe<subscriber>(std::forward<Args>(args)...);
+	return riwo::utils::sbus::subscribe<subscriber>(std::forward<Args>(args)...);
 }
 
 } //namespace libempp::sbus

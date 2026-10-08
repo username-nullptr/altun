@@ -17,9 +17,9 @@
 namespace libempp::storage { namespace
 {
 
-class LIBGS_DECL_HIDDEN file_descriptor
+class RIWO_DECL_HIDDEN file_descriptor
 {
-	LIBGS_DISABLE_COPY_MOVE(file_descriptor)
+	RIWO_DISABLE_COPY_MOVE(file_descriptor)
 
 public:
 	explicit file_descriptor(int descriptor = -1) noexcept :
@@ -72,7 +72,7 @@ constexpr int probe_ambiguous = -2;
 		result : 0;
 }
 
-[[nodiscard]] libgs::optional<filesystem_info> probe_filesystem
+[[nodiscard]] riwo::optional<filesystem_info> probe_filesystem
 (int descriptor, const path_t &device, std::uint64_t offset, std::uint64_t size, bool report_ambiguous)
 {
 	probe_ptr probe(::blkid_new_probe(), &blkid_free_probe);
@@ -107,7 +107,7 @@ constexpr int probe_ambiguous = -2;
 		);
 	}
 	if( result != probe_ok )
-		return libgs::nullopt;
+		return riwo::nullopt;
 
 	filesystem_info info;
 	info.device = device;
@@ -136,17 +136,17 @@ constexpr int probe_ambiguous = -2;
 	return path;
 }
 
-struct LIBGS_DECL_HIDDEN raw_partition
+struct RIWO_DECL_HIDDEN raw_partition
 {
 	partition_info info;
 	std::uint64_t offset_bytes = 0;
 	std::uint64_t size_bytes = 0;
 };
 
-[[nodiscard]] libgs::optional<filesystem_info> probe_partition_device(const raw_partition &partition)
+[[nodiscard]] riwo::optional<filesystem_info> probe_partition_device(const raw_partition &partition)
 {
 	if( not partition.info.device )
-		return libgs::nullopt;
+		return riwo::nullopt;
 
 	// A partition node has its own block-cache mapping. Probing it directly
 	// avoids stale parent-device pages after the partition was reformatted.
@@ -154,7 +154,7 @@ struct LIBGS_DECL_HIDDEN raw_partition
 		partition.info.device->c_str(), O_RDONLY | O_CLOEXEC
 	));
 	if( descriptor.get() < 0 )
-		return libgs::nullopt;
+		return riwo::nullopt;
 
 	struct stat status {};
 	std::uint64_t size = 0;
@@ -162,7 +162,7 @@ struct LIBGS_DECL_HIDDEN raw_partition
 	if( ::fstat(descriptor.get(), &status) < 0 or not S_ISBLK(status.st_mode) or
 		::ioctl(descriptor.get(), BLKGETSIZE64, &size) < 0 or
 		size != partition.size_bytes )
-		return libgs::nullopt;
+		return riwo::nullopt;
 
 	return probe_filesystem (
 		descriptor.get(), *partition.info.device, 0, 0, false
@@ -286,7 +286,7 @@ disk_info inspect_disk(const path_t &device)
 	{
 		if( raw.size_bytes != 0 )
 		{
-			libgs::optional<filesystem_info> direct;
+			riwo::optional<filesystem_info> direct;
 			if( is_block_device )
 				direct = probe_partition_device(raw);
 
@@ -321,9 +321,9 @@ void require_partition_table(const disk_info &disk, std::string_view operation)
 
 } // namespace detail
 
-result_t<libgs::optional<filesystem_info>> inspect_filesystem(const path_t &device)
+result_t<riwo::optional<filesystem_info>> inspect_filesystem(const path_t &device)
 {
-	return detail::capture_expected<libgs::optional<filesystem_info>>([&]
+	return detail::capture_expected<riwo::optional<filesystem_info>>([&]
 	{
 		detail::ensure_path(device, "libempp::storage::inspect_filesystem");
 		file_descriptor descriptor(::open(device.c_str(), O_RDONLY | O_CLOEXEC));
@@ -335,9 +335,9 @@ result_t<libgs::optional<filesystem_info>> inspect_filesystem(const path_t &devi
 	});
 }
 
-result_t<libgs::optional<filesystem_info>> inspect_filesystem(const device_info &device)
+result_t<riwo::optional<filesystem_info>> inspect_filesystem(const device_info &device)
 {
-	return detail::capture_expected<libgs::optional<filesystem_info>>([&]
+	return detail::capture_expected<riwo::optional<filesystem_info>>([&]
 	{
 		constexpr std::string_view operation =
 			"libempp::storage::inspect_filesystem";

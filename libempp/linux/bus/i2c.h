@@ -9,7 +9,7 @@
 #else //__linux__
 
 #include <libempp/linux/global.h>
-#include <libgs/core/async_expected.h>
+#include <riwo/core/async_expected.h>
 
 namespace libempp::bus
 {
@@ -20,12 +20,12 @@ enum i2c_reg_bit {
 	reg_bit8 = 1, reg_bit16
 };
 template <i2c_reg_bit RegBit>
-using i2c_data_t = libgs::byte_unsigned_t<RegBit>;
+using i2c_data_t = riwo::byte_unsigned_t<RegBit>;
 
-template <libgs::concepts::exec Exec = asio::any_io_executor>
+template <riwo::concepts::exec Exec = asio::any_io_executor>
 class LIBEMPP_LINUX_TAPI basic_i2c
 {
-	LIBGS_DISABLE_COPY(basic_i2c)
+	RIWO_DISABLE_COPY(basic_i2c)
 
 public:
 	using executor_type = Exec;
@@ -55,19 +55,19 @@ public:
 	};
 
 public:
-	explicit basic_i2c(libgs::concepts::match_sched<Exec> auto &&exec);
-	explicit basic_i2c() requires libgs::concepts::match_def_exec<Exec>;
+	explicit basic_i2c(riwo::concepts::match_sched<Exec> auto &&exec);
+	explicit basic_i2c() requires riwo::concepts::match_def_exec<Exec>;
 
-	explicit basic_i2c(const node &dev, libgs::concepts::match_sched<Exec> auto &&exec);
-	explicit basic_i2c(const node &dev) requires libgs::concepts::match_def_exec<Exec>;
+	explicit basic_i2c(const node &dev, riwo::concepts::match_sched<Exec> auto &&exec);
+	explicit basic_i2c(const node &dev) requires riwo::concepts::match_def_exec<Exec>;
 
 	basic_i2c(handle_t &&handle, const attributes_t &attrs);
 	~basic_i2c();
 
-	template <libgs::concepts::match_sched<Exec> Exec0>
+	template <riwo::concepts::match_sched<Exec> Exec0>
 	basic_i2c(basic_i2c<Exec0> &&other) noexcept;
 
-	template <libgs::concepts::match_sched<Exec> Exec0>
+	template <riwo::concepts::match_sched<Exec> Exec0>
 	basic_i2c &operator=(basic_i2c<Exec0> &&other) noexcept;
 
 public:
@@ -84,27 +84,27 @@ public:
 
 	template <typename Token, typename Value = size_t>
 	static constexpr bool task_token_v =
-		libgs::concepts::tf_opt_token<Token,std::error_code,Value>;
+		riwo::concepts::tf_opt_token<Token,std::error_code,Value>;
 
 	template <typename Token, typename Value = size_t>
 	static constexpr bool read_token_v = task_token_v<Token,Value> and
-		not libgs::is_detached_v<libgs::token_unbound_t<Token>>;
+		not riwo::is_detached_v<riwo::token_unbound_t<Token>>;
 
 public:
-	template <reg_bit_t RegBit = reg_bit8, typename Token = libgs::use_sync_t>
-	auto write(data_t<RegBit> reg, libgs::const_buffer buffer, Token &&token = {})
+	template <reg_bit_t RegBit = reg_bit8, typename Token = riwo::use_sync_t>
+	auto write(data_t<RegBit> reg, riwo::const_buffer buffer, Token &&token = {})
 		requires is_valid_reg_bit_v<RegBit> and task_token_v<Token>;
 
-	template <reg_bit_t RegBit = reg_bit8, typename Token = libgs::use_sync_t>
+	template <reg_bit_t RegBit = reg_bit8, typename Token = riwo::use_sync_t>
 	auto write(data_t<RegBit> reg, Token &&token = {})
 		requires is_valid_reg_bit_v<RegBit> and task_token_v<Token>;
 
-	template <reg_bit_t RegBit = reg_bit8, typename Token = libgs::use_sync_t>
-	auto read(data_t<RegBit> reg, libgs::mutable_buffer buffer, Token &&token = {})
+	template <reg_bit_t RegBit = reg_bit8, typename Token = riwo::use_sync_t>
+	auto read(data_t<RegBit> reg, riwo::mutable_buffer buffer, Token &&token = {})
 		requires is_valid_reg_bit_v<RegBit> and read_token_v<Token>;
 
-	template <libgs::concepts::array_buffer Buffer,
-		reg_bit_t RegBit = reg_bit8, typename Token = libgs::use_sync_t>
+	template <riwo::concepts::array_buffer Buffer,
+		reg_bit_t RegBit = reg_bit8, typename Token = riwo::use_sync_t>
 	auto read(data_t<RegBit> reg, Token &&token = {}) requires
 		is_valid_reg_bit_v<RegBit> and read_token_v<Token,Buffer>;
 
@@ -118,21 +118,21 @@ public:
 
 public:
 	[[nodiscard]] static handle_t make_handle (
-		const node &dev, libgs::concepts::match_sched<Exec> auto &&exec,
+		const node &dev, riwo::concepts::match_sched<Exec> auto &&exec,
 		std::error_code &error
 	) noexcept;
 
 	[[nodiscard]] static handle_t make_handle (
 		const node &dev, std::error_code &error
-	) noexcept requires libgs::concepts::match_def_exec<Exec>;
+	) noexcept requires riwo::concepts::match_def_exec<Exec>;
 
-	template <libgs::concepts::match_sched<Exec> Exec0 = libgs::io_context_t&>
+	template <riwo::concepts::match_sched<Exec> Exec0 = riwo::io_context_t&>
 	[[nodiscard]] static handle_t make_handle (
-		const node &dev, Exec0 &&exec = libgs::io_context()
+		const node &dev, Exec0 &&exec = riwo::io_context()
 	);
 
 private:
-	template <libgs::concepts::exec>
+	template <riwo::concepts::exec>
 	friend class basic_i2c;
 
 	class impl;

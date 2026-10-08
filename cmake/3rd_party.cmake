@@ -9,11 +9,11 @@ if (LIBEMPP_USE_EMBEDDED_NLOHMANN)
 	)
 endif ()
 
-if (LIBEMPP_USE_EMBEDDED_LIBGS)
+if (LIBEMPP_USE_EMBEDDED_RIWO)
 	include_directories(SYSTEM
-		${${PRO_NAME}_3rd_path}/libgs/3rd_party/spdlog
-		${${PRO_NAME}_3rd_path}/libgs/3rd_party/asio
-		${${PRO_NAME}_3rd_path}/libgs
-		${LIBGS_CONFIG_INCLUDE}
+		${${PRO_NAME}_3rd_path}/riwo/3rd_party/spdlog
+		${${PRO_NAME}_3rd_path}/riwo/3rd_party/asio
+		${${PRO_NAME}_3rd_path}/riwo
+		${RIWO_CONFIG_INCLUDE}
 	)
 endif ()

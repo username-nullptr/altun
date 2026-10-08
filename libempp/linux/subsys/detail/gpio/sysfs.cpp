@@ -102,7 +102,7 @@ bool read_uint_file(const fs::path &path, uint32_t &value, std::error_code &erro
 	if( not read )
 		return false;
 
-	const auto result = libgs::strtls::to_uint32(text);
+	const auto result = riwo::strtls::to_uint32(text);
 	if( not result )
 	{
 		error = std::make_error_code(std::errc::invalid_argument);
@@ -340,7 +340,7 @@ private:
 		if( not read_descriptor(m_value_fd, text, error) )
 			return false;
 
-		const auto result = libgs::strtls::to_bool(text);
+		const auto result = riwo::strtls::to_bool(text);
 		if( not result )
 		{
 			error = std::make_error_code(std::errc::invalid_argument);

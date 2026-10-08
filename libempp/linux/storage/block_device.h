@@ -16,7 +16,7 @@ namespace libempp::storage
 
 class LIBEMPP_LINUX_API block_device
 {
-	LIBGS_DISABLE_COPY(block_device)
+	RIWO_DISABLE_COPY(block_device)
 	class impl;
 
 public:
@@ -39,8 +39,8 @@ public:
 
 public:
 	// offset and the returned size are expressed in bytes.
-	[[nodiscard]] libgs::io_expected read_some_at (
-		offset_t offset, libgs::mutable_buffer buffer
+	[[nodiscard]] riwo::io_expected read_some_at (
+		offset_t offset, riwo::mutable_buffer buffer
 	);
 	[[nodiscard]] result_t<block_info> refresh();
 	[[nodiscard]] result_t<block_info> info() const;

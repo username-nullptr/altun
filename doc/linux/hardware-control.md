@@ -47,7 +47,7 @@ node.consumer = "status";
 
 gpio output(node);
 output.set(true);
-auto value = output.get(); // libgs::sys_expected<bool>
+auto value = output.get(); // riwo::sys_expected<bool>
 ```
 
 `gpio_group` manages several lines on one chip; `gpio_manager` manages groups across chips. Both support lookup by line/index or unique alias and provide batch `set()`, `rising()`, `falling()`, `invert()`, and `get()` operations.
@@ -82,7 +82,7 @@ gpio input(button);
 input.on_event({.edge = gpio::edge_t::both}, [](gpio::event_t event) {
     std::cout << event.timestamp_ns << '\n';
 });
-libgs::exec();
+riwo::exec();
 ```
 
 The application must keep the executor running. Inspect the compiled backend with `gpio::backend_name()`.

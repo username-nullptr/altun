@@ -21,7 +21,7 @@ struct mount_options : operation_options
 		helper,
 		automatic
 	};
-	libgs::optional<std::string> filesystem_type {};
+	riwo::optional<std::string> filesystem_type {};
 
 	// Linux MS_* flags from <sys/mount.h>.
 	unsigned long flags = 0;
@@ -67,7 +67,7 @@ struct mount_info
 
 [[nodiscard]] LIBEMPP_LINUX_API result_t<std::vector<mount_info>> mounts();
 
-[[nodiscard]] LIBEMPP_LINUX_API result_t<libgs::optional<mount_info>>
+[[nodiscard]] LIBEMPP_LINUX_API result_t<riwo::optional<mount_info>>
 find_mount_by_target(const path_t &target);
 
 [[nodiscard]] LIBEMPP_LINUX_API result_t<std::vector<mount_info>>

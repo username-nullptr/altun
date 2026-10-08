@@ -2,7 +2,7 @@
 
 [Linux module](../linux.md) · [Execution model](../io-model.md)
 
-The interfaces in `libempp::bus` support synchronous calls and LibGS completion tokens. Link `empp.linux`.
+The interfaces in `libempp::bus` support synchronous calls and Riwo completion tokens. Link `empp.linux`.
 
 ## I²C
 
@@ -16,10 +16,10 @@ libempp::bus::i2c device;
 device.open({"/dev/i2c-1", 0x48}, error);
 
 std::uint8_t value = 0;
-device.read(0x00, libgs::mutable_buffer(&value, 1), error);
+device.read(0x00, riwo::mutable_buffer(&value, 1), error);
 
 value = 0x80;
-device.write(0x01, libgs::const_buffer(&value, 1), error);
+device.write(0x01, riwo::const_buffer(&value, 1), error);
 ```
 
 Use `reg_bit16` for a 16-bit register address. A fixed-size read can return an array:
@@ -44,8 +44,8 @@ device.open({"/dev/spidev0.0", 1'000'000}, error);
 std::array<std::uint8_t, 4> tx {0x9f, 0x00, 0x00, 0x00};
 std::array<std::uint8_t, 4> rx {};
 device.transfer(
-    libgs::const_buffer(tx.data(), tx.size()),
-    libgs::mutable_buffer(rx.data(), rx.size()),
+    riwo::const_buffer(tx.data(), tx.size()),
+    riwo::mutable_buffer(rx.data(), rx.size()),
     error
 );
 ```

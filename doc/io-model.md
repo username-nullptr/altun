@@ -2,7 +2,7 @@
 
 [Documentation](README.md)
 
-libEMpp asynchronous APIs follow Asio and LibGS conventions. Executor-bound types expose `executor_type`, `executor_t`, and `get_executor()`; convenience aliases use the default LibGS execution context.
+libEMpp asynchronous APIs follow Asio and Riwo conventions. Executor-bound types expose `executor_type`, `executor_t`, and `get_executor()`; convenience aliases use the default Riwo execution context.
 
 ## Completion and lifetime
 
@@ -23,10 +23,10 @@ asio::io_context context;
 auto strand = asio::make_strand(context);
 libempp::bus::basic_i2c<decltype(strand)> sensor(strand);
 
-asio::co_spawn(strand, [&]() -> libgs::awaitable<void> {
+asio::co_spawn(strand, [&]() -> riwo::awaitable<void> {
     std::array<std::uint8_t, 2> value {};
-    co_await sensor.read(0x00, libgs::buffer(value), libgs::use_awaitable);
-}, libgs::detached);
+    co_await sensor.read(0x00, riwo::buffer(value), riwo::use_awaitable);
+}, riwo::detached);
 ```
 
 A mutex around only the initiating call does not serialize later completion or cancellation.

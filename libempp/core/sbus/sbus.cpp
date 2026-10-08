@@ -8,12 +8,12 @@ namespace libempp::sbus
 
 void publish(std::string_view topic, const void *buffer, size_t size)
 {
-	libgs::utils::sbus::publish<interface>(topic, buffer, size);
+	riwo::utils::sbus::publish<interface>(topic, buffer, size);
 }
 
 void publish(std::string_view topic, const char *str)
 {
-	libgs::utils::sbus::publish<interface>(topic, str, strlen(str));
+	riwo::utils::sbus::publish<interface>(topic, str, strlen(str));
 }
 
 } //namespace libempp::sbus

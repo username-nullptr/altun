@@ -11,7 +11,7 @@ class cache_runtime
 public:
 	cache_runtime() :
 		cache(context),
-		worker([this] { libgs::exec(context); }) {}
+		worker([this] { riwo::exec(context); }) {}
 
 	~cache_runtime()
 	{

@@ -11,9 +11,9 @@ namespace libempp::subsys
 
 namespace fs = std::filesystem;
 
-class LIBGS_DECL_HIDDEN backlight::impl
+class RIWO_DECL_HIDDEN backlight::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	impl() = default;
@@ -96,7 +96,7 @@ public:
 		open(node, error);
 		if( error )
 		{
-			libgs::system_error::loc_throw (
+			riwo::system_error::loc_throw (
 				error, "libempp::subsys::backlight::open"
 			);
 		}
@@ -131,7 +131,7 @@ public:
 			error = std::error_code(errno, std::system_category());
 			return false;
 		}
-		const auto result = libgs::strtls::to_uint32 (
+		const auto result = riwo::strtls::to_uint32 (
 			std::string_view(buffer, static_cast<size_t>(size))
 		);
 		if( not result )
@@ -265,7 +265,7 @@ backlight &backlight::set_brightness(brightness_t brightness)
 	set_brightness(brightness, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw (
+		riwo::system_error::loc_throw (
 			error, "libempp::subsys::backlight::set_brightness"
 		);
 	}
@@ -300,7 +300,7 @@ backlight &backlight::set_power(power_t power)
 	set_power(power, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw (
+		riwo::system_error::loc_throw (
 			error, "libempp::subsys::backlight::set_power"
 		);
 	}

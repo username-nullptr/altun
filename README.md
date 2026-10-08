@@ -7,7 +7,7 @@ libEMpp is a C++20 component library for embedded applications. The source tree 
 | Core | `empp.core` | Logging, INI settings, SBus, shared-library plugins, and subprocess plugins |
 | Linux | `empp.linux` | udev, storage, I²C, SPI, GPIO, PWM, LEDs, backlights, and serial-port binding |
 
-`empp.linux` is built only on Linux and publicly links `empp.core`. LibGS is included as a Git submodule and provides the execution, logging, and utility foundations.
+`empp.linux` is built only on Linux and publicly links `empp.core`. Riwo is included as a Git submodule and provides the execution, logging, and utility foundations.
 
 ## Build
 
@@ -72,7 +72,7 @@ doc/               Build and module guides
 examples/          Runnable API examples
 test/              Functional, stress, and performance tests
 cmake/             Build configuration
-3rd_party/libgs/   Bundled LibGS source
+3rd_party/riwo/   Bundled Riwo source
 ```
 
 Hardware writes and storage mutation take effect immediately. Verify the device, permissions, electrical parameters, mount state, and stable device identity before using those APIs.

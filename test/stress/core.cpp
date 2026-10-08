@@ -66,7 +66,7 @@ EMPP_TEST("core", "plugin descriptor parsing pressure")
 
 EMPP_TEST("core", "shared library interface concurrency pressure")
 {
-	libgs::library library(std::filesystem::path(LIBEMPP_TEST_PLUGIN_FILE));
+	riwo::library library(std::filesystem::path(LIBEMPP_TEST_PLUGIN_FILE));
 	EMPP_REQUIRE(library.load());
 	const auto function = library.interface<int(int)>("libempp_test_double");
 	EMPP_REQUIRE(function);

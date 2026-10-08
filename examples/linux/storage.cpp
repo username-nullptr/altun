@@ -8,7 +8,7 @@
 
 namespace storage = libempp::storage;
 
-void print_filesystem(const libgs::optional<storage::filesystem_info> &info,
+void print_filesystem(const riwo::optional<storage::filesystem_info> &info,
 	std::string_view indent)
 {
 	if( not info )
@@ -45,7 +45,7 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 	const storage::path_t device = argv[1];
-	libgs::optional<storage::device_info> selected;
+	riwo::optional<storage::device_info> selected;
 	const auto resolved = storage::resolve_device(device);
 	if( resolved )
 		selected = *resolved;

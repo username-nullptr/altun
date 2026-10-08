@@ -5,8 +5,8 @@
 #define LIBEMPP_CORE_PLUGIN_MANAGER_H
 
 #include <libempp/core/global.h>
-#include <libgs/core/system/library.h>
-#include <libgs/utils/process.h>
+#include <riwo/core/system/library.h>
+#include <riwo/utils/process.h>
 #include <nlohmann/json.hpp>
 #include <map>
 
@@ -15,16 +15,16 @@ namespace libempp
 
 class LIBEMPP_CORE_API plugin_manager
 {
-	LIBGS_DISABLE_COPY_MOVE(plugin_manager)
+	RIWO_DISABLE_COPY_MOVE(plugin_manager)
 
 public:
 	using path_t = std::filesystem::path;
 	using json_t = nlohmann::json;
 
-	using library_t = std::shared_ptr<libgs::library>;
+	using library_t = std::shared_ptr<riwo::library>;
 	using libraries_t = std::map<std::string,library_t>;
 
-	using process_t = std::shared_ptr<libgs::utils::process>;
+	using process_t = std::shared_ptr<riwo::utils::process>;
 	using processes_t = std::map<std::string,process_t>;
 
 	struct library_node
@@ -34,8 +34,8 @@ public:
 	};
 	struct process_node : library_node
 	{
-		std::vector<libgs::value> args {};
-		std::map<std::string,libgs::value> envs {};
+		std::vector<riwo::value> args {};
+		std::map<std::string,riwo::value> envs {};
 	};
 
 public:
@@ -50,23 +50,23 @@ public:
 	[[nodiscard]] static json_t config() noexcept;
 
 public:
-	[[nodiscard]] static libgs::optional<library_t> library(std::string_view name) noexcept;
+	[[nodiscard]] static riwo::optional<library_t> library(std::string_view name) noexcept;
 	[[nodiscard]] static libraries_t libraries() noexcept;
 
 	/* Environment variables :
 		LIBEMPP_PLUGIN_GROUP
 		LIBEMPP_PLUGIN_NAME
 	*/
-	[[nodiscard]] static libgs::optional<process_t> process(std::string_view name) noexcept;
+	[[nodiscard]] static riwo::optional<process_t> process(std::string_view name) noexcept;
 	[[nodiscard]] static processes_t processes() noexcept;
 
 public:
 	template <typename Func>
-	static constexpr bool is_predicate_v = libgs::concepts::callable_ret <
+	static constexpr bool is_predicate_v = riwo::concepts::callable_ret <
 		Func, bool, std::string_view, library_t
 	>;
 	template <typename Func>
-	[[nodiscard]] static libgs::optional<library_t> library(Func &&predicate)
+	[[nodiscard]] static riwo::optional<library_t> library(Func &&predicate)
 		noexcept requires is_predicate_v<Func>;
 };
 

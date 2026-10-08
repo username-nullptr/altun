@@ -4,7 +4,7 @@
 #include "plugin_manager.h"
 #include "log.h"
 
-#include <libgs/core/system/app_utls.h>
+#include <riwo/core/system/app_utls.h>
 #include <set>
 
 namespace libempp
@@ -25,9 +25,9 @@ std::atomic_bool g_dirty {true};
 std::vector<plugin_manager::library_node> g_library_nodes {};
 std::vector<plugin_manager::process_node> g_process_nodes {};
 
-class LIBGS_DECL_HIDDEN process_registry final
+class RIWO_DECL_HIDDEN process_registry final
 {
-	LIBGS_DISABLE_COPY_MOVE(process_registry)
+	RIWO_DISABLE_COPY_MOVE(process_registry)
 
 public:
 	process_registry() = default;
@@ -39,23 +39,23 @@ public:
 		// one is being joined.
 		for(auto &[name, process] : processes)
 		{
-			LIBGS_UNUSED(name);
+			RIWO_UNUSED(name);
 			if( process and process->joinable() )
 				process->kill();
 		}
 		for(auto &[name, process] : processes)
 		{
-			LIBGS_UNUSED(name);
+			RIWO_UNUSED(name);
 			if( not process or not process->joinable() )
 				continue;
 
 			std::error_code error;
-			LIBGS_UNUSED(process->join(error));
+			RIWO_UNUSED(process->join(error));
 			if( process->joinable() )
 			{
 				// A concurrent join can temporarily own the reap operation.  Release
 				// this handle so map destruction can never terminate the application.
-				process->cancel(libgs::utils::process::cancel_option::kill);
+				process->cancel(riwo::utils::process::cancel_option::kill);
 			}
 		}
 	}
@@ -75,8 +75,8 @@ void plugin_manager::set_config_file(const path_t &file_name)
 		);
 		return ;
 	}
-	libgs::app::absolute_path(file_name)
-	.and_then([](const path_t &config_file) -> libgs::sys_expected<path_t>
+	riwo::app::absolute_path(file_name)
+	.and_then([](const path_t &config_file) -> riwo::sys_expected<path_t>
 	{
 		std::ifstream file(config_file);
 		if( not file.is_open() )
@@ -103,13 +103,13 @@ void plugin_manager::set_config_file(const path_t &file_name)
 		}
 		return config_file;
 	})
-	.or_else([&](const libgs::error_code &error)
+	.or_else([&](const riwo::error_code &error)
 	{
 		libempp_clog_error("LibEMpp.Core",
 			"plugin_manager: Set config file '{}' failed: {}.",
 			file_name, error
 		);
-		return libgs::sys_expected<path_t>{""};
+		return riwo::sys_expected<path_t>{""};
 	});
 }
 
@@ -135,16 +135,16 @@ static plugin_manager::processes_t &managed_processes() noexcept
 
 static plugin_manager::libraries_t g_libraries;
 
-class LIBGS_DECL_HIDDEN config_parser
+class RIWO_DECL_HIDDEN config_parser
 {
-	LIBGS_DISABLE_COPY_MOVE(config_parser)
+	RIWO_DISABLE_COPY_MOVE(config_parser)
 
 public:
 	struct app_desc
 	{
 		std::string file_name {};
-		std::vector<libgs::value> args {};
-		std::map<std::string,libgs::value> envs {};
+		std::vector<riwo::value> args {};
+		std::map<std::string,riwo::value> envs {};
 	};
 	explicit config_parser(std::string_view group) :
 		m_group(group) {}
@@ -155,14 +155,14 @@ public:
 public:
 	void parse() noexcept
 	{
-		auto root_path = libgs::strtls::file_path(g_file_name);
+		auto root_path = riwo::strtls::file_path(g_file_name);
 		try {
 			// Remove Duplicates.
 			for(auto config = m_group.empty() ? g_config : g_config[m_group];
 				auto &pack_obj : config)
 			{
 				auto path = pack_obj["path"].get<std::string>() + "/";
-				if( not libgs::app::is_absolute_path(path) )
+				if( not riwo::app::is_absolute_path(path) )
 					path.insert(0, root_path);
 
 				if( auto apps_obj = pack_obj["apps"]; apps_obj.is_object() )
@@ -332,7 +332,7 @@ private:
 void plugin_manager::parse(std::string_view group)
 {
 	if( g_initialized )
-		libgs::runtime_error::loc_throw("Already initialized.");
+		riwo::runtime_error::loc_throw("Already initialized.");
 
 	g_process_nodes.clear();
 	g_library_nodes.clear();
@@ -365,7 +365,7 @@ void plugin_manager::parse(std::string_view group)
 void plugin_manager::load(std::string_view group)
 {
 	if( g_initialized )
-		libgs::runtime_error::loc_throw("Already initialized.");
+		riwo::runtime_error::loc_throw("Already initialized.");
 
 	if( g_dirty )
 		parse(group);
@@ -382,7 +382,7 @@ void plugin_manager::load(std::string_view group)
 			continue;
 		}
 		auto [it, inserted] = managed_processes().emplace (
-			node.name, std::make_shared<libgs::utils::process> (
+			node.name, std::make_shared<riwo::utils::process> (
 				node.file_name, node.args
 			)
 		);
@@ -399,7 +399,7 @@ void plugin_manager::load(std::string_view group)
 				node.file_name
 			);
 		}).
-		or_else([&](const libgs::error_code &error)
+		or_else([&](const riwo::error_code &error)
 		{
 			libempp_clog_warning("LibEMpp.Core",
 				"plugin_manager: Load application '{}' failed: {}.",
@@ -418,7 +418,7 @@ void plugin_manager::load(std::string_view group)
 			continue;
 		}
 		auto [it, inserted] = g_libraries.emplace (
-			name, std::make_shared<libgs::library>(file_name)
+			name, std::make_shared<riwo::library>(file_name)
 		);
 		assert(inserted);
 
@@ -429,7 +429,7 @@ void plugin_manager::load(std::string_view group)
 				"plugin_manager: Load plugin: '{}'.", file_name
 			);
 		}).
-		or_else([&](const libgs::error_code &error)
+		or_else([&](const riwo::error_code &error)
 		{
 			libempp_clog_warning("LibEMpp.Core",
 				"plugin_manager: Load plugin '{}' failed: {}.",
@@ -454,11 +454,11 @@ plugin_manager::json_t plugin_manager::config() noexcept
 	return g_config;
 }
 
-libgs::optional<plugin_manager::library_t> plugin_manager::library(std::string_view name) noexcept
+riwo::optional<plugin_manager::library_t> plugin_manager::library(std::string_view name) noexcept
 {
 	auto it = g_libraries.find(std::string(name));
 	return it == g_libraries.end() ?
-		libgs::optional<library_t>() : libgs::make_optional(it->second);
+		riwo::optional<library_t>() : riwo::make_optional(it->second);
 }
 
 plugin_manager::libraries_t plugin_manager::libraries() noexcept
@@ -466,12 +466,12 @@ plugin_manager::libraries_t plugin_manager::libraries() noexcept
 	return g_libraries;
 }
 
-libgs::optional<plugin_manager::process_t> plugin_manager::process(std::string_view name) noexcept
+riwo::optional<plugin_manager::process_t> plugin_manager::process(std::string_view name) noexcept
 {
 	auto &processes = managed_processes();
 	auto it = processes.find(std::string(name));
 	return it == processes.end() ?
-		libgs::optional<process_t>() : libgs::make_optional(it->second);
+		riwo::optional<process_t>() : riwo::make_optional(it->second);
 }
 
 plugin_manager::processes_t plugin_manager::processes() noexcept

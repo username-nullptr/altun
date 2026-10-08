@@ -4,8 +4,8 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(MAJOR_VERSION 0)
-set(MINOR_VERSION 6)
-set(PATCH_VERSION 2)
+set(MINOR_VERSION 7)
+set(PATCH_VERSION 0)
 
 set(PRO_VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION})
 set(PRO_NAME libEMpp)
@@ -44,7 +44,7 @@ add_subdirectory(libempp)
 # Generate the installed package only after every provider and exported target
 # has been resolved.  External providers choose their concrete imported target
 # names while configuring 3rd_party, so generating this file earlier leaves
-# empty target names in LibGSConfig.cmake.
+# empty target names in RiwoConfig.cmake.
 include(provider)
 
 if (BUILD_TESTING)

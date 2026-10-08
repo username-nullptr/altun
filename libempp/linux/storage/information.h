@@ -15,10 +15,10 @@ namespace libempp::storage
 {
 
 [[nodiscard]] LIBEMPP_LINUX_API
-result_t<libgs::optional<filesystem_info>> inspect_filesystem(const path_t &device);
+result_t<riwo::optional<filesystem_info>> inspect_filesystem(const path_t &device);
 
 [[nodiscard]] LIBEMPP_LINUX_API
-result_t<libgs::optional<filesystem_info>> inspect_filesystem(const device_info &device);
+result_t<riwo::optional<filesystem_info>> inspect_filesystem(const device_info &device);
 
 [[nodiscard]] LIBEMPP_LINUX_API
 result_t<disk_info> inspect_disk(const path_t &device);

@@ -9,8 +9,8 @@
 #else //__linux__
 
 #include <libempp/linux/udev/properties.h>
-#include <libgs/utils/signal_slot.h>
-#include <libgs/core/execution.h>
+#include <riwo/utils/signal_slot.h>
+#include <riwo/core/execution.h>
 #include <libudev.h>
 
 namespace libempp::udev { namespace detail {
@@ -51,22 +51,22 @@ struct LIBEMPP_LINUX_API device_event
 	[[nodiscard]] std::optional<std::string_view> property(std::string_view key) const noexcept;
 };
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec = asio::any_io_executor>
+template <subsys_enum Subsys, riwo::concepts::exec Exec = asio::any_io_executor>
 	requires subsys::is_valid_v<Subsys>
 class LIBEMPP_LINUX_TAPI basic_event
 {
-	LIBGS_DISABLE_COPY_MOVE(basic_event)
+	RIWO_DISABLE_COPY_MOVE(basic_event)
 
 public:
 	using executor_type = Exec;
 	using executor_t = executor_type;
 
 	using handle_t = asio::posix::basic_stream_descriptor<executor_t>;
-	using signal_t = libgs::utils::signal<libgs::awaitable<void>(device_event)>;
-	using error_signal_t = libgs::utils::signal<libgs::awaitable<void>(std::error_code)>;
+	using signal_t = riwo::utils::signal<riwo::awaitable<void>(device_event)>;
+	using error_signal_t = riwo::utils::signal<riwo::awaitable<void>(std::error_code)>;
 
-	explicit basic_event(libgs::concepts::match_sched<Exec> auto &&exec);
-	basic_event() requires libgs::concepts::match_def_exec<Exec>;
+	explicit basic_event(riwo::concepts::match_sched<Exec> auto &&exec);
+	basic_event() requires riwo::concepts::match_def_exec<Exec>;
 	~basic_event();
 
 public:

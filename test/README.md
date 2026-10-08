@@ -2,7 +2,7 @@
 
 [Project](../README.md) · [Build guide](../doc/getting-started.md)
 
-CTest names are prefixed with `empp.` so libEMpp tests can be selected independently from bundled LibGS tests.
+CTest names are prefixed with `empp.` so libEMpp tests can be selected independently from bundled Riwo tests.
 
 ## Functional
 
@@ -73,11 +73,24 @@ build-test/output/bin/empp.test.core \
 
 The runner also reads `LIBEMPP_TEST_CASE`, `LIBEMPP_TEST_REPEAT`, `LIBEMPP_TEST_SEED`, and `LIBEMPP_TEST_FAIL_FAST=1`.
 
+## Installed package
+
+`empp.cmake.install-consumer` installs the current build into an isolated
+prefix, configures a standalone downstream project with `find_package`, and
+builds and runs consumers of every installed component and compatibility
+target. It also verifies that the package rejects an unavailable component.
+
+```sh
+ctest --test-dir build-test \
+  -R '^empp\.cmake\.install-consumer$' --output-on-failure
+```
+
 ## Test configuration
 
 | Option | Default | Purpose |
 | --- | :---: | --- |
-| `BUILD_TESTING` | `OFF` | Build functional tests |
+| `BUILD_TESTING` | `OFF` | Enable CTest and build functional tests |
+| `LIBEMPP_BUILD_CMAKE_TESTS` | value of `BUILD_TESTING` | Test the installed CMake package |
 | `LIBEMPP_BUILD_STRESS_TESTS` | `OFF` | Build stress tests |
 | `LIBEMPP_BUILD_PERFORMANCE_TESTS` | `OFF` | Build benchmarks |
 | `LIBEMPP_ENABLE_TEST_SANITIZERS` | `OFF` | Enable ASan and UBSan |

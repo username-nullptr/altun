@@ -47,8 +47,8 @@ int main(int argc, const char *argv[])
 			return 1;
 		}
 		const auto transferred = device.transfer (
-			libgs::const_buffer(transmitted.data(), transmitted.size()),
-			libgs::mutable_buffer(received.data(), received.size()), error
+			riwo::const_buffer(transmitted.data(), transmitted.size()),
+			riwo::mutable_buffer(received.data(), received.size()), error
 		);
 		if( error )
 		{

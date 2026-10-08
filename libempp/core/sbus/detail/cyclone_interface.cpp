@@ -7,9 +7,9 @@
 #include "cyclone_message.h"
 #include "log.h"
 
-#include <libgs/core/lock_free_queue.h>
-#include <libgs/core/shared_mutex.h>
-#include <libgs/utils/signal_slot.h>
+#include <riwo/core/lock_free_queue.h>
+#include <riwo/core/shared_mutex.h>
+#include <riwo/utils/signal_slot.h>
 
 #include <dds/version.h>
 #include <dds/dds.h>
@@ -21,7 +21,7 @@ namespace libempp::sbus { namespace
 using payload_buffer_t = std::vector<std::byte>;
 using shared_payload_t = std::shared_ptr<const payload_buffer_t>;
 
-struct LIBGS_DECL_HIDDEN transparent_string_hash
+struct RIWO_DECL_HIDDEN transparent_string_hash
 {
 	using is_transparent = void;
 
@@ -33,7 +33,7 @@ struct LIBGS_DECL_HIDDEN transparent_string_hash
 	}
 };
 
-class LIBGS_DECL_HIDDEN payload_t
+class RIWO_DECL_HIDDEN payload_t
 {
 public:
 	payload_t(const void *data, size_t size) :
@@ -109,12 +109,12 @@ constexpr size_t g_shared_payload_threshold = 64 * 1'024;
 [[noreturn]] void uncaught_exception(const std::exception &ex) noexcept
 {
 	libempp_clog_critical("LibEMpp.Core", "Uncaught exception: {}", ex);
-	libgs::forced_termination();
+	riwo::forced_termination();
 }
 
-class /* LIBGS_DECL_HIDDEN */ subscriber_thread
+class /* RIWO_DECL_HIDDEN */ subscriber_thread
 {
-	LIBGS_DISABLE_COPY_MOVE(subscriber_thread)
+	RIWO_DISABLE_COPY_MOVE(subscriber_thread)
 
 protected:
 	subscriber_thread() = default;
@@ -186,11 +186,11 @@ private:
 	std::thread m_thread {};
 };
 
-class /* LIBGS_DECL_HIDDEN */ global_subscriber : public subscriber_thread
+class /* RIWO_DECL_HIDDEN */ global_subscriber : public subscriber_thread
 {
-	LIBGS_DISABLE_COPY_MOVE(global_subscriber)
+	RIWO_DISABLE_COPY_MOVE(global_subscriber)
 
-	libgs::circular_lock_free_queue <
+	riwo::circular_lock_free_queue <
 		std::pair<std::string,payload_t>, g_queue_max_size
 	> m_queue {};
 
@@ -224,15 +224,15 @@ public:
 		notify();
 	}
 
-	libgs::utils::signal<void(std::string_view,payload_t)> received;
+	riwo::utils::signal<void(std::string_view,payload_t)> received;
 };
 
 using global_subscriber_ptr = std::shared_ptr<global_subscriber>;
 
-class /* LIBGS_DECL_HIDDEN */ subscriber : public subscriber_thread
+class /* RIWO_DECL_HIDDEN */ subscriber : public subscriber_thread
 {
-	LIBGS_DISABLE_COPY_MOVE(subscriber)
-	libgs::circular_lock_free_queue<payload_t,g_queue_max_size> m_queue {};
+	RIWO_DISABLE_COPY_MOVE(subscriber)
+	riwo::circular_lock_free_queue<payload_t,g_queue_max_size> m_queue {};
 
 public:
 	subscriber()
@@ -260,16 +260,16 @@ public:
 		notify();
 	}
 
-	libgs::utils::signal<void(payload_t)> received;
+	riwo::utils::signal<void(payload_t)> received;
 };
 
 using subscriber_ptr = std::shared_ptr<subscriber>;
 
 } //namespace
 
-class LIBGS_DECL_HIDDEN cyclone_interface::impl
+class RIWO_DECL_HIDDEN cyclone_interface::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 	using subscriber_map = std::unordered_map <
 		uint64_t, subscriber_ptr
@@ -366,16 +366,16 @@ public:
 	topic_map m_subscribers {};
 
 	std::unordered_map<uint64_t,std::string> m_topics_by_sid {};
-	mutable libgs::shared_mutex m_subscribers_lock {};
+	mutable riwo::shared_mutex m_subscribers_lock {};
 
 	std::unordered_map<uint64_t,
 		global_subscriber_ptr
 	> m_global_subscribers {};
 
-	mutable libgs::shared_mutex m_global_subscribers_lock {};
+	mutable riwo::shared_mutex m_global_subscribers_lock {};
 };
 
-LIBGS_DECL_HIDDEN void bridge_cyclone_data_available (
+RIWO_DECL_HIDDEN void bridge_cyclone_data_available (
 	std::string_view topic, const void *data, size_t size
 );
 namespace
@@ -393,7 +393,7 @@ std::unordered_map <
 
 interface_set g_global_interfaces {};
 topic_interface_map g_topic_interfaces {};
-libgs::shared_mutex m_objs_lock {};
+riwo::shared_mutex m_objs_lock {};
 
 asio::io_context g_ioc {};
 std::thread g_ioc_thread {};
@@ -553,7 +553,7 @@ void bridge_cyclone_data_available(std::string_view topic, const void *data, siz
 cyclone_interface::cyclone_interface() :
 	m_impl(std::make_unique<impl>())
 {
-	LIBGS_UNUSED(g_runtime_guard);
+	RIWO_UNUSED(g_runtime_guard);
 }
 
 cyclone_interface::~cyclone_interface() = default;
@@ -649,7 +649,7 @@ void cyclone_interface::init()
 	libempp_clog_debug("LibEMpp.Core", "libempp.sbus.init finished.");
 
 	// Start the event loop in a separate thread.
-	g_ioc_thread = std::thread([] { libgs::exec(g_ioc); });
+	g_ioc_thread = std::thread([] { riwo::exec(g_ioc); });
 }
 
 void cyclone_interface::publish(std::string_view topic, const void *buffer, size_t size)
@@ -657,7 +657,7 @@ void cyclone_interface::publish(std::string_view topic, const void *buffer, size
 	std::span view {
 		static_cast<const std::byte*>(buffer), size
 	};
-	libgs::dispatch(g_ioc,
+	riwo::dispatch(g_ioc,
 	[topic = std::string(topic), payload = payload_buffer_t{ view.begin(), view.end() }]
 	{
 		auto msg = libempp_sbus_message__alloc();
@@ -668,9 +668,9 @@ void cyclone_interface::publish(std::string_view topic, const void *buffer, size
 			);
 			return ;
 		}
-		msg->topic = libgs::remove_const(topic.c_str());
+		msg->topic = riwo::remove_const(topic.c_str());
 		msg->content._buffer = payload.empty() ?
-			nullptr : reinterpret_cast<char*>(libgs::remove_const(payload.data()));
+			nullptr : reinterpret_cast<char*>(riwo::remove_const(payload.data()));
 
 		msg->content._length = msg->content._maximum = payload.size();
 		auto res= dds_write(g_writer, msg);
@@ -726,7 +726,7 @@ void cyclone_interface::cancel_topic(std::string_view topic)
 		{
 			for(auto &[sid, subscriber] : it->second)
 			{
-				libgs::ignore_unused(subscriber);
+				riwo::ignore_unused(subscriber);
 				m_impl->m_topics_by_sid.erase(sid);
 			}
 			m_impl->m_subscribers.erase(it);
@@ -809,7 +809,7 @@ void cyclone_interface::cancel()
 	std::unique_lock objs_lock(m_objs_lock);
 	for(auto &[topic, subscribers] : m_impl->m_subscribers)
 	{
-		libgs::ignore_unused(subscribers);
+		riwo::ignore_unused(subscribers);
 		if( auto pos = g_topic_interfaces.find(topic); pos != g_topic_interfaces.end() )
 		{
 			pos->second.erase(this);

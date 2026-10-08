@@ -41,13 +41,13 @@ int main(int argc, const char *argv[])
 		{
 			value = static_cast<uint8_t>(parse_number(argv[4], 0xff));
 			transferred = device.write (
-				reg, libgs::const_buffer(&value, 1), error
+				reg, riwo::const_buffer(&value, 1), error
 			);
 		}
 		else
 		{
 			transferred = device.read (
-				reg, libgs::mutable_buffer(&value, 1), error
+				reg, riwo::mutable_buffer(&value, 1), error
 			);
 		}
 		if(error)

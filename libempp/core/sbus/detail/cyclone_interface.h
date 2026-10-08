@@ -13,7 +13,7 @@ namespace libempp::sbus
 class LIBEMPP_CORE_API cyclone_interface final :
 	public std::enable_shared_from_this<cyclone_interface>
 {
-	LIBGS_DISABLE_COPY_MOVE(cyclone_interface)
+	RIWO_DISABLE_COPY_MOVE(cyclone_interface)
 
 public:
 	friend void bridge_cyclone_data_available (

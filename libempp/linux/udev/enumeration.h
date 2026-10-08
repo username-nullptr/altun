@@ -8,7 +8,7 @@
 #else //__linux__
 
 #include <libempp/linux/udev/properties.h>
-#include <libgs/core/value.h>
+#include <riwo/core/value.h>
 #include <libudev.h>
 
 namespace libempp::udev { namespace detail {
@@ -25,8 +25,8 @@ class LIBEMPP_LINUX_TAPI enumeration
 {
 public:
 	// Retrieve a device that matches the supplied properties.
-	enumeration(std::string_view pro_key, const libgs::value &pro_value);
-	enumeration(std::initializer_list<std::pair<std::string_view, libgs::value>> properties);
+	enumeration(std::string_view pro_key, const riwo::value &pro_value);
+	enumeration(std::initializer_list<std::pair<std::string_view, riwo::value>> properties);
 	enumeration(const properties_t &properties);
 
 	enumeration(); // Invalid instance.
@@ -39,8 +39,8 @@ public:
 	enumeration &operator=(enumeration &&other) noexcept;
 
 public:
-	[[nodiscard]] libgs::optional<libgs::value> property (
-		libgs::concepts::string_p<char> auto &&key
+	[[nodiscard]] riwo::optional<riwo::value> property (
+		riwo::concepts::string_p<char> auto &&key
 	) const noexcept;
 
 	[[nodiscard]] std::vector<std::string> property_keys() const;
@@ -54,7 +54,7 @@ public:
 
 public: // Retrieve all devices that match the supplied properties.
 	[[nodiscard]] static std::vector<enumeration> list (
-		std::string_view pro_key, const libgs::value &pro_value
+		std::string_view pro_key, const riwo::value &pro_value
 	);
 	[[nodiscard]] static std::vector<enumeration> list (
 		const properties_t &properties = {}

@@ -20,7 +20,7 @@ static void signal_handler(int signo, siginfo_t*, void*)
 	{
 		// Application cleanup can occasionally block a normal shutdown.
 		// Force termination until a safe recovery path is available.
-		libgs::forced_termination();
+		riwo::forced_termination();
 	}
 	else if( signo == SIGTRAP )
 		return ;
@@ -80,10 +80,10 @@ static void signal_handler(int signo, siginfo_t*, void*)
 		write(STDERR_FILENO, text, len);
 	}
 	// exit(signo);
-	libgs::forced_termination();
+	riwo::forced_termination();
 }
 
-LIBGS_REGISTRATION
+RIWO_REGISTRATION
 {
 	struct sigaction sa {};
 	sa.sa_sigaction = signal_handler;

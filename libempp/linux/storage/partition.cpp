@@ -49,14 +49,14 @@ namespace libempp::storage { namespace
 	);
 }
 
-[[nodiscard]] libgs::optional<device_id> device_identity(const path_t &device)
+[[nodiscard]] riwo::optional<device_id> device_identity(const path_t &device)
 {
 	struct stat status {};
 	if( ::stat(device.c_str(), &status) < 0 )
 		detail::throw_errno("libempp::storage::partition identity");
 
 	if( S_ISREG(status.st_mode) )
-		return libgs::nullopt;
+		return riwo::nullopt;
 
 	if( not S_ISBLK(status.st_mode) )
 	{
@@ -70,7 +70,7 @@ namespace libempp::storage { namespace
 	};
 }
 
-void ensure_identity(const path_t &device, const libgs::optional<device_id> &before)
+void ensure_identity(const path_t &device, const riwo::optional<device_id> &before)
 {
 	if( const auto after = device_identity(device); after != before )
 	{
@@ -81,7 +81,7 @@ void ensure_identity(const path_t &device, const libgs::optional<device_id> &bef
 }
 
 void ensure_expected_identity
-(const libgs::optional<device_id> &actual, const libgs::optional<device_id> &expected)
+(const riwo::optional<device_id> &actual, const riwo::optional<device_id> &expected)
 {
 	if( actual and not expected )
 	{
@@ -97,7 +97,7 @@ void ensure_expected_identity
 	}
 }
 
-void ensure_unmounted(const path_t &device, const libgs::optional<device_id> &identity)
+void ensure_unmounted(const path_t &device, const riwo::optional<device_id> &identity)
 {
 	if( not identity )
 		return ;
@@ -243,7 +243,7 @@ namespace detail
 
 [[nodiscard]] static result_t<disk_info> replace_partition_table(const path_t &device,
 	partition_table_type type, const std::vector<partition_spec> &partitions,
-	const partition_options &options, const libgs::optional<device_id> &expected)
+	const partition_options &options, const riwo::optional<device_id> &expected)
 {
 	return detail::capture_expected<disk_info>([&]
 	{
@@ -273,7 +273,7 @@ namespace detail
 }
 
 [[nodiscard]] static result_t<partition_info> create_partition(const path_t &device,
-	const partition_spec &spec, const partition_options &options, const libgs::optional<device_id> &expected)
+	const partition_spec &spec, const partition_options &options, const riwo::optional<device_id> &expected)
 {
 	return detail::capture_expected<partition_info>([&]
 	{
@@ -327,7 +327,7 @@ namespace detail
 }
 
 [[nodiscard]] static result_t<> delete_partition(const path_t &device, uint32_t number,
-	const partition_options &options, const libgs::optional<device_id> &expected)
+	const partition_options &options, const riwo::optional<device_id> &expected)
 {
 	return capture_expected([&]
 	{
@@ -362,7 +362,7 @@ namespace detail
 }
 
 [[nodiscard]] static result_t<partition_info> expand_partition(const path_t &device, uint32_t number,
-	sector_t new_size_sectors, const partition_options &options, const libgs::optional<device_id> &expected)
+	sector_t new_size_sectors, const partition_options &options, const riwo::optional<device_id> &expected)
 {
 	return detail::capture_expected<partition_info>([&]
 	{
@@ -421,7 +421,7 @@ result_t<disk_info> replace_partition_table(const path_t &device, partition_tabl
 	const std::vector<partition_spec> &partitions, const partition_options &options)
 {
 	return detail::replace_partition_table (
-		device, type, partitions, options, libgs::nullopt
+		device, type, partitions, options, riwo::nullopt
 	);
 }
 
@@ -448,7 +448,7 @@ result_t<disk_info> replace_partition_table(const device_info &device, partition
 result_t<partition_info> create_partition
 (const path_t &device, const partition_spec &spec, const partition_options &options)
 {
-	return detail::create_partition(device, spec, options, libgs::nullopt);
+	return detail::create_partition(device, spec, options, riwo::nullopt);
 }
 
 result_t<partition_info> create_partition
@@ -469,7 +469,7 @@ result_t<partition_info> create_partition
 
 result_t<> delete_partition(const path_t &device, uint32_t number, const partition_options &options)
 {
-	return detail::delete_partition(device, number, options, libgs::nullopt);
+	return detail::delete_partition(device, number, options, riwo::nullopt);
 }
 
 result_t<> delete_partition(const device_info &device, uint32_t number, const partition_options &options)
@@ -488,7 +488,7 @@ result_t<> delete_partition(const device_info &device, uint32_t number, const pa
 result_t<partition_info> expand_partition
 (const path_t &device, uint32_t number, sector_t new_size_sectors, const partition_options &options)
 {
-	return detail::expand_partition(device, number, new_size_sectors, options, libgs::nullopt);
+	return detail::expand_partition(device, number, new_size_sectors, options, riwo::nullopt);
 }
 
 result_t<partition_info> expand_partition

@@ -146,3 +146,7 @@ else ()
 		"${PRO_NAME}: Enable LIBEMPP_BUILD_PERFORMANCE_TESTS for performance benchmarks."
 	)
 endif ()
+
+if (LIBEMPP_BUILD_CMAKE_TESTS)
+	add_subdirectory(cmake)
+endif ()

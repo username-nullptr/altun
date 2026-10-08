@@ -15,7 +15,7 @@ namespace libempp::subsys::detail
 
 class LIBEMPP_LINUX_API pwm_backend
 {
-	LIBGS_DISABLE_COPY_MOVE(pwm_backend)
+	RIWO_DISABLE_COPY_MOVE(pwm_backend)
 
 public:
 	pwm_backend() = default;

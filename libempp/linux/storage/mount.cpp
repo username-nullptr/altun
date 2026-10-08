@@ -16,13 +16,13 @@
 namespace libempp::storage { namespace
 {
 
-[[nodiscard]] libgs::optional<std::uint32_t> parse_uint32(std::string_view value)
+[[nodiscard]] riwo::optional<std::uint32_t> parse_uint32(std::string_view value)
 {
 	std::uint32_t result = 0;
 	const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result);
 
 	if( parsed.ec != std::errc{} or parsed.ptr != value.data() + value.size() )
-		return libgs::nullopt;
+		return riwo::nullopt;
 	return result;
 }
 
@@ -88,11 +88,11 @@ namespace libempp::storage { namespace
 		const auto separator = device_text.find(':');
 
 		const auto major_number = separator == std::string::npos ?
-			libgs::optional<uint32_t>{} :
+			riwo::optional<uint32_t>{} :
 			parse_uint32(std::string_view(device_text).substr(0, separator));
 
 		const auto minor_number = separator == std::string::npos ?
-			libgs::optional<uint32_t>{} :
+			riwo::optional<uint32_t>{} :
 			parse_uint32(std::string_view(device_text).substr(separator + 1));
 
 		if( not id or not parent_id or not major_number or not minor_number )
@@ -143,11 +143,11 @@ namespace libempp::storage { namespace
 	};
 }
 
-[[nodiscard]] libgs::optional<device_id> block_identity(const path_t &device) noexcept
+[[nodiscard]] riwo::optional<device_id> block_identity(const path_t &device) noexcept
 {
 	struct stat status {};
 	if( ::stat(device.c_str(), &status) < 0 or not S_ISBLK(status.st_mode) )
-		return libgs::nullopt;
+		return riwo::nullopt;
 
 	return device_id {
 		.major = ::major(status.st_rdev),
@@ -189,7 +189,7 @@ namespace libempp::storage { namespace
 	return entries;
 }
 
-[[nodiscard]] libgs::optional<mount_info> mount_at(const path_t &target)
+[[nodiscard]] riwo::optional<mount_info> mount_at(const path_t &target)
 {
 	const auto normalized = std::filesystem::weakly_canonical(target);
 	for(auto &entry : mounts_impl())
@@ -197,7 +197,7 @@ namespace libempp::storage { namespace
 		if( std::filesystem::weakly_canonical(entry.target) == normalized )
 			return std::move(entry);
 	}
-	return libgs::nullopt;
+	return riwo::nullopt;
 }
 
 [[nodiscard]] std::string mount_option_text(unsigned long flags, const std::string &data)
@@ -262,7 +262,7 @@ void helper_mount
 	detail::run_command(std::move(arguments), {}, options.timeout);
 }
 
-class LIBGS_DECL_HIDDEN mount_rollback
+class RIWO_DECL_HIDDEN mount_rollback
 {
 public:
 	explicit mount_rollback(path_t target) :
@@ -293,7 +293,7 @@ namespace detail
 {
 
 [[nodiscard]] static result_t<mount_info> mount
-(const path_t &source, const path_t &target, const mount_options &options, const libgs::optional<device_id> &expected)
+(const path_t &source, const path_t &target, const mount_options &options, const riwo::optional<device_id> &expected)
 {
 	return detail::capture_expected<mount_info>([&]
 	{
@@ -386,7 +386,7 @@ namespace detail
 }
 
 [[nodiscard]] static result_t<std::size_t> unmount_device
-(const path_t &device, const unmount_options &options, const libgs::optional<device_id> &expected)
+(const path_t &device, const unmount_options &options, const riwo::optional<device_id> &expected)
 {
 	return detail::capture_expected<std::size_t>([&]
 	{
@@ -480,9 +480,9 @@ result_t<std::vector<mount_info>> mounts()
 	});
 }
 
-result_t<libgs::optional<mount_info>> find_mount_by_target(const path_t &target)
+result_t<riwo::optional<mount_info>> find_mount_by_target(const path_t &target)
 {
-	return detail::capture_expected<libgs::optional<mount_info>>([&]
+	return detail::capture_expected<riwo::optional<mount_info>>([&]
 	{
 		detail::ensure_path(target, "libempp::storage::find_mount_by_target");
 		return mount_at(target);

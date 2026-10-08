@@ -3,14 +3,14 @@
 
 #include "enumeration.h"
 #include <libempp/core/log.h>
-#include <libgs/core/algorithm/misc.h>
+#include <riwo/core/algorithm/misc.h>
 
 namespace libempp::udev::detail { namespace
 {
 
-class LIBGS_DECL_HIDDEN udev_protector
+class RIWO_DECL_HIDDEN udev_protector
 {
-	LIBGS_DISABLE_COPY_MOVE(udev_protector)
+	RIWO_DISABLE_COPY_MOVE(udev_protector)
 
 public:
 	udev_protector(std::string_view subsystem, const properties_t &properties)
@@ -29,7 +29,7 @@ public:
 			libempp_clog_critical("LibEMpp.Linux",
 				"udev::enumeration <bug>: Failed to create udev enumerate."
 			);
-			libgs::forced_termination();
+			riwo::forced_termination();
 		}
 		const std::string subsystem_value(subsystem);
 		udev_enumerate_add_match_subsystem(m_enumerate, subsystem_value.c_str());
@@ -59,7 +59,7 @@ public:
 				const char *property = udev_device_get_property_value (
 					device, property_key.c_str()
 				);
-				if( not property or libgs::wildcard_match(value, property) < 0 )
+				if( not property or riwo::wildcard_match(value, property) < 0 )
 				{
 					matched = false;
 					break;
@@ -94,7 +94,7 @@ private:
 
 } //namespace
 
-class LIBGS_DECL_HIDDEN enumeration_core::impl
+class RIWO_DECL_HIDDEN enumeration_core::impl
 {
 public:
 	impl(std::shared_ptr<udev_protector> protector, udev_list_entry *entry) :
@@ -187,10 +187,10 @@ enumeration_core::enumeration_core(enumeration_core &&other) noexcept = default;
 
 enumeration_core &enumeration_core::operator=(enumeration_core &&other) noexcept = default;
 
-libgs::optional<libgs::value>
+riwo::optional<riwo::value>
 enumeration_core::property(std::string_view key) const noexcept
 {
-	libgs::optional<libgs::value> result;
+	riwo::optional<riwo::value> result;
 	if( not is_valid() )
 		return result;
 	try {

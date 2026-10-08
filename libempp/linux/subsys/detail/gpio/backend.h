@@ -30,7 +30,7 @@ enum class gpio_event_wait_t : uint8_t {
 
 class LIBEMPP_LINUX_API gpio_backend
 {
-	LIBGS_DISABLE_COPY_MOVE(gpio_backend)
+	RIWO_DISABLE_COPY_MOVE(gpio_backend)
 
 public:
 	gpio_backend() = default;

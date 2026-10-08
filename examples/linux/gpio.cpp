@@ -88,7 +88,7 @@ int main(int argc, const char *argv[])
 			) : 10'000UL;
 			gpio::event_t event;
 			std::error_code event_error;
-			using namespace libgs::operators;
+			using namespace riwo::operators;
 			line.wait_event(event,
 				[&event_error, &context](std::error_code error) {
 					event_error = error;

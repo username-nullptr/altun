@@ -18,10 +18,10 @@ namespace libempp::subsys { namespace detail
 
 } // namespace detail
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_gpio<Exec>::impl : public std::enable_shared_from_this<impl>
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 private:
 	using event_handler_t = asio::any_completion_handler<void(std::error_code)>;
@@ -52,8 +52,8 @@ private:
 	};
 
 public:
-	explicit impl(libgs::concepts::match_sched<Exec> auto &&exec) :
-		m_exec(libgs::get_executor_helper(std::forward<decltype(exec)>(exec))),
+	explicit impl(riwo::concepts::match_sched<Exec> auto &&exec) :
+		m_exec(riwo::get_executor_helper(std::forward<decltype(exec)>(exec))),
 		m_event_handle(m_exec),
 		m_callback_exec(asio::make_strand(m_exec)) {}
 
@@ -155,19 +155,19 @@ public:
 		return m_backend and m_backend->is_open();
 	}
 
-	[[nodiscard]] libgs::sys_expected<bool> get() const noexcept
+	[[nodiscard]] riwo::sys_expected<bool> get() const noexcept
 	{
 		std::scoped_lock backend_lock(m_backend_mutex);
 		if( not m_backend or not m_backend->is_open() )
 		{
-			return libgs::sys_unexpected (
+			return riwo::sys_unexpected (
 				std::make_error_code(std::errc::bad_file_descriptor)
 			);
 		}
 		std::error_code error;
 		const bool result = m_backend->value(error);
 		if( error )
-			return libgs::sys_unexpected(error);
+			return riwo::sys_unexpected(error);
 		return result;
 	}
 
@@ -324,7 +324,7 @@ public:
 		catch(...)
 		{
 			post_handler(std::move(handler),
-				libgs::exception_error(std::current_exception())
+				riwo::exception_error(std::current_exception())
 			);
 			return ;
 		}
@@ -350,7 +350,7 @@ public:
 					{
 						try {
 							auto executor = self->m_event_handle.get_executor();
-							libgs::dispatch(std::move(executor), [self = std::move(self), id] {
+							riwo::dispatch(std::move(executor), [self = std::move(self), id] {
 								self->cancel_waiter(id);
 							});
 						}
@@ -367,7 +367,7 @@ public:
 		}
 		catch(...)
 		{
-			start_error = libgs::exception_error(std::current_exception());
+			start_error = riwo::exception_error(std::current_exception());
 			if( queued )
 			{
 				std::scoped_lock lock(m_event_mutex);
@@ -387,14 +387,14 @@ public:
 		if( event.edge != edge_t::rising and event.edge != edge_t::falling and
 			event.edge != edge_t::both )
 		{
-			libgs::system_error::loc_throw(
+			riwo::system_error::loc_throw(
 				std::make_error_code(std::errc::invalid_argument),
 				"libempp::subsys::basic_gpio<Exec>::on_event"
 			);
 		}
 		if( auto error = validate_event_source() )
 		{
-			libgs::system_error::loc_throw(error,
+			riwo::system_error::loc_throw(error,
 				"libempp::subsys::basic_gpio<Exec>::on_event"
 			);
 		}
@@ -414,7 +414,7 @@ public:
 		if( auto error = start_monitor_locked() )
 		{
 			m_subscriptions.pop_back();
-			libgs::system_error::loc_throw(error,
+			riwo::system_error::loc_throw(error,
 				"libempp::subsys::basic_gpio<Exec>::on_event"
 			);
 		}
@@ -430,7 +430,7 @@ public:
 			event = {};
 			if( handler )
 			{
-				libgs::post_completion(executor, std::move(handler),
+				riwo::post_completion(executor, std::move(handler),
 					std::make_error_code(std::errc::bad_file_descriptor)
 				);
 			}
@@ -482,7 +482,7 @@ private:
 		catch(...)
 		{
 			m_monitoring = false;
-			return libgs::exception_error(std::current_exception());
+			return riwo::exception_error(std::current_exception());
 		}
 		return {};
 	}
@@ -587,7 +587,7 @@ private:
 		}
 		catch(...)
 		{
-			fail_waiters(libgs::exception_error(std::current_exception()));
+			fail_waiters(riwo::exception_error(std::current_exception()));
 			return ;
 		}
 		for(auto &waiter : waiters)
@@ -599,7 +599,7 @@ private:
 		for(auto &callback : callbacks)
 		{
 			try {
-				libgs::post(m_callback_exec,
+				riwo::post(m_callback_exec,
 				[callback = std::move(callback), event]() mutable noexcept
 				{
 					try {
@@ -644,7 +644,7 @@ private:
 	void post_handler(event_handler_t handler, std::error_code error)
 	{
 		if( handler )
-			libgs::post_completion(m_exec, std::move(handler), error);
+			riwo::post_completion(m_exec, std::move(handler), error);
 	}
 
 	void post_waiter
@@ -717,60 +717,60 @@ private:
 	bool m_sync_reading = false;
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Exec0>
 basic_gpio<Exec>::basic_gpio(const node_t &node, Exec0 &&exec) requires (
 	not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio> and
-	libgs::concepts::match_sched<Exec0,executor_t>
+	riwo::concepts::match_sched<Exec0,executor_t>
 ) : m_impl(std::make_shared<impl>(std::forward<decltype(exec)>(exec)))
 {
 	std::error_code error;
 	m_impl->open(node, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::open");
+		riwo::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::open");
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec>::basic_gpio(const node_t &node)
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_gpio(node, libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_gpio(node, riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Exec0>
 basic_gpio<Exec>::basic_gpio(Exec0 &&exec) requires (
 	not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio> and
-	libgs::concepts::match_sched<Exec0,executor_t>
+	riwo::concepts::match_sched<Exec0,executor_t>
 ) : m_impl(std::make_shared<impl>(std::forward<decltype(exec)>(exec)))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec>::basic_gpio()
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_gpio(libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_gpio(riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec>::~basic_gpio()
 {
 	if( m_impl )
 		m_impl->close();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec>::basic_gpio(basic_gpio &&other) noexcept :
 	m_impl(std::move(other.m_impl))
 {
 	other.m_impl = std::make_shared<impl>(m_impl->get_executor());
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::operator=(basic_gpio &&other) noexcept
 {
 	if( this == &other )
@@ -784,7 +784,7 @@ basic_gpio<Exec> &basic_gpio<Exec>::operator=(basic_gpio &&other) noexcept
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::open(const node_t &node, std::error_code &error) noexcept
 {
 	if( not m_impl )
@@ -796,17 +796,17 @@ basic_gpio<Exec> &basic_gpio<Exec>::open(const node_t &node, std::error_code &er
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::open(const node_t &node)
 {
 	std::error_code error;
 	open(node, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::open");
+		riwo::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::open");
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::close() noexcept
 {
 	if( m_impl )
@@ -814,7 +814,7 @@ basic_gpio<Exec> &basic_gpio<Exec>::close() noexcept
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::set(bool value, std::error_code &error) noexcept
 {
 	if( not m_impl )
@@ -824,41 +824,41 @@ basic_gpio<Exec> &basic_gpio<Exec>::set(bool value, std::error_code &error) noex
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::set(bool value)
 {
 	std::error_code error;
 	set(value, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::set");
+		riwo::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::set");
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::rising(std::error_code &error) noexcept
 {
 	return set(true, error);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::rising()
 {
 	return set(true);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::falling(std::error_code &error) noexcept
 {
 	return set(false, error);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::falling()
 {
 	return set(false);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::invert(std::error_code &error) noexcept
 {
 	if( not m_impl )
@@ -868,46 +868,46 @@ basic_gpio<Exec> &basic_gpio<Exec>::invert(std::error_code &error) noexcept
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::invert()
 {
 	std::error_code error;
 	invert(error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::invert");
+		riwo::system_error::loc_throw(error, "libempp::subsys::basic_gpio<Exec>::invert");
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
-libgs::sys_expected<bool> basic_gpio<Exec>::get() const noexcept
+template <riwo::concepts::exec Exec>
+riwo::sys_expected<bool> basic_gpio<Exec>::get() const noexcept
 {
 	if( not m_impl )
 	{
-		return libgs::sys_unexpected (
+		return riwo::sys_unexpected (
 			std::make_error_code(std::errc::bad_file_descriptor)
 		);
 	}
 	return m_impl->get();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec>::operator bool() const
 {
-	return libgs::expected_value_or_throw(get());
+	return riwo::expected_value_or_throw(get());
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_gpio<Exec>::operator*() const
 {
-	return libgs::expected_value_or_throw(get());
+	return riwo::expected_value_or_throw(get());
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Token>
 auto basic_gpio<Exec>::wait_event(event_t &event, Token &&token)
 	requires event_token_v<Token>
 {
-	if constexpr( libgs::is_error_code_token_v<Token> )
+	if constexpr( riwo::is_error_code_token_v<Token> )
 	{
 		if( m_impl )
 			m_impl->wait_event(event, token);
@@ -917,7 +917,7 @@ auto basic_gpio<Exec>::wait_event(event_t &event, Token &&token)
 			token = std::make_error_code(std::errc::bad_file_descriptor);
 		}
 	}
-	else if constexpr( libgs::is_sync_opt_token_v<Token> )
+	else if constexpr( riwo::is_sync_opt_token_v<Token> )
 	{
 		std::error_code error;
 		if( m_impl )
@@ -929,14 +929,14 @@ auto basic_gpio<Exec>::wait_event(event_t &event, Token &&token)
 		}
 		if( error )
 		{
-			libgs::system_error::loc_throw(error,
+			riwo::system_error::loc_throw(error,
 				"libempp::subsys::basic_gpio<Exec>::wait_event"
 			);
 		}
 	}
 	else
 	{
-		return libgs::initiate_io_void(get_executor(),
+		return riwo::initiate_io_void(get_executor(),
 			[executor = get_executor(), implementation = m_impl, destination = &event]
 			<typename Handler>(Handler &&completion_handler) mutable
 			{
@@ -948,12 +948,12 @@ auto basic_gpio<Exec>::wait_event(event_t &event, Token &&token)
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_gpio<Exec> &basic_gpio<Exec>::on_event(const event_t &event, on_event_t callback)
 {
 	if( not m_impl )
 	{
-		libgs::system_error::loc_throw (
+		riwo::system_error::loc_throw (
 			std::make_error_code(std::errc::bad_file_descriptor),
 			"libempp::subsys::basic_gpio<Exec>::on_event"
 		);
@@ -962,31 +962,31 @@ basic_gpio<Exec> &basic_gpio<Exec>::on_event(const event_t &event, on_event_t ca
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio<Exec>::node() const -> node_t
 {
 	return m_impl ? m_impl->node() : node_t{};
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_gpio<Exec>::is_open() const noexcept
 {
 	return m_impl and m_impl->is_open();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio<Exec>::backend() noexcept -> backend_t
 {
 	return detail::gpio_backend_type();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 const char *basic_gpio<Exec>::backend_name() noexcept
 {
 	return detail::gpio_backend_name();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_gpio<Exec>::get_executor() noexcept -> executor_t
 {
 	return m_impl->get_executor();

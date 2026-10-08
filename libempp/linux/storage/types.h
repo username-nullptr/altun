@@ -17,7 +17,7 @@ using path_t = std::filesystem::path;
 using sector_t = uint64_t;
 
 template <typename Value = void>
-using result_t = libgs::sys_expected<Value>;
+using result_t = riwo::sys_expected<Value>;
 
 struct device_id
 {
@@ -47,10 +47,10 @@ struct device_info
 {
 	path_t device {};
 	path_t sys_path {};
-	libgs::optional<path_t> parent_device {};
+	riwo::optional<path_t> parent_device {};
 
 	device_id id {};
-	libgs::optional<block_geometry> geometry {};
+	riwo::optional<block_geometry> geometry {};
 
 	std::string bus {};
 	std::string model {};
@@ -86,7 +86,7 @@ struct partition_table_info
 
 struct LIBEMPP_LINUX_API partition_info
 {
-	libgs::optional<path_t> device {};
+	riwo::optional<path_t> device {};
 	uint32_t number = 0;
 
 	sector_t start_sector = 0;
@@ -102,16 +102,16 @@ struct LIBEMPP_LINUX_API partition_info
 	bool logical = false;
 	bool extended = false;
 
-	libgs::optional<filesystem_info> filesystem {};
+	riwo::optional<filesystem_info> filesystem {};
 
-	[[nodiscard]] libgs::optional<sector_t> end_sector() const noexcept;
-	[[nodiscard]] libgs::optional<uint64_t> size_bytes(uint32_t sector_size) const noexcept;
+	[[nodiscard]] riwo::optional<sector_t> end_sector() const noexcept;
+	[[nodiscard]] riwo::optional<uint64_t> size_bytes(uint32_t sector_size) const noexcept;
 };
 
 struct disk_info
 {
 	path_t device {};
-	libgs::optional<partition_table_info> table {};
+	riwo::optional<partition_table_info> table {};
 
 	uint64_t size_bytes = 0;
 	uint32_t sector_size = 0;

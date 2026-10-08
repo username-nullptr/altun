@@ -21,11 +21,11 @@ libempp_log_info("libEMpp {}", libempp::version_string());
 libempp_clog_warning("sensor", "temperature: {:.1f}", 82.5);
 ```
 
-The first family uses the default LibGS logger; `libempp_clog_*` uses a named logger. Format strings use fmt syntax.
+The first family uses the default Riwo logger; `libempp_clog_*` uses a named logger. Format strings use fmt syntax.
 
 ## Settings
 
-The settings macros return process-owned LibGS settings instances. Keys use `group/key`; `set()` changes memory and `sync()` writes the loaded file.
+The settings macros return process-owned Riwo settings instances. Keys use `group/key`; `set()` changes memory and `sync()` writes the loaded file.
 
 ```cpp
 #include <libempp/core/settings.h>
@@ -45,7 +45,7 @@ Use `changed` and `loaded` signals when the application needs notifications. See
 
 ## Software bus
 
-`libempp::sbus` exposes LibGS-compatible typed and raw publish/subscribe operations. The build selects one interface; see [SBus build options](getting-started.md#sbus).
+`libempp::sbus` exposes Riwo-compatible typed and raw publish/subscribe operations. The build selects one interface; see [SBus build options](getting-started.md#sbus).
 
 ```cpp
 #include <libempp/core/sbus/sbus.h>

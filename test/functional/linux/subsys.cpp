@@ -135,7 +135,7 @@ EMPP_TEST("virtual-device", "GPIO validation and closed operations need no hardw
 {
 	using gpio = libempp::subsys::gpio;
 	gpio line;
-	static_assert(std::same_as<decltype(line.get()),libgs::sys_expected<bool>>);
+	static_assert(std::same_as<decltype(line.get()),riwo::sys_expected<bool>>);
 	static_assert(noexcept(line.get()));
 	EMPP_REQUIRE(not line.is_open());
 	EMPP_REQUIRE(std::string_view(gpio::backend_name()) ==
@@ -265,11 +265,11 @@ EMPP_TEST("virtual-device", "GPIO group wraps one chip with line alias and batch
 	const auto blue = output_config(9, "blue");
 	gpio_group outputs(chip, {red, green, blue});
 	static_assert(std::same_as <
-		decltype(outputs.get(gpio_group::line_t {})),libgs::sys_expected<bool>
+		decltype(outputs.get(gpio_group::line_t {})),riwo::sys_expected<bool>
 	>);
 	static_assert(noexcept(outputs.get(gpio_group::line_t {})));
 	static_assert(std::same_as <
-		decltype(outputs.get()),libgs::sys_expected<gpio_group::line_values_t>
+		decltype(outputs.get()),riwo::sys_expected<gpio_group::line_values_t>
 	>);
 	static_assert(noexcept(outputs.get()));
 	const std::string red_alias = "red";
@@ -474,12 +474,12 @@ EMPP_TEST("virtual-device", "GPIO manager coordinates chips indices aliases and 
 	gpio_manager manager {red, green, blue};
 	std::error_code error;
 	static_assert(std::same_as <
-		decltype(manager.get(gpio_manager::index_t {})),libgs::sys_expected<bool>
+		decltype(manager.get(gpio_manager::index_t {})),riwo::sys_expected<bool>
 	>);
 	static_assert(noexcept(manager.get(
 		std::declval<const gpio_manager::index_t&>())));
 	static_assert(std::same_as <
-		decltype(manager.get()),libgs::sys_expected<gpio_manager::index_values_t>
+		decltype(manager.get()),riwo::sys_expected<gpio_manager::index_values_t>
 	>);
 	static_assert(noexcept(manager.get()));
 	EMPP_REQUIRE(manager.is_open());
@@ -697,7 +697,7 @@ EMPP_TEST("virtual-device", "GPIO event callbacks preserve every queued edge")
 	}
 
 	gpio::event_t waited_event;
-	auto event_future = input.wait_event(waited_event, libgs::use_future);
+	auto event_future = input.wait_event(waited_event, riwo::use_future);
 	empp_test_support::push_virtual_gpio_event(true);
 	EMPP_REQUIRE(event_future.wait_for(2s) == std::future_status::ready);
 	event_future.get();
@@ -730,15 +730,15 @@ EMPP_TEST("virtual-device", "GPIO event callbacks preserve every queued edge")
 	}
 	input.on_event(both_edges, gpio::on_event_t{});
 
-	using namespace libgs::operators;
+	using namespace riwo::operators;
 	gpio::event_t timed_event;
-	auto timed_future = input.wait_event(timed_event, libgs::use_future | 25ms);
+	auto timed_future = input.wait_event(timed_event, riwo::use_future | 25ms);
 	EMPP_REQUIRE_SYSTEM_ERROR(
 		asio::error::make_error_code(asio::error::timed_out), timed_future.get());
 	EMPP_REQUIRE_EQ(timed_event.edge, gpio::edge_t::none);
 
 	gpio::event_t cancelled_event;
-	auto cancelled_future = input.wait_event(cancelled_event, libgs::use_future);
+	auto cancelled_future = input.wait_event(cancelled_event, riwo::use_future);
 	input.close();
 	EMPP_REQUIRE_SYSTEM_ERROR(
 		asio::error::make_error_code(asio::error::operation_aborted),

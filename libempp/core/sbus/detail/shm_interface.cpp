@@ -18,7 +18,7 @@ using namespace std::chrono_literals;
 namespace libempp::sbus
 {
 
-LIBGS_DECL_HIDDEN void bridge_shm_data_available (
+RIWO_DECL_HIDDEN void bridge_shm_data_available (
 	std::string_view, const void*, size_t
 );
 namespace
@@ -159,7 +159,7 @@ struct incoming_message
 
 class shared_lock
 {
-	LIBGS_DISABLE_COPY_MOVE(shared_lock)
+	RIWO_DISABLE_COPY_MOVE(shared_lock)
 
 public:
 	explicit shared_lock(pthread_mutex_t &mutex) noexcept :
@@ -304,7 +304,7 @@ void deactivate_dead_readers(region_header &header) noexcept
 
 class runtime
 {
-	LIBGS_DISABLE_COPY_MOVE(runtime)
+	RIWO_DISABLE_COPY_MOVE(runtime)
 
 public:
 	runtime() :
@@ -876,7 +876,7 @@ void rebuild_interface_snapshot()
 
 	for(const auto &[pointer, object] : g_interfaces)
 	{
-		LIBGS_UNUSED(pointer);
+		RIWO_UNUSED(pointer);
 		snapshot->emplace_back(object);
 	}
 	g_interface_snapshot.store(std::move(snapshot), std::memory_order_release);
@@ -884,9 +884,9 @@ void rebuild_interface_snapshot()
 
 } //namespace
 
-class LIBGS_DECL_HIDDEN shm_interface::impl
+class RIWO_DECL_HIDDEN shm_interface::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	impl() = default;
@@ -923,7 +923,7 @@ public:
 
 		for(const auto &[sid, callback] : source->second)
 		{
-			LIBGS_UNUSED(sid);
+			RIWO_UNUSED(sid);
 			snapshot->emplace_back(callback);
 		}
 		topic_snapshots.insert_or_assign(source->first, std::move(snapshot));
@@ -936,7 +936,7 @@ public:
 
 		for(const auto &[sid, callback] : global_callbacks)
 		{
-			LIBGS_UNUSED(sid);
+			RIWO_UNUSED(sid);
 			snapshot->emplace_back(callback);
 		}
 		global_snapshot = std::move(snapshot);
@@ -990,7 +990,7 @@ shm_interface::~shm_interface() = default;
 
 void shm_interface::init()
 {
-	LIBGS_UNUSED(bus_runtime());
+	RIWO_UNUSED(bus_runtime());
 }
 
 void shm_interface::publish(std::string_view topic, const void *buffer, size_t size)
@@ -1020,7 +1020,7 @@ uint64_t shm_interface::subscribe(std::string_view topic, topic_callback func)
 		const auto [position, inserted] =
 			g_interfaces.insert_or_assign(this, shared_from_this());
 
-		LIBGS_UNUSED(position);
+		RIWO_UNUSED(position);
 		if( inserted )
 			rebuild_interface_snapshot();
 	}
@@ -1039,7 +1039,7 @@ uint64_t shm_interface::subscribe(global_callback func)
 		const auto [position, inserted] =
 			g_interfaces.insert_or_assign(this, shared_from_this());
 
-		LIBGS_UNUSED(position);
+		RIWO_UNUSED(position);
 		if( inserted )
 			rebuild_interface_snapshot();
 	}
@@ -1054,7 +1054,7 @@ void shm_interface::cancel_topic(std::string_view topic)
 	{
 		for(const auto &[sid, callback] : it->second)
 		{
-			LIBGS_UNUSED(callback);
+			RIWO_UNUSED(callback);
 			m_impl->topics_by_sid.erase(sid);
 		}
 		m_impl->topic_callbacks.erase(it);

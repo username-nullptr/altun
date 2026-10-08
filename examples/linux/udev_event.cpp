@@ -20,7 +20,7 @@ int main(int argc, const char *argv[])
 	events.error.connect([](const std::error_code &error)
 	{
 		std::cerr << "Block event failed: " << error.message() << '\n';
-		libgs::exit(1);
+		riwo::exit(1);
 	});
 
 	// DEVTYPE is optional. For block devices, common values are "disk" and "partition".
@@ -34,5 +34,5 @@ int main(int argc, const char *argv[])
 		std::cerr << "Failed to monitor block devices: " << error.message() << '\n';
 		return 1;
 	}
-	return libgs::exec();
+	return riwo::exec();
 }

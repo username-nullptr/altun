@@ -4,6 +4,10 @@
 option(BUILD_TESTING
 	"-- ${PRO_NAME}: Build automated tests." OFF
 )
+option(LIBEMPP_BUILD_CMAKE_TESTS
+	"-- ${PRO_NAME}: Test the installed CMake package."
+	${BUILD_TESTING}
+)
 option(LIBEMPP_ENABLE_TEST_SANITIZERS
 	"-- ${PRO_NAME}: Enable ASan and UBSan for functional and stress tests." OFF
 )
@@ -79,6 +83,12 @@ endforeach ()
 if (LIBEMPP_ENABLE_TEST_SANITIZERS AND LIBEMPP_ENABLE_TEST_TSAN)
 	message(FATAL_ERROR
 		"${PRO_NAME}: ASan/UBSan and TSan cannot be enabled together."
+	)
+endif ()
+
+if (LIBEMPP_BUILD_CMAKE_TESTS AND NOT BUILD_TESTING)
+	message(FATAL_ERROR
+		"${PRO_NAME}: CMake integration tests require BUILD_TESTING=ON."
 	)
 endif ()
 
@@ -182,8 +192,8 @@ if (LIBEMPP_ENABLE_TEST_SANITIZERS OR LIBEMPP_ENABLE_TEST_TSAN)
 		target_link_options(libempp.test.sanitizer INTERFACE
 			-fsanitize=address,undefined
 		)
-		# Keep the bundled LibGS modules on the same instrumentation mode.
-		set(LIBGS_ENABLE_TEST_SANITIZERS ON)
+		# Keep the bundled Riwo modules on the same instrumentation mode.
+		set(RIWO_ENABLE_TEST_SANITIZERS ON)
 	else ()
 		target_compile_options(libempp.test.sanitizer INTERFACE
 			-fsanitize=thread
@@ -191,6 +201,6 @@ if (LIBEMPP_ENABLE_TEST_SANITIZERS OR LIBEMPP_ENABLE_TEST_TSAN)
 			-fno-sanitize-recover=all
 		)
 		target_link_options(libempp.test.sanitizer INTERFACE -fsanitize=thread)
-		set(LIBGS_ENABLE_TEST_TSAN ON)
+		set(RIWO_ENABLE_TEST_TSAN ON)
 	endif ()
 endif ()

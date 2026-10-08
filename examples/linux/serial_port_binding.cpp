@@ -56,5 +56,5 @@ int main(int argc, const char *argv[])
 		libempp::udev::prop_key::id_model, argv[1], options
 	);
 	rule->open();
-	return libgs::exec();
+	return riwo::exec();
 }

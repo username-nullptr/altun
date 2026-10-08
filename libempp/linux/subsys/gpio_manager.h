@@ -26,10 +26,10 @@ struct LIBEMPP_LINUX_API gpio_index
 	[[nodiscard]] std::strong_ordering operator<=>(const gpio_index &other) const noexcept;
 };
 
-template <libgs::concepts::exec Exec = asio::any_io_executor>
+template <riwo::concepts::exec Exec = asio::any_io_executor>
 class LIBEMPP_LINUX_TAPI basic_gpio_manager
 {
-	LIBGS_DISABLE_COPY(basic_gpio_manager)
+	RIWO_DISABLE_COPY(basic_gpio_manager)
 
 public:
 	using executor_type = Exec;
@@ -55,26 +55,26 @@ public:
 	template <typename Exec0>
 	explicit basic_gpio_manager(const nodes_t &nodes, Exec0 &&exec) requires (
 		not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio_manager> and
-		libgs::concepts::match_sched<Exec0,executor_t>
+		riwo::concepts::match_sched<Exec0,executor_t>
 	);
 	explicit basic_gpio_manager(const nodes_t &nodes)
-		requires libgs::concepts::match_def_exec<executor_t>;
+		requires riwo::concepts::match_def_exec<executor_t>;
 
 	template <typename Exec0>
 	explicit basic_gpio_manager(std::initializer_list<node_t> nodes, Exec0 &&exec) requires (
 		not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio_manager> and
-		libgs::concepts::match_sched<Exec0,executor_t>
+		riwo::concepts::match_sched<Exec0,executor_t>
 	);
 	explicit basic_gpio_manager(std::initializer_list<node_t> nodes)
-		requires libgs::concepts::match_def_exec<executor_t>;
+		requires riwo::concepts::match_def_exec<executor_t>;
 
 	template <typename Exec0>
 	explicit basic_gpio_manager(Exec0 &&exec) requires (
 		not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio_manager> and
-		libgs::concepts::match_sched<Exec0,executor_t>
+		riwo::concepts::match_sched<Exec0,executor_t>
 	);
 	explicit basic_gpio_manager()
-		requires libgs::concepts::match_def_exec<Exec>;
+		requires riwo::concepts::match_def_exec<Exec>;
 
 	~basic_gpio_manager();
 	basic_gpio_manager(basic_gpio_manager &&other) noexcept;
@@ -91,7 +91,7 @@ public:
 	basic_gpio_manager &open(std::initializer_list<node_t> nodes);
 
 	basic_gpio_manager &close(const index_t &index) noexcept;
-	basic_gpio_manager &close(const libgs::concepts::text_p<char> auto &alias) noexcept;
+	basic_gpio_manager &close(const riwo::concepts::text_p<char> auto &alias) noexcept;
 	basic_gpio_manager &close() noexcept;
 
 public:
@@ -101,18 +101,18 @@ public:
 	[[nodiscard]] gpio_t &at(const index_t &index);
 	[[nodiscard]] const gpio_t &at(const index_t &index) const;
 
-	[[nodiscard]] gpio_t &at(const libgs::concepts::text_p<char> auto &alias);
-	[[nodiscard]] const gpio_t &at(const libgs::concepts::text_p<char> auto &alias) const;
+	[[nodiscard]] gpio_t &at(const riwo::concepts::text_p<char> auto &alias);
+	[[nodiscard]] const gpio_t &at(const riwo::concepts::text_p<char> auto &alias) const;
 
 	[[nodiscard]] gpio_t &operator[](const index_t &index);
 	[[nodiscard]] const gpio_t &operator[](const index_t &index) const;
 
-	[[nodiscard]] gpio_t &operator[](const libgs::concepts::text_p<char> auto &alias);
-	[[nodiscard]] const gpio_t &operator[](const libgs::concepts::text_p<char> auto &alias) const;
+	[[nodiscard]] gpio_t &operator[](const riwo::concepts::text_p<char> auto &alias);
+	[[nodiscard]] const gpio_t &operator[](const riwo::concepts::text_p<char> auto &alias) const;
 
 	[[nodiscard]] bool contains_chip(const std::filesystem::path &chip) const noexcept;
 	[[nodiscard]] bool contains(const index_t &index) const noexcept;
-	[[nodiscard]] bool contains(const libgs::concepts::text_p<char> auto &alias) const noexcept;
+	[[nodiscard]] bool contains(const riwo::concepts::text_p<char> auto &alias) const noexcept;
 
 public:
 	basic_gpio_manager &set(const index_t &index, bool value, std::error_code &error) noexcept;
@@ -128,11 +128,11 @@ public:
 	basic_gpio_manager &set(bool value);
 
 	basic_gpio_manager &set (
-		const libgs::concepts::text_p<char> auto &alias, bool value, std::error_code &error
+		const riwo::concepts::text_p<char> auto &alias, bool value, std::error_code &error
 	) noexcept;
 
 	basic_gpio_manager &set (
-		const libgs::concepts::text_p<char> auto &alias, bool value
+		const riwo::concepts::text_p<char> auto &alias, bool value
 	);
 
 public:
@@ -149,11 +149,11 @@ public:
 	basic_gpio_manager &rising();
 
 	basic_gpio_manager &rising (
-		const libgs::concepts::text_p<char> auto &alias, std::error_code &error
+		const riwo::concepts::text_p<char> auto &alias, std::error_code &error
 	) noexcept;
 
 	basic_gpio_manager &rising (
-		const libgs::concepts::text_p<char> auto &alias
+		const riwo::concepts::text_p<char> auto &alias
 	);
 
 public:
@@ -170,11 +170,11 @@ public:
 	basic_gpio_manager &falling();
 
 	basic_gpio_manager &falling (
-		const libgs::concepts::text_p<char> auto &alias, std::error_code &error
+		const riwo::concepts::text_p<char> auto &alias, std::error_code &error
 	) noexcept;
 
 	basic_gpio_manager &falling (
-		const libgs::concepts::text_p<char> auto &alias
+		const riwo::concepts::text_p<char> auto &alias
 	);
 
 public:
@@ -185,19 +185,19 @@ public:
 	basic_gpio_manager &invert();
 
 	basic_gpio_manager &invert (
-		const libgs::concepts::text_p<char> auto &alias, std::error_code &error
+		const riwo::concepts::text_p<char> auto &alias, std::error_code &error
 	) noexcept;
 
 	basic_gpio_manager &invert (
-		const libgs::concepts::text_p<char> auto &alias
+		const riwo::concepts::text_p<char> auto &alias
 	);
 
 public:
-	[[nodiscard]] libgs::sys_expected<index_values_t> get() const noexcept;
-	[[nodiscard]] libgs::sys_expected<bool> get(const index_t &index) const noexcept;
+	[[nodiscard]] riwo::sys_expected<index_values_t> get() const noexcept;
+	[[nodiscard]] riwo::sys_expected<bool> get(const index_t &index) const noexcept;
 
-	[[nodiscard]] libgs::sys_expected<bool> get(
-		const libgs::concepts::text_p<char> auto &alias
+	[[nodiscard]] riwo::sys_expected<bool> get(
+		const riwo::concepts::text_p<char> auto &alias
 	) const noexcept;
 
 	[[nodiscard]] explicit operator index_values_t() const;

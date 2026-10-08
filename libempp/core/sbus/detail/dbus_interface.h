@@ -13,7 +13,7 @@ namespace libempp::sbus
 class LIBEMPP_CORE_API dbus_interface final :
 	public std::enable_shared_from_this<dbus_interface>
 {
-	LIBGS_DISABLE_COPY_MOVE(dbus_interface)
+	RIWO_DISABLE_COPY_MOVE(dbus_interface)
 
 public:
 	friend void bridge_dbus_data_available (

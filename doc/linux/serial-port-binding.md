@@ -31,7 +31,7 @@ auto rule = binding.make_rule(
     options
 );
 rule->open();
-return libgs::exec();
+return riwo::exec();
 ```
 
 Keep the returned `rule_context` alive while monitoring. `binding` aggregates events from all rules; each rule also exposes `opened`, `closed`, `received`, and `error`.

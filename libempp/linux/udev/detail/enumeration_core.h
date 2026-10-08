@@ -25,7 +25,7 @@ public:
 	enumeration_core &operator=(enumeration_core &&other) noexcept;
 
 public:
-	[[nodiscard]] libgs::optional<libgs::value> property(std::string_view key) const noexcept;
+	[[nodiscard]] riwo::optional<riwo::value> property(std::string_view key) const noexcept;
 	[[nodiscard]] std::vector<std::string> property_keys() const;
 
 	[[nodiscard]] bool is_valid() const noexcept;

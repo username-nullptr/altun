@@ -27,7 +27,7 @@ concept i2c_array_readable = requires(Device &device) {
 template <typename Device>
 concept i2c_detached_array_readable = requires(Device &device) {
 	device.template read<std::array<std::uint8_t,1>>(
-		std::uint8_t {}, libgs::detached
+		std::uint8_t {}, riwo::detached
 	);
 };
 
@@ -35,7 +35,7 @@ using compile_test_i2c = libempp::bus::i2c;
 static_assert(i2c_array_readable<compile_test_i2c,std::array<std::uint8_t,1>>);
 static_assert(not i2c_array_readable<compile_test_i2c,std::vector<std::uint8_t>>);
 static_assert(not i2c_detached_array_readable<compile_test_i2c>);
-static_assert(not libgs::concepts::array_buffer<std::array<const std::uint8_t,1>>);
+static_assert(not riwo::concepts::array_buffer<std::array<const std::uint8_t,1>>);
 static_assert(not compile_test_i2c::is_valid_reg_bit_v<
 	static_cast<libempp::bus::i2c_reg_bit>(3)>);
 
@@ -76,7 +76,7 @@ EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl sim
 
 	const std::array<std::uint8_t, 2> payload {0xA5, 0x5A};
 	const auto written = device.write(0x2A,
-		libgs::const_buffer(payload.data(), payload.size()), error);
+		riwo::const_buffer(payload.data(), payload.size()), error);
 	EMPP_REQUIRE(not error);
 	EMPP_REQUIRE_EQ(written, 3U);
 	{
@@ -90,7 +90,7 @@ EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl sim
 
 	std::array<std::uint8_t, 3> result {};
 	const auto read = device.read<libempp::bus::reg_bit16>(0x1234,
-		libgs::mutable_buffer(result.data(), result.size()), error);
+		riwo::mutable_buffer(result.data(), result.size()), error);
 	EMPP_REQUIRE(not error);
 	EMPP_REQUIRE_EQ(read, result.size());
 	EMPP_REQUIRE_EQ(result, (std::array<std::uint8_t, 3> {0x11, 0x22, 0x33}));
@@ -113,7 +113,7 @@ EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl sim
 	}
 
 	auto future = device.read<std::array<std::uint8_t,2>>(
-		0x2B, libgs::use_future
+		0x2B, riwo::use_future
 	);
 	context.run();
 	EMPP_REQUIRE_EQ(future.get(),
@@ -147,7 +147,7 @@ EMPP_TEST("virtual-device", "I2C reads and writes registers through an ioctl sim
 	for(std::size_t index = 0; index < batch_size; ++index)
 	{
 		futures.push_back(device.read<batch_buffer>(
-			static_cast<std::uint8_t>(0x40 + index), libgs::use_future
+			static_cast<std::uint8_t>(0x40 + index), riwo::use_future
 		));
 	}
 	context.run();
@@ -183,7 +183,7 @@ EMPP_TEST("virtual-device", "I2C validates failures before touching hardware")
 	std::error_code error;
 	std::uint8_t byte = 0;
 
-	const auto closed_write = device.write(0x01, libgs::const_buffer(&byte, 1), error);
+	const auto closed_write = device.write(0x01, riwo::const_buffer(&byte, 1), error);
 	EMPP_REQUIRE_EQ(closed_write, 0U);
 	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::bad_file_descriptor));
 	const auto closed_read = device.read<std::array<std::uint8_t,2>>(0x01, error);
@@ -194,7 +194,7 @@ EMPP_TEST("virtual-device", "I2C validates failures before touching hardware")
 	EMPP_REQUIRE(not error);
 
 	auto closed_future = device.read<std::array<std::uint8_t,2>>(
-		0x01, libgs::use_future
+		0x01, riwo::use_future
 	);
 	context.run();
 	EMPP_REQUIRE_SYSTEM_ERROR(std::make_error_code(std::errc::bad_file_descriptor),
@@ -210,7 +210,7 @@ EMPP_TEST("virtual-device", "I2C validates failures before touching hardware")
 	));
 
 	const auto oversized = device.write(0x01,
-		libgs::const_buffer(&byte, std::numeric_limits<std::uint16_t>::max()), error);
+		riwo::const_buffer(&byte, std::numeric_limits<std::uint16_t>::max()), error);
 	EMPP_REQUIRE_EQ(oversized, 0U);
 	EMPP_REQUIRE_EQ(error, std::make_error_code(std::errc::message_size));
 
@@ -254,7 +254,7 @@ EMPP_TEST("virtual-device", "I2C array read retains operation state after device
 			std::scoped_lock lock(virtual_ioctl_mutex);
 			virtual_i2c_devices[descriptor].read_data = {0x10, 0x20, 0x30, 0x40};
 		}
-		future = device.read<result_type>(0x08, libgs::use_future);
+		future = device.read<result_type>(0x08, riwo::use_future);
 	}
 	context.run();
 	EMPP_REQUIRE_EQ(future.get(),

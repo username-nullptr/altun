@@ -19,8 +19,8 @@
 namespace libempp::storage { namespace
 {
 
-[[nodiscard]] libgs::optional<device_id> ensure_format_target
-(const path_t &device, const libgs::optional<device_id> &expected)
+[[nodiscard]] riwo::optional<device_id> ensure_format_target
+(const path_t &device, const riwo::optional<device_id> &expected)
 {
 	detail::ensure_path(device, "libempp::storage::format");
 	struct stat status {};
@@ -42,7 +42,7 @@ namespace libempp::storage { namespace
 				"libempp::storage::format"
 			);
 		}
-		return libgs::nullopt;
+		return riwo::nullopt;
 	}
 	const device_id identity {
 		.major = ::major(status.st_rdev),
@@ -94,7 +94,7 @@ namespace libempp::storage { namespace
 	return identity;
 }
 
-void ensure_identity(const path_t &device, const libgs::optional<device_id> &before)
+void ensure_identity(const path_t &device, const riwo::optional<device_id> &before)
 {
 	if( not before )
 		return ;
@@ -184,7 +184,7 @@ namespace detail
 {
 
 [[nodiscard]] static result_t<filesystem_info> format
-(const path_t &device, const format_options &options, const libgs::optional<device_id> &expected)
+(const path_t &device, const format_options &options, const riwo::optional<device_id> &expected)
 {
 	return detail::capture_expected<filesystem_info>([&]
 	{
@@ -225,7 +225,7 @@ namespace detail
 
 result_t<filesystem_info> format(const path_t &device, const format_options &options)
 {
-	return detail::format(device, options, libgs::nullopt);
+	return detail::format(device, options, riwo::nullopt);
 }
 
 result_t<filesystem_info> format(const device_info &device, const format_options &options)

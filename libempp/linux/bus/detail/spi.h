@@ -14,58 +14,58 @@
 namespace libempp::bus
 {
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_spi<Exec>::impl :
 	public std::enable_shared_from_this<impl>
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	explicit impl(handle_t &&handle, const attributes_t &attrs) :
 		m_attributes(attrs), m_handle(std::move(handle)) {}
 
-	explicit impl(libgs::concepts::match_sched<Exec> auto &&exec) :
-		m_handle(libgs::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
+	explicit impl(riwo::concepts::match_sched<Exec> auto &&exec) :
+		m_handle(riwo::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
 
 public:
-	[[nodiscard]] libgs::io_expected transfer
-	(const libgs::const_buffer &tx_buffer, const libgs::mutable_buffer &rx_buffer) noexcept
+	[[nodiscard]] riwo::io_expected transfer
+	(const riwo::const_buffer &tx_buffer, const riwo::mutable_buffer &rx_buffer) noexcept
 	{
 		if( tx_buffer.size() != rx_buffer.size() )
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::invalid_argument)
 			);
 		}
 		return ctrl(tx_buffer, rx_buffer, "transfer");
 	}
 
-	[[nodiscard]] libgs::io_expected write(const libgs::const_buffer &buffer) noexcept {
-		return ctrl(buffer, libgs::mutable_buffer{}, "write");
+	[[nodiscard]] riwo::io_expected write(const riwo::const_buffer &buffer) noexcept {
+		return ctrl(buffer, riwo::mutable_buffer{}, "write");
 	}
 
-	[[nodiscard]] libgs::io_expected read(const libgs::mutable_buffer &buffer) noexcept
+	[[nodiscard]] riwo::io_expected read(const riwo::mutable_buffer &buffer) noexcept
 	{
 		if( buffer.size() == 0 )
 			return size_t {};
-		return ctrl(libgs::const_buffer{}, buffer, "read");
+		return ctrl(riwo::const_buffer{}, buffer, "read");
 	}
 
 	template <typename Token>
 	[[nodiscard]] auto transfer
-	(const libgs::const_buffer &tx_buffer, const libgs::mutable_buffer &rx_buffer, Token &&token)
+	(const riwo::const_buffer &tx_buffer, const riwo::mutable_buffer &rx_buffer, Token &&token)
 	{
-		if constexpr(libgs::is_error_code_token_v<Token>)
+		if constexpr(riwo::is_error_code_token_v<Token>)
 		{
-			return libgs::expected_value_or_error (
+			return riwo::expected_value_or_error (
 				transfer(tx_buffer, rx_buffer), token
 			);
 		}
-		else if constexpr(libgs::is_sync_opt_token_v<Token>)
-			return libgs::expected_value_or_throw(transfer(tx_buffer, rx_buffer));
+		else if constexpr(riwo::is_sync_opt_token_v<Token>)
+			return riwo::expected_value_or_throw(transfer(tx_buffer, rx_buffer));
 		else
 		{
-			return libgs::initiate_io<size_t>(m_handle.get_executor(),
+			return riwo::initiate_io<size_t>(m_handle.get_executor(),
 			[self = this->shared_from_this(), tx_buffer, rx_buffer]
 			<typename T0>(T0 &&completion_token) mutable
 			{
@@ -78,25 +78,25 @@ public:
 	}
 
 	template <typename Token>
-	[[nodiscard]] auto write(const libgs::const_buffer &buffer, Token &&token)
+	[[nodiscard]] auto write(const riwo::const_buffer &buffer, Token &&token)
 	{
 		using token_t = std::remove_cvref_t<Token>;
-		if constexpr(libgs::is_error_code_token_v<Token>)
-			return libgs::expected_value_or_error(write(buffer), token);
+		if constexpr(riwo::is_error_code_token_v<Token>)
+			return riwo::expected_value_or_error(write(buffer), token);
 
-		else if constexpr(libgs::is_sync_opt_token_v<Token>)
-			return libgs::expected_value_or_throw(write(buffer));
+		else if constexpr(riwo::is_sync_opt_token_v<Token>)
+			return riwo::expected_value_or_throw(write(buffer));
 
-		else if constexpr(libgs::is_detached_v<libgs::token_unbound_t<token_t>>)
+		else if constexpr(riwo::is_detached_v<riwo::token_unbound_t<token_t>>)
 		{
 			auto owner = copy_write_buffer(buffer);
-			return libgs::initiate_io<size_t>(m_handle.get_executor(),
+			return riwo::initiate_io<size_t>(m_handle.get_executor(),
 			[self = this->shared_from_this(), owner]<typename T0>(T0 &&completion_token) mutable
 			{
 				self->async_execute([self, owner]
 				{
 					return self->write (
-						libgs::const_buffer(owner->data(), owner->size())
+						riwo::const_buffer(owner->data(), owner->size())
 					);
 				},
 				std::forward<T0>(completion_token));
@@ -105,7 +105,7 @@ public:
 		}
 		else
 		{
-			return libgs::initiate_io<size_t>(m_handle.get_executor(),
+			return riwo::initiate_io<size_t>(m_handle.get_executor(),
 			[self = this->shared_from_this(), buffer]<typename T0>(T0 &&completion_token) mutable
 			{
 				self->async_execute([self, buffer] {
@@ -117,17 +117,17 @@ public:
 	}
 
 	template <typename Token>
-	[[nodiscard]] auto read(const libgs::mutable_buffer &buffer, Token &&token)
+	[[nodiscard]] auto read(const riwo::mutable_buffer &buffer, Token &&token)
 	{
-		if constexpr(libgs::is_error_code_token_v<Token>)
-			return libgs::expected_value_or_error(read(buffer), token);
+		if constexpr(riwo::is_error_code_token_v<Token>)
+			return riwo::expected_value_or_error(read(buffer), token);
 
-		else if constexpr(libgs::is_sync_opt_token_v<Token>)
-			return libgs::expected_value_or_throw(read(buffer));
+		else if constexpr(riwo::is_sync_opt_token_v<Token>)
+			return riwo::expected_value_or_throw(read(buffer));
 
 		else
 		{
-			return libgs::initiate_io<size_t>(m_handle.get_executor(),
+			return riwo::initiate_io<size_t>(m_handle.get_executor(),
 			[self = this->shared_from_this(), buffer]<typename T0>(T0 &&completion_token) mutable
 			{
 				self->async_execute([self, buffer] {
@@ -138,7 +138,7 @@ public:
 		}
 	}
 
-	template <libgs::concepts::array_buffer Buffer, typename Token>
+	template <riwo::concepts::array_buffer Buffer, typename Token>
 	[[nodiscard]] auto async_read_buffer(Token &&token)
 	{
 		using token_t = std::remove_cvref_t<Token>;
@@ -165,25 +165,25 @@ public:
 					std::move(completion)(error, std::move(*result));
 				}))
 			));
-			self->read(libgs::buffer(*result), std::move(next_handler));
+			self->read(riwo::buffer(*result), std::move(next_handler));
 		},
 		completion_token);
 	}
 
 private:
-	[[nodiscard]] libgs::io_expected ctrl(const libgs::const_buffer &tx_buffer,
-		const libgs::mutable_buffer &rx_buffer, std::string_view operation) noexcept
+	[[nodiscard]] riwo::io_expected ctrl(const riwo::const_buffer &tx_buffer,
+		const riwo::mutable_buffer &rx_buffer, std::string_view operation) noexcept
 	{
 		const auto size = std::max(tx_buffer.size(), rx_buffer.size());
 		if( size > std::numeric_limits<uint32_t>::max() )
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::message_size)
 			);
 		}
 		if( not m_handle.is_open() )
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::bad_file_descriptor)
 			);
 		}
@@ -213,11 +213,11 @@ private:
 		libempp_log_warning("LibEMpp.Linux",
 			"spi::{}: ioctl(SPI_IOC_MESSAGE) failed: {}", operation, error
 		);
-		return libgs::io_unexpected(error);
+		return riwo::io_unexpected(error);
 	}
 
 	[[nodiscard]] static std::shared_ptr<std::vector<std::byte>>
-	copy_write_buffer(const libgs::const_buffer &buffer)
+	copy_write_buffer(const riwo::const_buffer &buffer)
 	{
 		auto owner = std::make_shared<std::vector<std::byte>>(buffer.size());
 		if( buffer.size() > 0 )
@@ -239,7 +239,7 @@ private:
 			completion_work = std::move(completion_work), completion = std::forward<Handler>(handler)
 		]() mutable
 		{
-			LIBGS_UNUSED(io_work);
+			RIWO_UNUSED(io_work);
 			std::error_code error;
 			size_t transferred = 0;
 			try {
@@ -250,14 +250,14 @@ private:
 					error = result.error();
 			}
 			catch(...) {
-				error = libgs::exception_error(std::current_exception());
+				error = riwo::exception_error(std::current_exception());
 			}
 			asio::dispatch(completion_exec, asio::bind_allocator(allocator, [
 				completion_work = std::move(completion_work),
 				completion = std::move(completion), error, transferred
 			]() mutable
 			{
-				LIBGS_UNUSED(completion_work);
+				RIWO_UNUSED(completion_work);
 				std::move(completion)(error, transferred);
 			}));
 		}));
@@ -268,7 +268,7 @@ public:
 	handle_t m_handle;
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_spi<Exec>::node::node(path_t dev_name, speed_t max_speed_hz,
 	mode_t mode, bits_t bits_per_word, const duration_t &delay, bool cs_change) :
 	dev_name(std::move(dev_name))
@@ -280,48 +280,48 @@ basic_spi<Exec>::node::node(path_t dev_name, speed_t max_speed_hz,
 	this->cs_change = cs_change;
 }
 
-template <libgs::concepts::exec Exec>
-basic_spi<Exec>::basic_spi(libgs::concepts::match_sched<Exec> auto &&exec) :
+template <riwo::concepts::exec Exec>
+basic_spi<Exec>::basic_spi(riwo::concepts::match_sched<Exec> auto &&exec) :
 	m_impl(std::make_shared<impl>(std::forward<decltype(exec)>(exec)))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_spi<Exec>::basic_spi()
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_spi(libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_spi(riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
-basic_spi<Exec>::basic_spi(const node &dev, libgs::concepts::match_sched<Exec> auto &&exec) :
+template <riwo::concepts::exec Exec>
+basic_spi<Exec>::basic_spi(const node &dev, riwo::concepts::match_sched<Exec> auto &&exec) :
 	basic_spi(make_handle(dev, std::forward<decltype(exec)>(exec)), static_cast<const attributes_t&>(dev))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_spi<Exec>::basic_spi(const node &dev)
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_spi(dev, libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_spi(dev, riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_spi<Exec>::basic_spi(handle_t &&handle, const attributes_t &attrs) :
 	m_impl(std::make_shared<impl>(std::move(handle), attrs))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_spi<Exec>::~basic_spi() = default;
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::match_sched<Exec> Exec0>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::match_sched<Exec> Exec0>
 basic_spi<Exec>::basic_spi(basic_spi<Exec0> &&other) noexcept
 {
 	if constexpr(std::same_as<Exec,Exec0>)
@@ -338,8 +338,8 @@ basic_spi<Exec>::basic_spi(basic_spi<Exec0> &&other) noexcept
 	}
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::match_sched<Exec> Exec0>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::match_sched<Exec> Exec0>
 basic_spi<Exec> &basic_spi<Exec>::operator=(basic_spi<Exec0> &&other) noexcept
 {
 	if constexpr(std::same_as<Exec,Exec0>)
@@ -362,7 +362,7 @@ basic_spi<Exec> &basic_spi<Exec>::operator=(basic_spi<Exec0> &&other) noexcept
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_spi<Exec>::open(const node &dev, std::error_code &error) noexcept
 {
 	error.clear();
@@ -380,20 +380,20 @@ void basic_spi<Exec>::open(const node &dev, std::error_code &error) noexcept
 	m_impl->m_attributes = static_cast<const attributes_t&>(dev);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_spi<Exec>::open(const node &dev)
 {
 	std::error_code error;
 	open(dev, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error, std::format (
+		riwo::system_error::loc_throw(error, std::format (
 			"libempp::spi::open('{}')", dev.dev_name.string()
 		));
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_spi<Exec>::close(std::error_code &error) noexcept
 {
 	error.clear();
@@ -401,53 +401,53 @@ void basic_spi<Exec>::close(std::error_code &error) noexcept
 		m_impl->m_handle.close(error);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_spi<Exec>::close()
 {
 	std::error_code error;
 	close(error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::spi::close");
+		riwo::system_error::loc_throw(error, "libempp::spi::close");
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Token>
 auto basic_spi<Exec>::transfer
-(libgs::const_buffer tx_buffer, libgs::mutable_buffer rx_buffer, Token &&token)
+(riwo::const_buffer tx_buffer, riwo::mutable_buffer rx_buffer, Token &&token)
 	requires read_token_v<Token>
 {
 	return m_impl->transfer(tx_buffer, rx_buffer, std::forward<Token>(token));
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Token>
-auto basic_spi<Exec>::write(libgs::const_buffer buffer, Token &&token)
+auto basic_spi<Exec>::write(riwo::const_buffer buffer, Token &&token)
 	requires task_token_v<Token>
 {
 	return m_impl->write(buffer, std::forward<Token>(token));
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Token>
-auto basic_spi<Exec>::read(libgs::mutable_buffer buffer, Token &&token)
+auto basic_spi<Exec>::read(riwo::mutable_buffer buffer, Token &&token)
 	requires read_token_v<Token>
 {
 	return m_impl->read(buffer, std::forward<Token>(token));
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::array_buffer Buffer, typename Token>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::array_buffer Buffer, typename Token>
 auto basic_spi<Exec>::read(Token &&token) requires read_token_v<Token,Buffer>
 {
-	if constexpr( libgs::is_sync_opt_token_v<Token> )
+	if constexpr( riwo::is_sync_opt_token_v<Token> )
 	{
 		Buffer result {};
-		LIBGS_UNUSED(read(libgs::buffer(result), std::forward<Token>(token)));
+		RIWO_UNUSED(read(riwo::buffer(result), std::forward<Token>(token)));
 		return result;
 	}
 	else
 	{
-		return libgs::initiate_io<Buffer>(get_executor(),
+		return riwo::initiate_io<Buffer>(get_executor(),
 		[implementation = m_impl]<typename T0>(T0 &&completion_token) mutable
 		{
 			return implementation->template async_read_buffer<Buffer>(
@@ -458,41 +458,41 @@ auto basic_spi<Exec>::read(Token &&token) requires read_token_v<Token,Buffer>
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_spi<Exec>::attributes() const noexcept -> attributes_t
 {
 	return m_impl->m_attributes;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_spi<Exec>::get_executor() noexcept -> executor_t
 {
 	return m_impl->m_handle.get_executor();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_spi<Exec>::is_open() const noexcept
 {
 	return m_impl->m_handle.is_open();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_spi<Exec>::handle() const noexcept -> const handle_t&
 {
 	return m_impl->m_handle;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_spi<Exec>::handle() noexcept -> handle_t&
 {
 	return m_impl->m_handle;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_spi<Exec>::make_handle
-(const node &dev, libgs::concepts::match_sched<Exec> auto &&exec, std::error_code &error) noexcept -> handle_t
+(const node &dev, riwo::concepts::match_sched<Exec> auto &&exec, std::error_code &error) noexcept -> handle_t
 {
-	handle_t stream(libgs::get_executor_helper (
+	handle_t stream(riwo::get_executor_helper (
 		std::forward<decltype(exec)>(exec)
 	));
 	error.clear();
@@ -542,21 +542,21 @@ auto basic_spi<Exec>::make_handle
 	return stream;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_spi<Exec>::make_handle(const node &dev, std::error_code &error) noexcept -> handle_t
-	requires libgs::concepts::match_def_exec<Exec>
+	requires riwo::concepts::match_def_exec<Exec>
 {
-	return make_handle(dev, libgs::io_context(), error);
+	return make_handle(dev, riwo::io_context(), error);
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::match_sched<Exec> Exec0>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::match_sched<Exec> Exec0>
 auto basic_spi<Exec>::make_handle(const node &dev, Exec0 &&exec) -> handle_t
 {
 	std::error_code error;
 	auto stream = make_handle(dev, std::forward<Exec0>(exec), error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::spi::make_handle");
+		riwo::system_error::loc_throw(error, "libempp::spi::make_handle");
 	return stream;
 }
 

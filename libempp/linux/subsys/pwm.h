@@ -15,7 +15,7 @@ namespace libempp::subsys
 
 class LIBEMPP_LINUX_API pwm
 {
-	LIBGS_DISABLE_COPY(pwm)
+	RIWO_DISABLE_COPY(pwm)
 
 public:
 	using channel_t = uint8_t;

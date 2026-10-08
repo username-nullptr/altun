@@ -8,7 +8,7 @@ namespace libempp
 {
 
 template <typename Func>
-libgs::optional<plugin_manager::library_t> plugin_manager::library(Func &&predicate) noexcept
+riwo::optional<plugin_manager::library_t> plugin_manager::library(Func &&predicate) noexcept
 	requires is_predicate_v<Func>
 {
 	for(auto &[name, lib] : libraries())

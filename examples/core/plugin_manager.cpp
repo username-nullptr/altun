@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <libempp/core/plugin_manager.h>
-#include <libgs/core/system/app_utls.h>
+#include <riwo/core/system/app_utls.h>
 
 #include <filesystem>
 #include <iostream>
@@ -13,7 +13,7 @@
 
 std::filesystem::path default_plugin_file()
 {
-	auto directory = libgs::app::dir_path();
+	auto directory = riwo::app::dir_path();
 	return directory ? *directory / LIBEMPP_EXAMPLE_PLUGIN_NAME :
 		std::filesystem::path(LIBEMPP_EXAMPLE_PLUGIN_NAME);
 }

@@ -80,7 +80,7 @@ EMPP_TEST("real-device", "optional block device read-only integration")
 		));
 		std::vector<std::byte> buffer(size);
 		const auto read_size = device.read_some_at (
-			0, libgs::mutable_buffer(buffer.data(), buffer.size())
+			0, riwo::mutable_buffer(buffer.data(), buffer.size())
 		);
 		EMPP_REQUIRE(read_size);
 		EMPP_REQUIRE(*read_size > 0);

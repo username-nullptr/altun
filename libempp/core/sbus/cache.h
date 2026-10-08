@@ -9,7 +9,7 @@
 namespace libempp::sbus
 {
 
-using cache_t = libgs::utils::sbus::cache<subscriber>;
+using cache_t = riwo::utils::sbus::cache<subscriber>;
 
 [[nodiscard]] LIBEMPP_CORE_API cache_t &cache() noexcept;
 

@@ -9,7 +9,7 @@
 #else //__linux__
 
 #include <libempp/linux/global.h>
-#include <libgs/core/async_expected.h>
+#include <riwo/core/async_expected.h>
 #include <linux/spi/spidev.h>
 
 namespace libempp::bus
@@ -25,10 +25,10 @@ enum spi_mode : spi_mode_t
 	spi_mode3 = SPI_MODE_3
 };
 
-template <libgs::concepts::exec Exec = asio::any_io_executor>
+template <riwo::concepts::exec Exec = asio::any_io_executor>
 class LIBEMPP_LINUX_TAPI basic_spi
 {
-	LIBGS_DISABLE_COPY(basic_spi)
+	RIWO_DISABLE_COPY(basic_spi)
 
 public:
 	using executor_type = Exec;
@@ -60,19 +60,19 @@ public:
 	};
 
 public:
-	explicit basic_spi(libgs::concepts::match_sched<Exec> auto &&exec);
-	explicit basic_spi() requires libgs::concepts::match_def_exec<Exec>;
+	explicit basic_spi(riwo::concepts::match_sched<Exec> auto &&exec);
+	explicit basic_spi() requires riwo::concepts::match_def_exec<Exec>;
 
-	explicit basic_spi(const node &dev, libgs::concepts::match_sched<Exec> auto &&exec);
-	explicit basic_spi(const node &dev) requires libgs::concepts::match_def_exec<Exec>;
+	explicit basic_spi(const node &dev, riwo::concepts::match_sched<Exec> auto &&exec);
+	explicit basic_spi(const node &dev) requires riwo::concepts::match_def_exec<Exec>;
 
 	basic_spi(handle_t &&handle, const attributes_t &attrs);
 	~basic_spi();
 
-	template <libgs::concepts::match_sched<Exec> Exec0>
+	template <riwo::concepts::match_sched<Exec> Exec0>
 	basic_spi(basic_spi<Exec0> &&other) noexcept;
 
-	template <libgs::concepts::match_sched<Exec> Exec0>
+	template <riwo::concepts::match_sched<Exec> Exec0>
 	basic_spi &operator=(basic_spi<Exec0> &&other) noexcept;
 
 public:
@@ -85,26 +85,26 @@ public:
 public:
 	template <typename Token, typename Value = size_t>
 	static constexpr bool task_token_v =
-		libgs::concepts::tf_opt_token<Token,std::error_code,Value>;
+		riwo::concepts::tf_opt_token<Token,std::error_code,Value>;
 
 	template <typename Token, typename Value = size_t>
 	static constexpr bool read_token_v = task_token_v<Token,Value> and
-		not libgs::is_detached_v<libgs::token_unbound_t<Token>>;
+		not riwo::is_detached_v<riwo::token_unbound_t<Token>>;
 
 public:
-	template <typename Token = libgs::use_sync_t>
-	auto transfer(libgs::const_buffer tx_buffer, libgs::mutable_buffer rx_buffer,
+	template <typename Token = riwo::use_sync_t>
+	auto transfer(riwo::const_buffer tx_buffer, riwo::mutable_buffer rx_buffer,
 		Token &&token = {}) requires read_token_v<Token>;
 
-	template <typename Token = libgs::use_sync_t>
-	auto write(libgs::const_buffer buffer, Token &&token = {})
+	template <typename Token = riwo::use_sync_t>
+	auto write(riwo::const_buffer buffer, Token &&token = {})
 		requires task_token_v<Token>;
 
-	template <typename Token = libgs::use_sync_t>
-	auto read(libgs::mutable_buffer buffer, Token &&token = {})
+	template <typename Token = riwo::use_sync_t>
+	auto read(riwo::mutable_buffer buffer, Token &&token = {})
 		requires read_token_v<Token>;
 
-	template <libgs::concepts::array_buffer Buffer, typename Token = libgs::use_sync_t>
+	template <riwo::concepts::array_buffer Buffer, typename Token = riwo::use_sync_t>
 	auto read(Token &&token = {}) requires read_token_v<Token,Buffer>;
 
 public:
@@ -117,21 +117,21 @@ public:
 
 public:
 	[[nodiscard]] static handle_t make_handle (
-		const node &dev, libgs::concepts::match_sched<Exec> auto &&exec,
+		const node &dev, riwo::concepts::match_sched<Exec> auto &&exec,
 		std::error_code &error
 	) noexcept;
 
 	[[nodiscard]] static handle_t make_handle (
 		const node &dev, std::error_code &error
-	) noexcept requires libgs::concepts::match_def_exec<Exec>;
+	) noexcept requires riwo::concepts::match_def_exec<Exec>;
 
-	template <libgs::concepts::match_sched<Exec> Exec0 = libgs::io_context_t&>
+	template <riwo::concepts::match_sched<Exec> Exec0 = riwo::io_context_t&>
 	[[nodiscard]] static handle_t make_handle (
-		const node &dev, Exec0 &&exec = libgs::io_context()
+		const node &dev, Exec0 &&exec = riwo::io_context()
 	);
 
 private:
-	template <libgs::concepts::exec>
+	template <riwo::concepts::exec>
 	friend class basic_spi;
 
 	class impl;

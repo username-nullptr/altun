@@ -13,9 +13,9 @@
 namespace libempp::subsys
 {
 
-class LIBGS_DECL_HIDDEN pwm::impl
+class RIWO_DECL_HIDDEN pwm::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	impl() = default;
@@ -60,7 +60,7 @@ pwm::pwm(node_t node) :
 	std::error_code error;
 	m_impl->open(node, error);
 	if(error)
-		libgs::system_error::loc_throw(error, "libempp::subsys::pwm::open");
+		riwo::system_error::loc_throw(error, "libempp::subsys::pwm::open");
 }
 
 pwm::pwm() :
@@ -94,7 +94,7 @@ pwm &pwm::open(node_t node)
 	std::error_code error;
 	open(std::move(node), error);
 	if(error)
-		libgs::system_error::loc_throw(error, "libempp::subsys::pwm::open");
+		riwo::system_error::loc_throw(error, "libempp::subsys::pwm::open");
 	return *this;
 }
 
@@ -119,7 +119,7 @@ pwm &pwm::set_period(uint32_t period)
 	std::error_code error;
 	set_period(period, error);
 	if(error)
-		libgs::system_error::loc_throw(error, "libempp::subsys::pwm::set_period");
+		riwo::system_error::loc_throw(error, "libempp::subsys::pwm::set_period");
 	return *this;
 }
 
@@ -138,7 +138,7 @@ pwm &pwm::set_duty_cycle(uint32_t duty_cycle)
 	std::error_code error;
 	set_duty_cycle(duty_cycle, error);
 	if(error)
-		libgs::system_error::loc_throw(
+		riwo::system_error::loc_throw(
 			error, "libempp::subsys::pwm::set_duty_cycle");
 	return *this;
 }
@@ -158,7 +158,7 @@ pwm &pwm::set(uint32_t period, uint32_t duty_cycle)
 	std::error_code error;
 	set(period, duty_cycle, error);
 	if(error)
-		libgs::system_error::loc_throw(error, "libempp::subsys::pwm::set");
+		riwo::system_error::loc_throw(error, "libempp::subsys::pwm::set");
 	return *this;
 }
 
@@ -176,7 +176,7 @@ pwm &pwm::set_enable(bool enable)
 	std::error_code error;
 	set_enable(enable, error);
 	if(error)
-		libgs::system_error::loc_throw(error, "libempp::subsys::pwm::set_enable");
+		riwo::system_error::loc_throw(error, "libempp::subsys::pwm::set_enable");
 	return *this;
 }
 

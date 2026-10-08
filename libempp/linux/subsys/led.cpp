@@ -13,9 +13,9 @@ namespace libempp::subsys
 
 namespace fs = std::filesystem;
 
-class LIBGS_DECL_HIDDEN led::impl
+class RIWO_DECL_HIDDEN led::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	impl() = default;
@@ -62,7 +62,7 @@ public:
 		if( not read_text(descriptor, text, error) )
 			return false;
 
-		const auto result = libgs::strtls::to_uint32(text);
+		const auto result = riwo::strtls::to_uint32(text);
 		if( not result )
 		{
 			error = std::make_error_code(std::errc::invalid_argument);
@@ -206,7 +206,7 @@ led::led(const node_t &node) :
 	std::error_code error;
 	m_impl->open(node, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::led::open");
+		riwo::system_error::loc_throw(error, "libempp::subsys::led::open");
 }
 
 led::led() :
@@ -241,7 +241,7 @@ led &led::open(const node_t &node)
 	std::error_code error;
 	open(node, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::led::open");
+		riwo::system_error::loc_throw(error, "libempp::subsys::led::open");
 	return *this;
 }
 
@@ -276,7 +276,7 @@ led &led::set_brightness(brightness_t brightness)
 	std::error_code error;
 	set_brightness(brightness, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::led::set_brightness");
+		riwo::system_error::loc_throw(error, "libempp::subsys::led::set_brightness");
 	return *this;
 }
 
@@ -309,7 +309,7 @@ led &led::set_trigger(std::string_view trigger)
 	std::error_code error;
 	set_trigger(trigger, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::led::set_trigger");
+		riwo::system_error::loc_throw(error, "libempp::subsys::led::set_trigger");
 	return *this;
 }
 
@@ -339,7 +339,7 @@ led &led::set_blink(duration_t delay_on, duration_t delay_off)
 	std::error_code error;
 	set_blink(delay_on, delay_off, error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::led::set_blink");
+		riwo::system_error::loc_throw(error, "libempp::subsys::led::set_blink");
 	return *this;
 }
 
@@ -411,7 +411,7 @@ std::string led::trigger() const
 	std::error_code error;
 	auto result = trigger(error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::led::trigger");
+		riwo::system_error::loc_throw(error, "libempp::subsys::led::trigger");
 	return result;
 }
 
@@ -465,7 +465,7 @@ std::vector<std::string> led::triggers() const
 	std::error_code error;
 	auto result = triggers(error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::subsys::led::triggers");
+		riwo::system_error::loc_throw(error, "libempp::subsys::led::triggers");
 	return result;
 }
 

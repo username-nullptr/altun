@@ -6,8 +6,8 @@
 #include <libempp/core/sbus/detail/cyclone_interface.h>
 #include <libempp/core/sbus/detail/dbus_interface.h>
 #include <libempp/core/sbus/detail/shm_interface.h>
-#include <libgs/utils/process.h>
-#include <libgs/utils/sbus.h>
+#include <riwo/utils/process.h>
+#include <riwo/utils/sbus.h>
 
 #include <array>
 #include <atomic>
@@ -46,7 +46,7 @@ struct message_header
 static_assert(sizeof(message_header) <= payload_sizes.front());
 
 template <typename Interface>
-using subscriber_t = libgs::utils::sbus::basic_subscriber<Interface>;
+using subscriber_t = riwo::utils::sbus::basic_subscriber<Interface>;
 
 template <typename Interface>
 struct transport_traits;
@@ -257,7 +257,7 @@ private:
 	std::filesystem::path m_path;
 };
 
-void stop_process(libgs::utils::process &process) noexcept
+void stop_process(riwo::utils::process &process) noexcept
 {
 	if( not process.joinable() )
 		return ;
@@ -371,7 +371,7 @@ public:
 
 private:
 	temporary_directory m_directory;
-	libgs::utils::process m_process;
+	riwo::utils::process m_process;
 	std::string m_request_topic;
 	std::string m_response_topic;
 	std::filesystem::path m_ready_file;
@@ -642,7 +642,7 @@ std::vector<result> launch_worker(
 	const std::filesystem::path &output
 )
 {
-	libgs::utils::process worker;
+	riwo::utils::process worker;
 	const auto started = worker.start(
 		LIBEMPP_PERFORMANCE_SBUS_EXECUTABLE,
 		"--benchmark", transport, output.string()

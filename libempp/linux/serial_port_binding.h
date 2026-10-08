@@ -11,9 +11,9 @@
 #include <libempp/linux/udev/event.h>
 #include <libempp/linux/udev/enumeration.h>
 
-#include <libgs/utils/signal_slot.h>
-#include <libgs/core/async_expected.h>
-#include <libgs/core/execution.h>
+#include <riwo/utils/signal_slot.h>
+#include <riwo/core/async_expected.h>
+#include <riwo/core/execution.h>
 
 namespace libempp
 {
@@ -59,10 +59,10 @@ struct serial_port_options
 	} flow_control = flow_control_t::none;
 };
 
-template <libgs::concepts::exec Exec = asio::any_io_executor>
+template <riwo::concepts::exec Exec = asio::any_io_executor>
 class LIBEMPP_LINUX_TAPI basic_serial_port_binding
 {
-	LIBGS_DISABLE_COPY_MOVE(basic_serial_port_binding)
+	RIWO_DISABLE_COPY_MOVE(basic_serial_port_binding)
 
 public:
 	using executor_type = Exec;
@@ -73,15 +73,15 @@ public:
 
 	using udev_t = udev::enumeration<subsys::enumeration::tty>;
 	using options_t = serial_port_options;
-	using rules_t = std::map<std::string,libgs::value>;
+	using rules_t = std::map<std::string,riwo::value>;
 
-	explicit basic_serial_port_binding(libgs::concepts::match_sched<Exec> auto &&exec);
-	basic_serial_port_binding() requires libgs::concepts::match_def_exec<Exec>;
+	explicit basic_serial_port_binding(riwo::concepts::match_sched<Exec> auto &&exec);
+	basic_serial_port_binding() requires riwo::concepts::match_def_exec<Exec>;
 	~basic_serial_port_binding();
 
 public:
 	template <typename...Args>
-	using signal_t = libgs::utils::signal<libgs::awaitable<void>(Args...)>;
+	using signal_t = riwo::utils::signal<riwo::awaitable<void>(Args...)>;
 
 	class rule_context;
 	using rule_context_ptr = std::shared_ptr<rule_context>;
@@ -92,14 +92,14 @@ public:
 	struct device_t
 	{
 		std::string port;
-		device_t(libgs::concepts::string_p<char> auto &&port);
+		device_t(riwo::concepts::string_p<char> auto &&port);
 		device_t(const udev_t &dev);
 	};
 
 public:
 	rule_context_ptr make_rule (
-		libgs::concepts::string_p<char> auto &&rule_key,
-		libgs::value value, const options_t &options = {}
+		riwo::concepts::string_p<char> auto &&rule_key,
+		riwo::value value, const options_t &options = {}
 	);
 	rule_context_ptr make_rule(rules_t rules, const options_t &options = {});
 	rule_context_ptr make_rule(device_t port, const options_t &options = {});
@@ -120,11 +120,11 @@ private:
 
 using serial_port_binding = basic_serial_port_binding<>;
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_serial_port_binding<Exec>::rule_context :
 	public std::enable_shared_from_this<rule_context>
 {
-	LIBGS_DISABLE_COPY_MOVE(rule_context)
+	RIWO_DISABLE_COPY_MOVE(rule_context)
 	friend class basic_serial_port_binding;
 	friend class io_context;
 
@@ -141,14 +141,14 @@ public:
 	ptr_t open();
 	ptr_t close();
 
-	template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = libgs::use_sync_t>
-	auto write(const std::vector<std::string> &ports, libgs::const_buffer buffer, Token &&token = {});
+	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	auto write(const std::vector<std::string> &ports, riwo::const_buffer buffer, Token &&token = {});
 
-	template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = libgs::use_sync_t>
-	auto write(std::string_view port, libgs::const_buffer buffer, Token &&token = {});
+	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	auto write(std::string_view port, riwo::const_buffer buffer, Token &&token = {});
 
-	template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = libgs::use_sync_t>
-	auto write(libgs::const_buffer buffer, Token &&token = {});
+	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	auto write(riwo::const_buffer buffer, Token &&token = {});
 
 public:
 	[[nodiscard]] std::vector<std::string> ports() const noexcept;
@@ -166,11 +166,11 @@ private:
 	std::shared_ptr<impl> m_impl {};
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_serial_port_binding<Exec>::io_context :
 	public std::enable_shared_from_this<io_context>
 {
-	LIBGS_DISABLE_COPY_MOVE(io_context)
+	RIWO_DISABLE_COPY_MOVE(io_context)
 	using rule_ptr = std::shared_ptr<typename rule_context::impl>;
 
 public:
@@ -181,13 +181,13 @@ public:
 	io_context(rule_ptr rule, std::string port, stream_ptr stream, payload_t payload);
 	~io_context();
 
-	template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = libgs::use_sync_t>
-	auto write(libgs::const_buffer buffer, Token &&token = {});
+	template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token = riwo::use_sync_t>
+	auto write(riwo::const_buffer buffer, Token &&token = {});
 
 public:
 	template <typename T>
 	static constexpr bool is_buffer_v =
-		libgs::is_vector_buffer_v<T> or libgs::is_string_buffer_v<T>;
+		riwo::is_vector_buffer_v<T> or riwo::is_string_buffer_v<T>;
 
 	template <typename Buffer = payload_t>
 	[[nodiscard]] decltype(auto) payload() const

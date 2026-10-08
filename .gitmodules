@@ -1,4 +1,4 @@
-[submodule "3rd_party/libgs"]
-	path = 3rd_party/libgs
-	url = https://gitee.com/jin-xiaoqiang/libgs.git
-	branch = bc
+[submodule "3rd_party/riwo"]
+	path = 3rd_party/riwo
+	url = https://gitee.com/jin-xiaoqiang/riwo.git
+	branch = b1xx

@@ -13,14 +13,14 @@ namespace libempp::udev::detail
 
 class LIBEMPP_LINUX_API event_core
 {
-	LIBGS_DISABLE_COPY_MOVE(event_core)
+	RIWO_DISABLE_COPY_MOVE(event_core)
 
 public:
-	using received_signal_t = libgs::utils::signal <
-		libgs::awaitable<void>(device_event)
+	using received_signal_t = riwo::utils::signal <
+		riwo::awaitable<void>(device_event)
 	>;
-	using error_signal_t = libgs::utils::signal <
-		libgs::awaitable<void>(std::error_code)
+	using error_signal_t = riwo::utils::signal <
+		riwo::awaitable<void>(std::error_code)
 	>;
 	event_core(asio::any_io_executor exec, std::string subsystem,
 		received_signal_t &received, error_signal_t &error

@@ -11,7 +11,7 @@
 namespace libempp::sbus
 {
 
-LIBGS_DECL_HIDDEN void bridge_dbus_data_available (
+RIWO_DECL_HIDDEN void bridge_dbus_data_available (
 	std::string_view, const void*, size_t
 );
 namespace
@@ -74,7 +74,7 @@ void rebuild_interface_snapshot()
 	snapshot->reserve(g_interfaces.size());
 	for(const auto &[pointer, object] : g_interfaces)
 	{
-		LIBGS_UNUSED(pointer);
+		RIWO_UNUSED(pointer);
 		snapshot->emplace_back(object);
 	}
 	g_interface_snapshot.store(std::move(snapshot), std::memory_order_release);
@@ -82,7 +82,7 @@ void rebuild_interface_snapshot()
 
 class runtime
 {
-	LIBGS_DISABLE_COPY_MOVE(runtime)
+	RIWO_DISABLE_COPY_MOVE(runtime)
 
 public:
 	runtime()
@@ -469,9 +469,9 @@ runtime &bus_runtime()
 namespace libempp::sbus
 {
 
-class LIBGS_DECL_HIDDEN dbus_interface::impl
+class RIWO_DECL_HIDDEN dbus_interface::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	using topic_subscribers = std::unordered_map<uint64_t,topic_callback>;
@@ -506,7 +506,7 @@ public:
 		snapshot->reserve(source->second.size());
 		for(const auto &[sid, callback] : source->second)
 		{
-			LIBGS_UNUSED(sid);
+			RIWO_UNUSED(sid);
 			snapshot->emplace_back(callback);
 		}
 		topic_snapshots.insert_or_assign(source->first, std::move(snapshot));
@@ -518,7 +518,7 @@ public:
 		snapshot->reserve(global_callbacks.size());
 		for(const auto &[sid, callback] : global_callbacks)
 		{
-			LIBGS_UNUSED(sid);
+			RIWO_UNUSED(sid);
 			snapshot->emplace_back(callback);
 		}
 		global_snapshot = std::move(snapshot);
@@ -571,7 +571,7 @@ dbus_interface::~dbus_interface() = default;
 
 void dbus_interface::init()
 {
-	LIBGS_UNUSED(bus_runtime());
+	RIWO_UNUSED(bus_runtime());
 }
 
 void dbus_interface::publish(std::string_view topic, const void *buffer, size_t size)
@@ -599,7 +599,7 @@ uint64_t dbus_interface::subscribe(std::string_view topic, topic_callback func)
 		std::lock_guard interfaces_lock(g_interfaces_mutex);
 		const auto [position, inserted] =
 			g_interfaces.insert_or_assign(this, shared_from_this());
-		LIBGS_UNUSED(position);
+		RIWO_UNUSED(position);
 		if( inserted )
 			rebuild_interface_snapshot();
 	}
@@ -617,7 +617,7 @@ uint64_t dbus_interface::subscribe(global_callback callback)
 		std::lock_guard interfaces_lock(g_interfaces_mutex);
 		const auto [position, inserted] =
 			g_interfaces.insert_or_assign(this, shared_from_this());
-		LIBGS_UNUSED(position);
+		RIWO_UNUSED(position);
 		if( inserted )
 			rebuild_interface_snapshot();
 	}
@@ -632,7 +632,7 @@ void dbus_interface::cancel_topic(std::string_view topic)
 	{
 		for(const auto &[sid, callback] : it->second)
 		{
-			LIBGS_UNUSED(callback);
+			RIWO_UNUSED(callback);
 			m_impl->topics_by_sid.erase(sid);
 		}
 		m_impl->topic_callbacks.erase(it);

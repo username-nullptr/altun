@@ -15,7 +15,7 @@ namespace libempp::subsys
 
 class LIBEMPP_LINUX_API led
 {
-	LIBGS_DISABLE_COPY(led)
+	RIWO_DISABLE_COPY(led)
 
 public:
 	using brightness_t = uint32_t;

@@ -9,7 +9,7 @@
 #else //__linux__
 
 #include <libempp/linux/global.h>
-#include <libgs/core/async_expected.h>
+#include <riwo/core/async_expected.h>
 
 namespace libempp::subsys
 {
@@ -49,10 +49,10 @@ struct gpio_event_t
 	uint64_t timestamp_ns = 0;
 };
 
-template <libgs::concepts::exec Exec = asio::any_io_executor>
+template <riwo::concepts::exec Exec = asio::any_io_executor>
 class LIBEMPP_LINUX_TAPI basic_gpio
 {
-	LIBGS_DISABLE_COPY(basic_gpio)
+	RIWO_DISABLE_COPY(basic_gpio)
 
 public:
 	using executor_type = Exec;
@@ -72,18 +72,18 @@ public:
 	template <typename Exec0>
 	explicit basic_gpio(const node_t &node, Exec0 &&exec) requires (
 		not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio> and
-		libgs::concepts::match_sched<Exec0,executor_t>
+		riwo::concepts::match_sched<Exec0,executor_t>
 	);
 	explicit basic_gpio(const node_t &node) requires
-		libgs::concepts::match_def_exec<executor_t>;
+		riwo::concepts::match_def_exec<executor_t>;
 
 	template <typename Exec0>
 	explicit basic_gpio(Exec0 &&exec) requires (
 		not std::same_as<std::remove_cvref_t<Exec0>,basic_gpio> and
-		libgs::concepts::match_sched<Exec0,executor_t>
+		riwo::concepts::match_sched<Exec0,executor_t>
 	);
 	explicit basic_gpio() requires
-		libgs::concepts::match_def_exec<executor_t>;
+		riwo::concepts::match_def_exec<executor_t>;
 
 	~basic_gpio();
 	basic_gpio(basic_gpio &&other) noexcept;
@@ -107,18 +107,18 @@ public:
 	basic_gpio &invert(std::error_code &error) noexcept;
 	basic_gpio &invert();
 
-	[[nodiscard]] libgs::sys_expected<bool> get() const noexcept;
+	[[nodiscard]] riwo::sys_expected<bool> get() const noexcept;
 	[[nodiscard]] explicit operator bool() const;
 	[[nodiscard]] bool operator*() const;
 
 public:
 	template <typename Token>
 	static constexpr bool event_token_v =
-		libgs::concepts::tf_opt_token<Token,std::error_code> and
-		not libgs::is_detached_v<libgs::token_unbound_t<Token>>;
+		riwo::concepts::tf_opt_token<Token,std::error_code> and
+		not riwo::is_detached_v<riwo::token_unbound_t<Token>>;
 
-	template <typename Token = const libgs::use_sync_t&>
-	auto wait_event(event_t &event, Token &&token = libgs::use_sync)
+	template <typename Token = const riwo::use_sync_t&>
+	auto wait_event(event_t &event, Token &&token = riwo::use_sync)
 		requires event_token_v<Token>;
 
 	using on_event_t = std::function<void(event_t)>;

@@ -9,7 +9,7 @@
 #else //__linux__
 
 #include <libempp/core/log.h>
-#include <libgs/core/utils/byte_order.h>
+#include <riwo/core/utils/byte_order.h>
 
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
@@ -18,28 +18,28 @@
 namespace libempp::bus
 {
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_i2c<Exec>::impl :
 	public std::enable_shared_from_this<impl>
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	explicit impl(handle_t &&handle, const attributes_t &attrs) :
 		m_attributes(attrs), m_handle(std::move(handle)) {}
 
-	explicit impl(libgs::concepts::match_sched<Exec> auto &&exec) :
-		m_handle(libgs::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
+	explicit impl(riwo::concepts::match_sched<Exec> auto &&exec) :
+		m_handle(riwo::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
 
 public:
 	template <i2c_reg_bit RegBit>
-	[[nodiscard]] libgs::io_expected write
-	(address_t address, data_t<RegBit> reg, const libgs::const_buffer &buffer) noexcept
+	[[nodiscard]] riwo::io_expected write
+	(address_t address, data_t<RegBit> reg, const riwo::const_buffer &buffer) noexcept
 	{
 		if( constexpr auto max_frame_size = std::numeric_limits<uint16_t>::max();
 			buffer.size() > max_frame_size - RegBit )
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::message_size)
 			);
 		}
@@ -50,11 +50,11 @@ public:
 		}
 		catch(const std::bad_alloc&)
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::not_enough_memory)
 			);
 		}
-		const auto network_reg = libgs::to_big_endian(reg);
+		const auto network_reg = riwo::to_big_endian(reg);
 		std::memcpy(frame.data(), &network_reg, RegBit);
 
 		if( buffer.size() > 0 )
@@ -73,18 +73,18 @@ public:
 	}
 
 	template <i2c_reg_bit RegBit>
-	[[nodiscard]] libgs::io_expected read
-	(address_t address, data_t<RegBit> reg, const libgs::mutable_buffer &buffer) noexcept
+	[[nodiscard]] riwo::io_expected read
+	(address_t address, data_t<RegBit> reg, const riwo::mutable_buffer &buffer) noexcept
 	{
 		if( buffer.size() == 0 )
 			return size_t {};
 		if( buffer.size() > std::numeric_limits<uint16_t>::max() )
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::message_size)
 			);
 		}
-		auto network_reg = libgs::to_big_endian(reg);
+		auto network_reg = riwo::to_big_endian(reg);
 		i2c_msg messages[2] {};
 
 		messages[0].addr = address;
@@ -105,32 +105,32 @@ public:
 
 	template <i2c_reg_bit RegBit, typename Token>
 	[[nodiscard]] auto write
-	(address_t address, data_t<RegBit> reg, const libgs::const_buffer &buffer, Token &&token)
+	(address_t address, data_t<RegBit> reg, const riwo::const_buffer &buffer, Token &&token)
 	{
 		using token_t = std::remove_cvref_t<Token>;
-		if constexpr( libgs::is_error_code_token_v<Token> )
+		if constexpr( riwo::is_error_code_token_v<Token> )
 		{
-			return libgs::expected_value_or_error (
+			return riwo::expected_value_or_error (
 				write<RegBit>(address, reg, buffer), token
 			);
 		}
-		else if constexpr( libgs::is_sync_opt_token_v<Token> )
+		else if constexpr( riwo::is_sync_opt_token_v<Token> )
 		{
-			return libgs::expected_value_or_throw (
+			return riwo::expected_value_or_throw (
 				write<RegBit>(address, reg, buffer)
 			);
 		}
-		else if constexpr( libgs::is_detached_v<libgs::token_unbound_t<token_t>> )
+		else if constexpr( riwo::is_detached_v<riwo::token_unbound_t<token_t>> )
 		{
 			auto owner = copy_write_buffer(buffer);
-			return libgs::initiate_io<size_t>(m_handle.get_executor(),
+			return riwo::initiate_io<size_t>(m_handle.get_executor(),
 			[self = this->shared_from_this(), address, reg, owner]
 			<typename T0>(T0 &&completion_token) mutable
 			{
 				self->async_execute([self, address, reg, owner]
 				{
 					return self->template write<RegBit>(address, reg,
-						libgs::const_buffer(owner->data(), owner->size())
+						riwo::const_buffer(owner->data(), owner->size())
 					);
 				},
 				std::forward<T0>(completion_token));
@@ -139,7 +139,7 @@ public:
 		}
 		else
 		{
-			return libgs::initiate_io<size_t>(m_handle.get_executor(),
+			return riwo::initiate_io<size_t>(m_handle.get_executor(),
 			[self = this->shared_from_this(), address, reg, buffer]
 			<typename T0>(T0 &&completion_token) mutable
 			{
@@ -153,23 +153,23 @@ public:
 
 	template <i2c_reg_bit RegBit, typename Token>
 	[[nodiscard]] auto read
-	(address_t address, data_t<RegBit> reg, const libgs::mutable_buffer &buffer, Token &&token)
+	(address_t address, data_t<RegBit> reg, const riwo::mutable_buffer &buffer, Token &&token)
 	{
-		if constexpr( libgs::is_error_code_token_v<Token> )
+		if constexpr( riwo::is_error_code_token_v<Token> )
 		{
-			return libgs::expected_value_or_error (
+			return riwo::expected_value_or_error (
 				read<RegBit>(address, reg, buffer), token
 			);
 		}
-		else if constexpr( libgs::is_sync_opt_token_v<Token> )
+		else if constexpr( riwo::is_sync_opt_token_v<Token> )
 		{
-			return libgs::expected_value_or_throw (
+			return riwo::expected_value_or_throw (
 				read<RegBit>(address, reg, buffer)
 			);
 		}
 		else
 		{
-			return libgs::initiate_io<size_t>(m_handle.get_executor(),
+			return riwo::initiate_io<size_t>(m_handle.get_executor(),
 			[self = this->shared_from_this(), address, reg, buffer]
 			<typename T0>(T0 &&completion_token) mutable
 			{
@@ -181,7 +181,7 @@ public:
 		}
 	}
 
-	template <i2c_reg_bit RegBit, libgs::concepts::array_buffer Buffer, typename Token>
+	template <i2c_reg_bit RegBit, riwo::concepts::array_buffer Buffer, typename Token>
 	[[nodiscard]] auto async_read_buffer
 	(address_t address, data_t<RegBit> reg, Token &&token)
 	{
@@ -211,19 +211,19 @@ public:
 				}))
 			));
 			self->template read<RegBit>(address, reg,
-				libgs::buffer(*result), std::move(next_handler)
+				riwo::buffer(*result), std::move(next_handler)
 			);
 		},
 		completion_token);
 	}
 
 private:
-	[[nodiscard]] libgs::io_expected ctrl
+	[[nodiscard]] riwo::io_expected ctrl
 	(i2c_rdwr_ioctl_data &transfer, size_t transferred_size, std::string_view operation) noexcept
 	{
 		if( not m_handle.is_open() )
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::bad_file_descriptor)
 			);
 		}
@@ -240,11 +240,11 @@ private:
 		libempp_log_warning("LibEMpp.Linux",
 			"i2c::{}: ioctl(I2C_RDWR) failed: {}", operation, error
 		);
-		return libgs::io_unexpected(error);
+		return riwo::io_unexpected(error);
 	}
 
 	[[nodiscard]] static std::shared_ptr<std::vector<std::byte>>
-	copy_write_buffer(const libgs::const_buffer &buffer)
+	copy_write_buffer(const riwo::const_buffer &buffer)
 	{
 		auto owner = std::make_shared<std::vector<std::byte>>(buffer.size());
 		if( buffer.size() > 0 )
@@ -266,7 +266,7 @@ private:
 			completion_work = std::move(completion_work), completion = std::forward<Handler>(handler)
 		]() mutable
 		{
-			LIBGS_UNUSED(io_work);
+			RIWO_UNUSED(io_work);
 			std::error_code error;
 			size_t transferred = 0;
 			try {
@@ -277,14 +277,14 @@ private:
 					error = result.error();
 			}
 			catch(...) {
-				error = libgs::exception_error(std::current_exception());
+				error = riwo::exception_error(std::current_exception());
 			}
 			asio::dispatch(completion_exec, asio::bind_allocator(allocator, [
 				completion_work = std::move(completion_work),
 				completion = std::move(completion), error, transferred
 			]() mutable
 			{
-				LIBGS_UNUSED(completion_work);
+				RIWO_UNUSED(completion_work);
 				std::move(completion)(error, transferred);
 			}));
 		}));
@@ -295,7 +295,7 @@ public:
 	handle_t m_handle;
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_i2c<Exec>::node::node(path_t dev_name, address_t addr,
 	const duration_t &timeout) :
 	dev_name(std::move(dev_name))
@@ -304,23 +304,23 @@ basic_i2c<Exec>::node::node(path_t dev_name, address_t addr,
 	this->timeout = timeout;
 }
 
-template <libgs::concepts::exec Exec>
-basic_i2c<Exec>::basic_i2c(libgs::concepts::match_sched<Exec> auto &&exec) :
+template <riwo::concepts::exec Exec>
+basic_i2c<Exec>::basic_i2c(riwo::concepts::match_sched<Exec> auto &&exec) :
 	m_impl(std::make_shared<impl>(std::forward<decltype(exec)>(exec)))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_i2c<Exec>::basic_i2c()
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_i2c(libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_i2c(riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
-basic_i2c<Exec>::basic_i2c(const node &dev, libgs::concepts::match_sched<Exec> auto &&exec) :
+template <riwo::concepts::exec Exec>
+basic_i2c<Exec>::basic_i2c(const node &dev, riwo::concepts::match_sched<Exec> auto &&exec) :
 	basic_i2c(make_handle(dev, std::forward<decltype(exec)>(exec)),
 		static_cast<const attributes_t&>(dev)
 	)
@@ -328,26 +328,26 @@ basic_i2c<Exec>::basic_i2c(const node &dev, libgs::concepts::match_sched<Exec> a
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_i2c<Exec>::basic_i2c(const node &dev)
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_i2c(dev, libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_i2c(dev, riwo::io_context())
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_i2c<Exec>::basic_i2c(handle_t &&handle, const attributes_t &attrs) :
 	m_impl(std::make_shared<impl>(std::move(handle), attrs))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_i2c<Exec>::~basic_i2c() = default;
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::match_sched<Exec> Exec0>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::match_sched<Exec> Exec0>
 basic_i2c<Exec>::basic_i2c(basic_i2c<Exec0> &&other) noexcept
 {
 	if constexpr( std::same_as<Exec,Exec0> )
@@ -370,8 +370,8 @@ basic_i2c<Exec>::basic_i2c(basic_i2c<Exec0> &&other) noexcept
 	}
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::match_sched<Exec> Exec0>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::match_sched<Exec> Exec0>
 basic_i2c<Exec> &basic_i2c<Exec>::operator=(basic_i2c<Exec0> &&other) noexcept
 {
 	if constexpr( std::same_as<Exec,Exec0> )
@@ -400,7 +400,7 @@ basic_i2c<Exec> &basic_i2c<Exec>::operator=(basic_i2c<Exec0> &&other) noexcept
 	return *this;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_i2c<Exec>::open(const node &dev, std::error_code &error) noexcept
 {
 	error.clear();
@@ -418,20 +418,20 @@ void basic_i2c<Exec>::open(const node &dev, std::error_code &error) noexcept
 	m_impl->m_attributes = static_cast<const attributes_t&>(dev);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_i2c<Exec>::open(const node &dev)
 {
 	std::error_code error;
 	open(dev, error);
 	if( error )
 	{
-		libgs::system_error::loc_throw(error, std::format (
+		riwo::system_error::loc_throw(error, std::format (
 			"libempp::i2c::open('{}')", dev.dev_name.string()
 		));
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_i2c<Exec>::close(std::error_code &error) noexcept
 {
 	error.clear();
@@ -439,18 +439,18 @@ void basic_i2c<Exec>::close(std::error_code &error) noexcept
 		m_impl->m_handle.close(error);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 void basic_i2c<Exec>::close()
 {
 	std::error_code error;
 	close(error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::i2c::close");
+		riwo::system_error::loc_throw(error, "libempp::i2c::close");
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <i2c_reg_bit RegBit, typename Token>
-auto basic_i2c<Exec>::write(data_t<RegBit> reg, libgs::const_buffer buffer, Token &&token)
+auto basic_i2c<Exec>::write(data_t<RegBit> reg, riwo::const_buffer buffer, Token &&token)
 	requires is_valid_reg_bit_v<RegBit> and task_token_v<Token>
 {
 	return m_impl->template write<RegBit>(
@@ -458,17 +458,17 @@ auto basic_i2c<Exec>::write(data_t<RegBit> reg, libgs::const_buffer buffer, Toke
 	);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <i2c_reg_bit RegBit, typename Token>
 auto basic_i2c<Exec>::write(data_t<RegBit> reg, Token &&token)
 	requires is_valid_reg_bit_v<RegBit> and task_token_v<Token>
 {
-	return write<RegBit>(reg, libgs::const_buffer{}, std::forward<Token>(token));
+	return write<RegBit>(reg, riwo::const_buffer{}, std::forward<Token>(token));
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <i2c_reg_bit RegBit, typename Token>
-auto basic_i2c<Exec>::read(data_t<RegBit> reg, libgs::mutable_buffer buffer, Token &&token)
+auto basic_i2c<Exec>::read(data_t<RegBit> reg, riwo::mutable_buffer buffer, Token &&token)
 	requires is_valid_reg_bit_v<RegBit> and read_token_v<Token>
 {
 	return m_impl->template read<RegBit>(
@@ -476,22 +476,22 @@ auto basic_i2c<Exec>::read(data_t<RegBit> reg, libgs::mutable_buffer buffer, Tok
 	);
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::array_buffer Buffer, i2c_reg_bit RegBit, typename Token>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::array_buffer Buffer, i2c_reg_bit RegBit, typename Token>
 auto basic_i2c<Exec>::read(data_t<RegBit> reg, Token &&token) requires
 	is_valid_reg_bit_v<RegBit> and read_token_v<Token,Buffer>
 {
-	if constexpr( libgs::is_sync_opt_token_v<Token> )
+	if constexpr( riwo::is_sync_opt_token_v<Token> )
 	{
 		Buffer result {};
-		LIBGS_UNUSED(read<RegBit>(reg, libgs::buffer(result),
+		RIWO_UNUSED(read<RegBit>(reg, riwo::buffer(result),
 			std::forward<Token>(token)
 		));
 		return result;
 	}
 	else
 	{
-		return libgs::initiate_io<Buffer>(get_executor(),
+		return riwo::initiate_io<Buffer>(get_executor(),
 		[implementation = m_impl, address = attributes().address, reg]
 		<typename T0>(T0 &&completion_token) mutable
 		{
@@ -503,41 +503,41 @@ auto basic_i2c<Exec>::read(data_t<RegBit> reg, Token &&token) requires
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_i2c<Exec>::attributes() const noexcept -> attributes_t
 {
 	return m_impl->m_attributes;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_i2c<Exec>::get_executor() noexcept -> executor_t
 {
 	return m_impl->m_handle.get_executor();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 bool basic_i2c<Exec>::is_open() const noexcept
 {
 	return m_impl->m_handle.is_open();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_i2c<Exec>::handle() const noexcept -> const handle_t&
 {
 	return m_impl->m_handle;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_i2c<Exec>::handle() noexcept -> handle_t&
 {
 	return m_impl->m_handle;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_i2c<Exec>::make_handle(const node &dev,
-	libgs::concepts::match_sched<Exec> auto &&exec, std::error_code &error) noexcept -> handle_t
+	riwo::concepts::match_sched<Exec> auto &&exec, std::error_code &error) noexcept -> handle_t
 {
-	handle_t stream(libgs::get_executor_helper (
+	handle_t stream(riwo::get_executor_helper (
 		std::forward<decltype(exec)>(exec)
 	));
 	error.clear();
@@ -588,21 +588,21 @@ auto basic_i2c<Exec>::make_handle(const node &dev,
 	return stream;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_i2c<Exec>::make_handle(const node &dev, std::error_code &error) noexcept -> handle_t
-	requires libgs::concepts::match_def_exec<Exec>
+	requires riwo::concepts::match_def_exec<Exec>
 {
-	return make_handle(dev, libgs::io_context(), error);
+	return make_handle(dev, riwo::io_context(), error);
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::match_sched<Exec> Exec0>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::match_sched<Exec> Exec0>
 auto basic_i2c<Exec>::make_handle(const node &dev, Exec0 &&exec) -> handle_t
 {
 	std::error_code error;
 	auto stream = make_handle(dev, std::forward<Exec0>(exec), error);
 	if( error )
-		libgs::system_error::loc_throw(error, "libempp::i2c::make_handle");
+		riwo::system_error::loc_throw(error, "libempp::i2c::make_handle");
 	return stream;
 }
 

@@ -43,10 +43,10 @@ constexpr event_action event_action_from_string(std::string_view action) noexcep
 	return event_action::unknown;
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
-basic_event<Subsys,Exec>::basic_event(libgs::concepts::match_sched<Exec> auto &&exec) :
-	m_exec(libgs::get_executor_helper(std::forward<decltype(exec)>(exec))),
+basic_event<Subsys,Exec>::basic_event(riwo::concepts::match_sched<Exec> auto &&exec) :
+	m_exec(riwo::get_executor_helper(std::forward<decltype(exec)>(exec))),
 	m_impl(std::make_shared<detail::event_core>(asio::any_io_executor(m_exec),
 		subsys::string<Subsys>(), received, error
 	))
@@ -54,37 +54,37 @@ basic_event<Subsys,Exec>::basic_event(libgs::concepts::match_sched<Exec> auto &&
 
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 basic_event<Subsys,Exec>::basic_event()
-	requires libgs::concepts::match_def_exec<Exec> :
-	basic_event(libgs::io_context())
+	requires riwo::concepts::match_def_exec<Exec> :
+	basic_event(riwo::io_context())
 {
 
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 basic_event<Subsys,Exec>::~basic_event()
 {
 	m_impl->detach();
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::open(std::error_code &ec) noexcept
 {
 	m_impl->open({}, ec);
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::open(std::string_view dev_type, std::error_code &ec) noexcept
 {
 	m_impl->open(dev_type, ec);
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::open(std::string_view dev_type)
 {
@@ -92,13 +92,13 @@ void basic_event<Subsys,Exec>::open(std::string_view dev_type)
 	open(dev_type, ec);
 	if( ec )
 	{
-		libgs::system_error::loc_throw (
+		riwo::system_error::loc_throw (
 			ec, "libempp::udev::basic_event::open"
 		);
 	}
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::open()
 {
@@ -106,20 +106,20 @@ void basic_event<Subsys,Exec>::open()
 	open(ec);
 	if( ec )
 	{
-		libgs::system_error::loc_throw (
+		riwo::system_error::loc_throw (
 			ec, "libempp::udev::basic_event::open"
 		);
 	}
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::close(std::error_code &ec) noexcept
 {
 	m_impl->close(ec);
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 void basic_event<Subsys,Exec>::close()
 {
@@ -127,20 +127,20 @@ void basic_event<Subsys,Exec>::close()
 	close(ec);
 	if( ec )
 	{
-		libgs::system_error::loc_throw (
+		riwo::system_error::loc_throw (
 			ec, "libempp::udev::basic_event::close"
 		);
 	}
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 basic_event<Subsys,Exec>::executor_t basic_event<Subsys,Exec>::get_executor() noexcept
 {
 	return m_exec;
 }
 
-template <subsys_enum Subsys, libgs::concepts::exec Exec>
+template <subsys_enum Subsys, riwo::concepts::exec Exec>
 	requires subsys::is_valid_v<Subsys>
 bool basic_event<Subsys,Exec>::is_open() const noexcept
 {

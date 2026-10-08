@@ -11,7 +11,7 @@ int main(int argc, const char *argv[])
 		argv[1] : "libempp-example.ini";
 
 	auto &settings = libempp_default_settings;
-	settings.changed.connect([](std::string_view key, const libgs::value &value) {
+	settings.changed.connect([](std::string_view key, const riwo::value &value) {
 		std::cout << "Changed " << key << " = " << value.to_string() << '\n';
 	});
 

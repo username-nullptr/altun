@@ -58,7 +58,7 @@ EMPP_TEST("io-model", "bus operations use the completion token executor")
 	bool i2c_array_completed = false;
 	bool spi_array_completed = false;
 
-	i2c.read(0, libgs::buffer(i2c_buffer),
+	i2c.read(0, riwo::buffer(i2c_buffer),
 		asio::bind_executor(completion_context.get_executor(),
 		[&](std::error_code error, std::size_t transferred)
 		{
@@ -67,7 +67,7 @@ EMPP_TEST("io-model", "bus operations use the completion token executor")
 			EMPP_REQUIRE_EQ(transferred, 0U);
 			i2c_completed = true;
 		}));
-	spi.read(libgs::buffer(spi_buffer),
+	spi.read(riwo::buffer(spi_buffer),
 		asio::bind_executor(completion_context.get_executor(),
 		[&](std::error_code error, std::size_t transferred)
 		{

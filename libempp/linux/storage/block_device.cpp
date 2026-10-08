@@ -84,9 +84,9 @@ namespace libempp::storage { namespace
 
 } // namespace
 
-class LIBGS_DECL_HIDDEN block_device::impl
+class RIWO_DECL_HIDDEN block_device::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	impl() = default;
@@ -172,16 +172,16 @@ public:
 		m_info = {};
 	}
 
-	[[nodiscard]] libgs::io_expected read_some_at(offset_t offset, const libgs::mutable_buffer &buffer) const
+	[[nodiscard]] riwo::io_expected read_some_at(offset_t offset, const riwo::mutable_buffer &buffer) const
 	{
 		if( m_descriptor < 0 )
-			return libgs::io_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
+			return riwo::io_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
 
 		if( buffer.size() == 0 or offset >= m_info.geometry.capacity_bytes )
-			return libgs::make_io_expected(0);
+			return riwo::make_io_expected(0);
 
 		if( offset > static_cast<offset_t>(std::numeric_limits<off_t>::max()) )
-			return libgs::io_unexpected(std::make_error_code(std::errc::value_too_large));
+			return riwo::io_unexpected(std::make_error_code(std::errc::value_too_large));
 
 		auto count = static_cast<size_t>(std::min<capacity_t>(
 			m_info.geometry.capacity_bytes - offset, buffer.size()
@@ -197,9 +197,9 @@ public:
 		while( read_size < 0 and errno == EINTR );
 
 		if( read_size < 0 )
-			return libgs::io_unexpected(std::error_code(errno, std::system_category()));
+			return riwo::io_unexpected(std::error_code(errno, std::system_category()));
 
-		return libgs::make_io_expected(static_cast<size_t>(read_size));
+		return riwo::make_io_expected(static_cast<size_t>(read_size));
 	}
 
 	int m_descriptor = -1;
@@ -222,7 +222,7 @@ result_t<std::unique_ptr<block_device>> block_device::open(path_t device)
 
 	implementation->open(std::move(device), error);
 	if( error )
-		return libgs::sys_unexpected(error);
+		return riwo::sys_unexpected(error);
 
 	return std::make_unique<block_device>(std::move(implementation));
 }
@@ -235,16 +235,16 @@ result_t<std::unique_ptr<block_device>> block_device::open(const device_info &de
 
 	const auto current = (*opened)->info();
 	if( not current )
-		return libgs::sys_unexpected(current.error());
+		return riwo::sys_unexpected(current.error());
 
 	auto resolved = resolve_device(device.device);
 	if( not resolved )
-		return libgs::sys_unexpected(resolved.error());
+		return riwo::sys_unexpected(resolved.error());
 
 	if( current->id != device.id or resolved->id != current->id or
 		(not device.sys_path.empty() and resolved->sys_path != device.sys_path) or
 		(not device.serial.empty() and resolved->serial != device.serial) )
-		return libgs::sys_unexpected(make_error_code(errc::device_changed));
+		return riwo::sys_unexpected(make_error_code(errc::device_changed));
 	return opened;
 }
 
@@ -256,18 +256,18 @@ result_t<std::vector<device_info>> enumerate_devices()
 
 	context_ptr context(::udev_new(), &::udev_unref);
 	if( not context )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::not_enough_memory));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::not_enough_memory));
 
 	enumerate_ptr devices(::udev_enumerate_new(context.get()), &::udev_enumerate_unref);
 	if( not devices )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::not_enough_memory));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::not_enough_memory));
 
 	if( const int error = ::udev_enumerate_add_match_subsystem(devices.get(), "block");
 		error < 0 )
-		return libgs::sys_unexpected(udev_error(error));
+		return riwo::sys_unexpected(udev_error(error));
 
 	if( const int error = ::udev_enumerate_scan_devices(devices.get()); error < 0 )
-		return libgs::sys_unexpected(udev_error(error));
+		return riwo::sys_unexpected(udev_error(error));
 
 	std::vector<device_info> result;
 	udev_list_entry *entry = nullptr;
@@ -306,32 +306,32 @@ result_t<std::vector<device_info>> enumerate_devices()
 result_t<device_info> resolve_device(const path_t &device)
 {
 	if( device.empty() )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::invalid_argument));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::invalid_argument));
 
 	struct stat status {};
 	if( ::stat(device.c_str(), &status) < 0 )
-		return libgs::sys_unexpected(std::error_code(errno, std::system_category()));
+		return riwo::sys_unexpected(std::error_code(errno, std::system_category()));
 
 	if( not S_ISBLK(status.st_mode) )
-		return libgs::sys_unexpected(std::error_code(ENOTBLK, std::system_category()));
+		return riwo::sys_unexpected(std::error_code(ENOTBLK, std::system_category()));
 
 	using context_ptr = std::unique_ptr<udev, decltype(&::udev_unref)>;
 	using device_ptr = std::unique_ptr<udev_device, decltype(&::udev_device_unref)>;
 
 	context_ptr context(::udev_new(), &::udev_unref);
 	if( not context )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::not_enough_memory));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::not_enough_memory));
 
 	device_ptr resolved (
 		::udev_device_new_from_devnum(context.get(), 'b', status.st_rdev),
 		&::udev_device_unref
 	);
 	if( not resolved )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::no_such_device));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::no_such_device));
 
 	auto info = make_device_info(resolved.get());
 	if( info.device.empty() )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::no_such_device));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::no_such_device));
 
 	if( auto opened = block_device::open(info.device) )
 	{
@@ -351,30 +351,30 @@ block_device &block_device::close() noexcept
 	return *this;
 }
 
-libgs::io_expected block_device::read_some_at(offset_t offset, libgs::mutable_buffer buffer)
+riwo::io_expected block_device::read_some_at(offset_t offset, riwo::mutable_buffer buffer)
 {
 	if( not m_impl )
-		return libgs::io_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
+		return riwo::io_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
 	return m_impl->read_some_at(offset, buffer);
 }
 
 result_t<block_info> block_device::refresh()
 {
 	if( not m_impl )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
 
 	std::error_code error;
 	m_impl->refresh(error);
 
 	if( error )
-		return libgs::sys_unexpected(error);
+		return riwo::sys_unexpected(error);
 	return m_impl->m_info;
 }
 
 result_t<block_info> block_device::info() const
 {
 	if( not is_open() )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::bad_file_descriptor));
 	return m_impl->m_info;
 }
 

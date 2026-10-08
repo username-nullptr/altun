@@ -1,70 +1,70 @@
-option(LIBEMPP_USE_EMBEDDED_LIBGS
-	"-- ${PRO_NAME}: Use the embedded LibGS dependency." ON
+option(LIBEMPP_USE_EMBEDDED_RIWO
+	"-- ${PRO_NAME}: Use the embedded Riwo dependency." ON
 )
-set(LIBEMPP_LIBGS_INSTALL_PREFIX "" CACHE PATH
-	"Install prefix of an external LibGS package."
+set(LIBEMPP_RIWO_INSTALL_PREFIX "" CACHE PATH
+	"Install prefix of an external Riwo package."
 )
-if (LIBEMPP_USE_EMBEDDED_LIBGS)
-	if (LIBEMPP_LIBGS_INSTALL_PREFIX)
+if (LIBEMPP_USE_EMBEDDED_RIWO)
+	if (LIBEMPP_RIWO_INSTALL_PREFIX)
 		message(FATAL_ERROR
-			"${PRO_NAME}: LIBEMPP_LIBGS_INSTALL_PREFIX is only valid when "
-			"LIBEMPP_USE_EMBEDDED_LIBGS=OFF."
+			"${PRO_NAME}: LIBEMPP_RIWO_INSTALL_PREFIX is only valid when "
+			"LIBEMPP_USE_EMBEDDED_RIWO=OFF."
 		)
 	endif ()
 
-	if (DEFINED LIBGS_BUILD_CORO AND NOT LIBGS_BUILD_CORO)
+	if (DEFINED RIWO_BUILD_CORO AND NOT RIWO_BUILD_CORO)
 		message(FATAL_ERROR
-			"${PRO_NAME}: The bundled LibGS requires LIBGS_BUILD_CORO=ON."
+			"${PRO_NAME}: The bundled Riwo requires RIWO_BUILD_CORO=ON."
 		)
 	endif ()
 
-	if (DEFINED LIBGS_BUILD_UTILITIES AND NOT LIBGS_BUILD_UTILITIES)
+	if (DEFINED RIWO_BUILD_UTILITIES AND NOT RIWO_BUILD_UTILITIES)
 		message(FATAL_ERROR
-			"${PRO_NAME}: The bundled LibGS requires LIBGS_BUILD_UTILITIES=ON."
+			"${PRO_NAME}: The bundled Riwo requires RIWO_BUILD_UTILITIES=ON."
 		)
 	endif ()
 
-	set(LIBGS_BUILD_CORO ON)
-	set(LIBGS_BUILD_UTILITIES ON)
+	set(RIWO_BUILD_CORO ON)
+	set(RIWO_BUILD_UTILITIES ON)
 
-	add_subdirectory(libgs)
-	message(STATUS "${PRO_NAME}: Use embedded LibGS.")
+	add_subdirectory(riwo)
+	message(STATUS "${PRO_NAME}: Use embedded Riwo.")
 
 else ()
-	if (LIBEMPP_LIBGS_INSTALL_PREFIX)
-		if (NOT IS_ABSOLUTE "${LIBEMPP_LIBGS_INSTALL_PREFIX}")
+	if (LIBEMPP_RIWO_INSTALL_PREFIX)
+		if (NOT IS_ABSOLUTE "${LIBEMPP_RIWO_INSTALL_PREFIX}")
 			message(FATAL_ERROR
-				"${PRO_NAME}: LIBEMPP_LIBGS_INSTALL_PREFIX must be an absolute path."
+				"${PRO_NAME}: LIBEMPP_RIWO_INSTALL_PREFIX must be an absolute path."
 			)
 		endif ()
 
-		if (NOT IS_DIRECTORY "${LIBEMPP_LIBGS_INSTALL_PREFIX}")
+		if (NOT IS_DIRECTORY "${LIBEMPP_RIWO_INSTALL_PREFIX}")
 			message(FATAL_ERROR
-				"${PRO_NAME}: LIBEMPP_LIBGS_INSTALL_PREFIX does not exist: "
-				"${LIBEMPP_LIBGS_INSTALL_PREFIX}"
+				"${PRO_NAME}: LIBEMPP_RIWO_INSTALL_PREFIX does not exist: "
+				"${LIBEMPP_RIWO_INSTALL_PREFIX}"
 			)
 		endif ()
 
-		find_package(LibGS CONFIG REQUIRED COMPONENTS coro utils
-			PATHS "${LIBEMPP_LIBGS_INSTALL_PREFIX}"
+		find_package(Riwo CONFIG REQUIRED COMPONENTS coro utils
+			PATHS "${LIBEMPP_RIWO_INSTALL_PREFIX}"
 			NO_DEFAULT_PATH
 		)
 	else ()
-		find_package(LibGS CONFIG REQUIRED COMPONENTS coro utils)
+		find_package(Riwo CONFIG REQUIRED COMPONENTS coro utils)
 	endif ()
 
-	foreach(libempp_libgs_target
-		LibGS::core LibGS::coro LibGS::utils
-		gs.core gs.coro gs.utils
+	foreach(libempp_riwo_target
+		Riwo::core Riwo::coro Riwo::utils
+		riwo.core riwo.coro riwo.utils
 	)
-		if (TARGET ${libempp_libgs_target})
-			set_property(TARGET ${libempp_libgs_target} PROPERTY
+		if (TARGET ${libempp_riwo_target})
+			set_property(TARGET ${libempp_riwo_target} PROPERTY
 				IMPORTED_GLOBAL TRUE
 			)
 		endif ()
 	endforeach()
 
-	message(STATUS "${PRO_NAME}: Use external LibGS ${LibGS_VERSION}.")
+	message(STATUS "${PRO_NAME}: Use external Riwo ${Riwo_VERSION}.")
 endif ()
 
 option(LIBEMPP_USE_EMBEDDED_NLOHMANN

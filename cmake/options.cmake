@@ -6,7 +6,7 @@ option(LIBEMPP_BUILD_SBUS_CYCLONE
 )
 set(LIBEMPP_SBUS_CYCLONE_SUPPORT ${LIBEMPP_BUILD_SBUS_CYCLONE})
 if (LIBEMPP_BUILD_SBUS_CYCLONE)
-	message(STATUS "${PRO_NAME}: Build LibGS.Utilities.SoftBus interface: Cyclone-DDS")
+	message(STATUS "${PRO_NAME}: Build Riwo.Utilities.SoftBus interface: Cyclone-DDS")
 endif ()
 
 option(LIBEMPP_BUILD_SBUS_DBUS
@@ -14,7 +14,7 @@ option(LIBEMPP_BUILD_SBUS_DBUS
 )
 set(LIBEMPP_SBUS_DBUS_SUPPORT ${LIBEMPP_BUILD_SBUS_DBUS})
 if (LIBEMPP_BUILD_SBUS_DBUS)
-	message(STATUS "${PRO_NAME}: Build LibGS.Utilities.SoftBus interface: D-Bus")
+	message(STATUS "${PRO_NAME}: Build Riwo.Utilities.SoftBus interface: D-Bus")
 endif ()
 
 option(LIBEMPP_BUILD_SBUS_SHM
@@ -28,16 +28,16 @@ endif ()
 
 set(LIBEMPP_SBUS_SHM_SUPPORT ${LIBEMPP_BUILD_SBUS_SHM})
 if (LIBEMPP_BUILD_SBUS_SHM)
-	message(STATUS "${PRO_NAME}: Build LibGS.Utilities.SoftBus interface: shared memory")
+	message(STATUS "${PRO_NAME}: Build Riwo.Utilities.SoftBus interface: shared memory")
 endif ()
 
 set(LIBEMPP_SBUS_INTERFACE "default" CACHE STRING
-	"Select the LibGS.Utilities.SoftBus interface. (Default: libgs default)"
+	"Select the Riwo.Utilities.SoftBus interface. (Default: riwo default)"
 )
 string(TOLOWER "${LIBEMPP_SBUS_INTERFACE}" LIBEMPP_SBUS_INTERFACE_NORMALIZED)
 
 set(LIBEMPP_SBUS_INTERFACE "${LIBEMPP_SBUS_INTERFACE_NORMALIZED}" CACHE STRING
-	"Select the LibGS.Utilities.SoftBus interface. (Default: libgs default)" FORCE
+	"Select the Riwo.Utilities.SoftBus interface. (Default: riwo default)" FORCE
 )
 set_property(CACHE LIBEMPP_SBUS_INTERFACE PROPERTY STRINGS
 	default local udp dbus cyclone shm
@@ -46,12 +46,12 @@ set_property(CACHE LIBEMPP_SBUS_INTERFACE PROPERTY STRINGS
 if ((LIBEMPP_SBUS_INTERFACE STREQUAL "cyclone" AND NOT LIBEMPP_BUILD_SBUS_CYCLONE) OR
 	(LIBEMPP_SBUS_INTERFACE STREQUAL "dbus" AND NOT LIBEMPP_BUILD_SBUS_DBUS) OR
 	(LIBEMPP_SBUS_INTERFACE STREQUAL "shm" AND NOT LIBEMPP_BUILD_SBUS_SHM))
-	message(FATAL_ERROR "${PRO_NAME}: Unsupported LibGS.Utilities.SoftBus interface: ${LIBEMPP_SBUS_INTERFACE}")
+	message(FATAL_ERROR "${PRO_NAME}: Unsupported Riwo.Utilities.SoftBus interface: ${LIBEMPP_SBUS_INTERFACE}")
 endif ()
 
 if (NOT LIBEMPP_SBUS_INTERFACE MATCHES "^(default|local|udp|dbus|cyclone|shm)$")
 	message(FATAL_ERROR
-		"${PRO_NAME}: Unknown LibGS.Utilities.SoftBus interface: ${LIBEMPP_SBUS_INTERFACE}"
+		"${PRO_NAME}: Unknown Riwo.Utilities.SoftBus interface: ${LIBEMPP_SBUS_INTERFACE}"
 	)
 endif ()
 

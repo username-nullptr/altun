@@ -47,7 +47,7 @@ int main(int argc, const char *argv[])
 	std::vector<std::byte> first_block(first_block_size);
 
 	const auto read_size = device.read_some_at (
-		0, libgs::mutable_buffer(first_block.data(), first_block.size())
+		0, riwo::mutable_buffer(first_block.data(), first_block.size())
 	);
 	if( not read_size )
 	{

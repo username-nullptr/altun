@@ -17,20 +17,20 @@ set(target_name empp.core)
 libempp_add_library(${target_name})
 
 if (LIBEMPP_SBUS_INTERFACE STREQUAL "udp")
-	get_target_property(libempp_libgs_utils_definitions
-		LibGS::utils INTERFACE_COMPILE_DEFINITIONS
+	get_target_property(libempp_riwo_utils_definitions
+		Riwo::utils INTERFACE_COMPILE_DEFINITIONS
 	)
-	if (NOT libempp_libgs_utils_definitions MATCHES
-		"(^|;)LIBGS_UTILS_SBUS_UDP_INTERFACE_SUPPORT=1(;|$)")
+	if (NOT libempp_riwo_utils_definitions MATCHES
+		"(^|;)RIWO_UTILS_SBUS_UDP_INTERFACE_SUPPORT=1(;|$)")
 		message(FATAL_ERROR
-			"${PRO_NAME}: LIBEMPP_SBUS_INTERFACE=udp requires a LibGS "
-			"Utilities library built with LIBGS_BUILD_UTILITIES_SBUS_UDP=ON."
+			"${PRO_NAME}: LIBEMPP_SBUS_INTERFACE=udp requires a Riwo "
+			"Utilities library built with RIWO_BUILD_UTILITIES_SBUS_UDP=ON."
 		)
 	endif ()
 endif ()
 
 target_link_libraries(${target_name} PUBLIC
-	gs.coro gs.utils
+	riwo.coro riwo.utils
 )
 if (NOT LIBEMPP_USE_EMBEDDED_NLOHMANN)
 	target_link_libraries(${target_name} PUBLIC

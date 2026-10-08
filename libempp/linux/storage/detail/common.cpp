@@ -15,7 +15,7 @@
 namespace libempp::storage::detail { namespace
 {
 
-class LIBGS_DECL_HIDDEN file_descriptor
+class RIWO_DECL_HIDDEN file_descriptor
 {
 public:
 	explicit file_descriptor(int descriptor = -1) noexcept :
@@ -48,7 +48,7 @@ void check_spawn_action(int result, std::string_view operation)
 
 [[noreturn]] void throw_error(const std::error_code &error, std::string_view operation)
 {
-	libgs::system_error::loc_throw(error, operation);
+	riwo::system_error::loc_throw(error, operation);
 	std::terminate();
 }
 

@@ -79,7 +79,7 @@ EMPP_TEST("linux", "I2C asynchronous device pressure")
 			const auto index = (position + offset) % devices.size();
 			reads.push_back({static_cast<std::uint8_t>(index),
 				devices[index]->read<buffer_type>(
-					static_cast<std::uint8_t>(operation), libgs::use_future)});
+					static_cast<std::uint8_t>(operation), riwo::use_future)});
 		}
 	}
 
@@ -140,7 +140,7 @@ EMPP_TEST("linux", "SPI asynchronous device pressure")
 		{
 			const auto index = (position + offset) % devices.size();
 			reads.push_back({static_cast<std::uint8_t>(index + 0x40),
-				devices[index]->read<buffer_type>(libgs::use_future)});
+				devices[index]->read<buffer_type>(riwo::use_future)});
 		}
 	}
 

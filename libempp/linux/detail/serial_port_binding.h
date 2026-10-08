@@ -9,19 +9,19 @@
 #else //__linux__
 
 #include <libempp/core/log.h>
-#include <libgs/core/algorithm/misc.h>
-#include <libgs/coro/utils.h>
+#include <riwo/core/algorithm/misc.h>
+#include <riwo/coro/utils.h>
 #include <algorithm>
 #include <set>
 
 namespace libempp
 {
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_serial_port_binding<Exec>::impl :
 	public std::enable_shared_from_this<impl>
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 	using baud_rate_t      = stream_t::baud_rate;
 	using character_size_t = stream_t::character_size;
 	using stop_bits_t      = stream_t::stop_bits;
@@ -30,23 +30,23 @@ class LIBEMPP_LINUX_TAPI basic_serial_port_binding<Exec>::impl :
 
 public:
 	explicit impl(auto &&exec) :
-		m_exec(libgs::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
+		m_exec(riwo::get_executor_helper(std::forward<decltype(exec)>(exec))) {}
 
 	void signal_relay(basic_serial_port_binding *q_ptr, const rule_context_ptr &context)
 	{
 		auto self = this->shared_from_this();
-		context->opened.connect(self, [q_ptr](std::string_view port) -> libgs::awaitable<void> {
+		context->opened.connect(self, [q_ptr](std::string_view port) -> riwo::awaitable<void> {
 			co_return co_await q_ptr->opened(port);
 		});
 		context->closed.connect(self, [q_ptr]
-		(std::string_view port, const std::error_code &error) -> libgs::awaitable<void> {
+		(std::string_view port, const std::error_code &error) -> riwo::awaitable<void> {
 			co_return co_await q_ptr->closed(port, error);
 		});
-		context->received.connect(self, [q_ptr](io_context_ptr ioc) -> libgs::awaitable<void> {
+		context->received.connect(self, [q_ptr](io_context_ptr ioc) -> riwo::awaitable<void> {
 			co_return co_await q_ptr->received(std::move(ioc));
 		});
 		context->error.connect(self, [q_ptr]
-		(std::string_view port, const std::error_code &error) -> libgs::awaitable<void> {
+		(std::string_view port, const std::error_code &error) -> riwo::awaitable<void> {
 			co_return co_await q_ptr->error(port, error);
 		});
 	}
@@ -83,33 +83,33 @@ public:
 	executor_t m_exec;
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::basic_serial_port_binding
-(libgs::concepts::match_sched<Exec> auto &&exec) :
+(riwo::concepts::match_sched<Exec> auto &&exec) :
 	m_impl(std::make_shared<impl>(std::forward<decltype(exec)>(exec)))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::basic_serial_port_binding()
-	requires libgs::concepts::match_def_exec<Exec> :
-	m_impl(std::make_shared<impl>(libgs::io_context()))
+	requires riwo::concepts::match_def_exec<Exec> :
+	m_impl(std::make_shared<impl>(riwo::io_context()))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::~basic_serial_port_binding() = default;
 
-template <libgs::concepts::exec Exec>
-basic_serial_port_binding<Exec>::device_t::device_t(libgs::concepts::string_p<char> auto &&port) :
-	port(libgs::strtls::to_string(std::forward<decltype(port)>(port)))
+template <riwo::concepts::exec Exec>
+basic_serial_port_binding<Exec>::device_t::device_t(riwo::concepts::string_p<char> auto &&port) :
+	port(riwo::strtls::to_string(std::forward<decltype(port)>(port)))
 {
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::device_t::device_t(const udev_t &dev)
 {
 	if( dev.is_valid() )
@@ -119,17 +119,17 @@ basic_serial_port_binding<Exec>::device_t::device_t(const udev_t &dev)
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::executor_t basic_serial_port_binding<Exec>::get_executor() noexcept
 {
 	return m_impl->m_exec;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_serial_port_binding<Exec>::rule_context::impl :
 	public std::enable_shared_from_this<impl>
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 	using baud_rate_t      = stream_t::baud_rate;
 	using character_size_t = stream_t::character_size;
 	using stop_bits_t      = stream_t::stop_bits;
@@ -158,7 +158,7 @@ public:
 			auto self = this->shared_from_this();
 			m_event.received.connect(self, &impl::handle_monitor_event);
 			m_event.error.connect(self, &impl::handle_monitor_error);
-			libgs::dispatch(m_exec, rule_work());
+			riwo::dispatch(m_exec, rule_work());
 		}
 	}
 
@@ -174,7 +174,7 @@ public:
 		for(auto &[port,stream] : m_devs)
 		{
 			if( not stream->is_open() )
-				libgs::dispatch(m_exec, dev_work(port, stream, false, generation));
+				riwo::dispatch(m_exec, dev_work(port, stream, false, generation));
 		}
 	}
 
@@ -212,12 +212,12 @@ public:
 	using write_target_t = std::pair<std::string,stream_ptr>;
 	using write_targets_t = std::vector<write_target_t>;
 
-	[[nodiscard]] libgs::io_expected write
-	(const stream_ptr &stream, const libgs::const_buffer &buffer) noexcept
+	[[nodiscard]] riwo::io_expected write
+	(const stream_ptr &stream, const riwo::const_buffer &buffer) noexcept
 	{
 		if( not stream )
 		{
-			return libgs::io_unexpected (
+			return riwo::io_unexpected (
 				std::make_error_code(std::errc::no_such_device)
 			);
 		}
@@ -225,36 +225,36 @@ public:
 		auto sum = asio::write(*stream, buffer, write_error);
 
 		if( write_error )
-			return libgs::io_unexpected(write_error);
+			return riwo::io_unexpected(write_error);
 		return sum;
 	}
 
 	template <typename Token>
 	[[nodiscard]] auto write(const std::string &port, const stream_ptr &stream,
-		const libgs::const_buffer &buffer, Token &&token)
+		const riwo::const_buffer &buffer, Token &&token)
 	{
-		if constexpr( libgs::is_error_code_token_v<Token> )
+		if constexpr( riwo::is_error_code_token_v<Token> )
 		{
-			return libgs::expected_value_or_error (
+			return riwo::expected_value_or_error (
 				write_and_notify(port, stream, buffer), token
 			);
 		}
-		else if constexpr( libgs::is_sync_opt_token_v<Token> )
+		else if constexpr( riwo::is_sync_opt_token_v<Token> )
 			return write_and_notify(port, stream, buffer);
 		else
 		{
 			using token_t = std::remove_cvref_t<Token>;
-			if constexpr( libgs::is_detached_v<libgs::token_unbound_t<token_t>> )
+			if constexpr( riwo::is_detached_v<riwo::token_unbound_t<token_t>> )
 			{
 				auto owner = copy_write_buffer(buffer);
-				return libgs::initiate_preserved_expected<size_t>(m_exec,
+				return riwo::initiate_preserved_expected<size_t>(m_exec,
 				[self = this->shared_from_this(), port, stream, owner]() mutable {
-					return self->co_write(port, stream, libgs::const_buffer(*owner));
+					return self->co_write(port, stream, riwo::const_buffer(*owner));
 				}, std::forward<Token>(token));
 			}
 			else
 			{
-				return libgs::initiate_preserved_expected<size_t>(m_exec,
+				return riwo::initiate_preserved_expected<size_t>(m_exec,
 				[self = this->shared_from_this(), port, stream, buffer]() mutable {
 					return self->co_write(port, stream, buffer);
 				}, std::forward<Token>(token));
@@ -262,21 +262,21 @@ public:
 		}
 	}
 
-	[[nodiscard]] libgs::awaitable<libgs::io_expected> co_write
-	(std::string port, stream_ptr stream, libgs::const_buffer buffer)
+	[[nodiscard]] riwo::awaitable<riwo::io_expected> co_write
+	(std::string port, stream_ptr stream, riwo::const_buffer buffer)
 	{
 		std::error_code write_error {};
 		auto size = co_await async_write(std::move(port), stream, buffer,
-			asio::redirect_error(libgs::use_awaitable, write_error)
+			asio::redirect_error(riwo::use_awaitable, write_error)
 		);
 		if( write_error )
-			co_return libgs::io_unexpected(write_error);
+			co_return riwo::io_unexpected(write_error);
 		co_return size;
 	}
 
 	template <typename Token>
 	[[nodiscard]] auto async_write
-	(std::string port, const stream_ptr &stream, libgs::const_buffer buffer, Token &&token)
+	(std::string port, const stream_ptr &stream, riwo::const_buffer buffer, Token &&token)
 	{
 		using token_t = std::remove_cvref_t<Token>;
 		token_t completion_token(std::forward<Token>(token));
@@ -292,7 +292,7 @@ public:
 	}
 
 	void async_write
-	(std::string port, const stream_ptr &stream, libgs::const_buffer buffer, io_handler_t handler)
+	(std::string port, const stream_ptr &stream, riwo::const_buffer buffer, io_handler_t handler)
 	{
 		if( not stream )
 		{
@@ -324,36 +324,36 @@ public:
 		);
 	}
 
-	[[nodiscard]] libgs::sys_expected<> write
-	(const write_targets_t &targets, const libgs::const_buffer &buffer) {
+	[[nodiscard]] riwo::sys_expected<> write
+	(const write_targets_t &targets, const riwo::const_buffer &buffer) {
 		return write_many(targets, buffer);
 	}
 
 	template <typename Token>
 	[[nodiscard]] auto write(const write_targets_t &targets,
-		const libgs::const_buffer &buffer, Token &&token)
+		const riwo::const_buffer &buffer, Token &&token)
 	{
-		if constexpr( libgs::is_error_code_token_v<Token> )
+		if constexpr( riwo::is_error_code_token_v<Token> )
 		{
 			auto result = write_many(targets, buffer);
 			token = result ? std::error_code{} : result.error();
 		}
-		else if constexpr( libgs::is_sync_opt_token_v<Token> )
+		else if constexpr( riwo::is_sync_opt_token_v<Token> )
 			return write_many(targets, buffer);
 		else
 		{
 			using token_t = std::remove_cvref_t<Token>;
-			if constexpr( libgs::is_detached_v<libgs::token_unbound_t<token_t>> )
+			if constexpr( riwo::is_detached_v<riwo::token_unbound_t<token_t>> )
 			{
 				auto owner = copy_write_buffer(buffer);
-				return libgs::initiate_preserved_expected<void>(m_exec,
+				return riwo::initiate_preserved_expected<void>(m_exec,
 				[self = this->shared_from_this(), targets, owner]() mutable {
-					return self->co_write_many(targets, libgs::const_buffer(*owner));
+					return self->co_write_many(targets, riwo::const_buffer(*owner));
 				}, std::forward<Token>(token));
 			}
 			else
 			{
-				return libgs::initiate_preserved_expected<void>(m_exec,
+				return riwo::initiate_preserved_expected<void>(m_exec,
 				[self = this->shared_from_this(), targets, buffer]() mutable {
 					return self->co_write_many(targets, buffer);
 				}, std::forward<Token>(token));
@@ -363,7 +363,7 @@ public:
 
 private:
 	[[nodiscard]] static std::shared_ptr<std::string>
-	copy_write_buffer(const libgs::const_buffer &buffer)
+	copy_write_buffer(const riwo::const_buffer &buffer)
 	{
 		auto owner = std::make_shared<std::string>();
 		if( buffer.size() > 0 )
@@ -376,7 +376,7 @@ private:
 	}
 
 	void post_write_result(io_handler_t handler, std::error_code write_error, size_t size) {
-		libgs::post_completion(m_exec, std::move(handler), write_error, size);
+		riwo::post_completion(m_exec, std::move(handler), write_error, size);
 	}
 
 	void notify_error(std::string_view port, std::error_code operation_error) noexcept
@@ -387,9 +387,9 @@ private:
 				return ;
 
 			std::string owned_port(port);
-			libgs::dispatch(m_exec,
+			riwo::dispatch(m_exec,
 			[context = std::move(context), port = std::move(owned_port), operation_error]
-			() mutable -> libgs::awaitable<void> {
+			() mutable -> riwo::awaitable<void> {
 				co_await context->error(port, operation_error);
 				co_return ;
 			});
@@ -405,9 +405,9 @@ private:
 				return ;
 
 			std::string owned_port(port);
-			libgs::dispatch(m_exec,
+			riwo::dispatch(m_exec,
 			[context = std::move(context), port = std::move(owned_port), close_error]
-			() mutable -> libgs::awaitable<void> {
+			() mutable -> riwo::awaitable<void> {
 				co_await context->closed(port, close_error);
 				co_return ;
 			});
@@ -415,7 +415,7 @@ private:
 		catch(...) {}
 	}
 
-	[[nodiscard]] libgs::awaitable<void> emit_closed
+	[[nodiscard]] riwo::awaitable<void> emit_closed
 	(const std::string &port, const std::error_code &close_error)
 	{
 		if( m_opened_ports.erase(port) == 0 )
@@ -426,8 +426,8 @@ private:
 		co_return ;
 	}
 
-	[[nodiscard]] libgs::io_expected write_and_notify
-	(std::string_view port, const stream_ptr &stream, const libgs::const_buffer &buffer) noexcept
+	[[nodiscard]] riwo::io_expected write_and_notify
+	(std::string_view port, const stream_ptr &stream, const riwo::const_buffer &buffer) noexcept
 	{
 		auto result = write(stream, buffer);
 		if( not result )
@@ -435,8 +435,8 @@ private:
 		return result;
 	}
 
-	[[nodiscard]] libgs::sys_expected<> write_many
-	(const write_targets_t &targets, const libgs::const_buffer &buffer)
+	[[nodiscard]] riwo::sys_expected<> write_many
+	(const write_targets_t &targets, const riwo::const_buffer &buffer)
 	{
 		std::error_code first_error {};
 		for( const auto &[port, stream] : targets )
@@ -451,19 +451,19 @@ private:
 			log_write_error(port, result.error());
 		}
 		if( first_error )
-			return libgs::sys_unexpected(first_error);
-		return libgs::make_sys_expected();
+			return riwo::sys_unexpected(first_error);
+		return riwo::make_sys_expected();
 	}
 
-	[[nodiscard]] libgs::awaitable<libgs::sys_expected<>>
-	co_write_many(write_targets_t targets, libgs::const_buffer buffer)
+	[[nodiscard]] riwo::awaitable<riwo::sys_expected<>>
+	co_write_many(write_targets_t targets, riwo::const_buffer buffer)
 	{
 		std::error_code first_error {};
 		for( auto &[port, stream] : targets )
 		{
 			std::error_code write_error {};
 			co_await write(port, stream, buffer,
-				asio::redirect_error(libgs::use_awaitable, write_error)
+				asio::redirect_error(riwo::use_awaitable, write_error)
 			);
 			if( write_error )
 			{
@@ -472,12 +472,12 @@ private:
 
 				log_write_error(port, write_error);
 				if( write_error == asio::error::operation_aborted )
-					co_return libgs::sys_unexpected(write_error);
+					co_return riwo::sys_unexpected(write_error);
 			}
 		}
 		if( first_error )
-			co_return libgs::sys_unexpected(first_error);
-		co_return libgs::make_sys_expected();
+			co_return riwo::sys_unexpected(first_error);
+		co_return riwo::make_sys_expected();
 	}
 
 	static void log_write_error
@@ -490,10 +490,10 @@ private:
 	}
 
 private:
-	[[nodiscard]] libgs::awaitable<void> rule_work()
+	[[nodiscard]] riwo::awaitable<void> rule_work()
 	{
 		auto self = this->shared_from_this();
-		LIBGS_UNUSED(self);
+		RIWO_UNUSED(self);
 
 		if( m_shutdown or q_ptr.expired() )
 			co_return ;
@@ -563,7 +563,7 @@ private:
 		{
 			const auto &[key, value] = rule;
 			const auto property = event.property(key);
-			return property and libgs::wildcard_match(*value, *property) >= 0;
+			return property and riwo::wildcard_match(*value, *property) >= 0;
 		});
 	}
 
@@ -617,7 +617,7 @@ private:
 		);
 		if( inserted and m_open )
 		{
-			libgs::dispatch(m_exec,
+			riwo::dispatch(m_exec,
 				dev_work(port, it->second, true, m_generation)
 			);
 		}
@@ -669,14 +669,14 @@ private:
 		return it != m_devs.end() and it->second == stream;
 	}
 
-	[[nodiscard]] libgs::awaitable<void> dev_work
+	[[nodiscard]] riwo::awaitable<void> dev_work
 	(std::string port, stream_ptr stream, bool is_rule, size_t generation)
 	{
 		using namespace std::chrono_literals;
-		using namespace libgs::coro::literals;
+		using namespace riwo::coro::literals;
 
 		auto self = this->shared_from_this();
-		LIBGS_UNUSED(self);
+		RIWO_UNUSED(self);
 
 		while( not q_ptr.expired() and m_open and generation == m_generation and
 			   is_current_rule_device(port, stream, is_rule) )
@@ -746,12 +746,12 @@ private:
 		co_return ;
 	}
 
-	[[nodiscard]] libgs::awaitable<void> read_work
+	[[nodiscard]] riwo::awaitable<void> read_work
 	(std::string port, stream_ptr stream, size_t generation)
 	{
 		using namespace std::chrono_literals;
-		using namespace libgs::coro::literals;
-		using namespace libgs::operators;
+		using namespace riwo::coro::literals;
+		using namespace riwo::operators;
 
 		auto self = this->shared_from_this();
 		constexpr size_t read_buffer_size = 1024;
@@ -881,18 +881,18 @@ public:
 	size_t m_open_err_cr = 0;
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context_ptr basic_serial_port_binding<Exec>::make_rule
-(libgs::concepts::string_p<char> auto &&rule_key, libgs::value value, const options_t &options)
+(riwo::concepts::string_p<char> auto &&rule_key, riwo::value value, const options_t &options)
 {
 	rules_t rule {{
-		libgs::strtls::to_string(std::forward<decltype(rule_key)>(rule_key)),
+		riwo::strtls::to_string(std::forward<decltype(rule_key)>(rule_key)),
 		std::move(value)
 	}};
 	return make_rule(std::move(rule), options);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context_ptr basic_serial_port_binding<Exec>::make_rule
 (rules_t rules, const options_t &options)
 {
@@ -904,7 +904,7 @@ basic_serial_port_binding<Exec>::rule_context_ptr basic_serial_port_binding<Exec
 	return context;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context_ptr basic_serial_port_binding<Exec>::make_rule
 (device_t port, const options_t &options)
 {
@@ -916,7 +916,7 @@ basic_serial_port_binding<Exec>::rule_context_ptr basic_serial_port_binding<Exec
 	return context;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context::rule_context
 (const executor_t &exec, std::string port, const options_t &options) :
 	m_impl(std::make_shared<impl>(exec, std::move(port), options))
@@ -924,7 +924,7 @@ basic_serial_port_binding<Exec>::rule_context::rule_context
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context::rule_context
 (const executor_t &exec, rules_t rules, const options_t &options) :
 	m_impl(std::make_shared<impl>(exec, std::move(rules), options))
@@ -932,13 +932,13 @@ basic_serial_port_binding<Exec>::rule_context::rule_context
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context::~rule_context()
 {
 	m_impl->shutdown();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context::ptr_t
 basic_serial_port_binding<Exec>::rule_context::open()
 {
@@ -946,7 +946,7 @@ basic_serial_port_binding<Exec>::rule_context::open()
 	return this->shared_from_this();
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::rule_context::ptr_t
 basic_serial_port_binding<Exec>::rule_context::close()
 {
@@ -954,10 +954,10 @@ basic_serial_port_binding<Exec>::rule_context::close()
 	return this->shared_from_this();
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::rule_context::write
-(const std::vector<std::string> &ports, libgs::const_buffer buffer, Token &&token)
+(const std::vector<std::string> &ports, riwo::const_buffer buffer, Token &&token)
 {
 	typename impl::write_targets_t targets;
 	targets.reserve(ports.size());
@@ -971,10 +971,10 @@ auto basic_serial_port_binding<Exec>::rule_context::write
 	return m_impl->write(targets, buffer, std::forward<Token>(token));
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::rule_context::write
-(std::string_view port, libgs::const_buffer buffer, Token &&token)
+(std::string_view port, riwo::const_buffer buffer, Token &&token)
 {
 	std::string target_port(port);
 	stream_ptr stream;
@@ -990,10 +990,10 @@ auto basic_serial_port_binding<Exec>::rule_context::write
 	);
 }
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::rule_context::write
-(libgs::const_buffer buffer, Token &&token)
+(riwo::const_buffer buffer, Token &&token)
 {
 	typename impl::write_targets_t targets;
 	targets.reserve(m_impl->m_devs.size());
@@ -1004,7 +1004,7 @@ auto basic_serial_port_binding<Exec>::rule_context::write
 	return m_impl->write(targets, buffer, std::forward<Token>(token));
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 std::vector<std::string> basic_serial_port_binding<Exec>::rule_context::ports() const noexcept
 {
 	std::vector<std::string> ports;
@@ -1013,16 +1013,16 @@ std::vector<std::string> basic_serial_port_binding<Exec>::rule_context::ports() 
 	return ports;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_serial_port_binding<Exec>::rule_context::get_executor() noexcept -> executor_t
 {
 	return m_impl->m_exec;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 class LIBEMPP_LINUX_TAPI basic_serial_port_binding<Exec>::io_context::impl
 {
-	LIBGS_DISABLE_COPY_MOVE(impl)
+	RIWO_DISABLE_COPY_MOVE(impl)
 
 public:
 	impl(rule_ptr rule, std::string port, stream_ptr stream, payload_t payload) :
@@ -1035,7 +1035,7 @@ public:
 	payload_t m_payload {};
 };
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::io_context::io_context
 (rule_ptr rule, std::string port, stream_ptr stream, payload_t payload) :
 	m_impl(std::make_shared<impl>(
@@ -1045,13 +1045,13 @@ basic_serial_port_binding<Exec>::io_context::io_context
 
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 basic_serial_port_binding<Exec>::io_context::~io_context() = default;
 
-template <libgs::concepts::exec Exec>
-template <libgs::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
+template <riwo::concepts::exec Exec>
+template <riwo::concepts::dis_func_tf_opt_token<std::error_code,size_t> Token>
 auto basic_serial_port_binding<Exec>::io_context::write
-(libgs::const_buffer buffer, Token &&token)
+(riwo::const_buffer buffer, Token &&token)
 {
 	return m_impl->m_rule->write (
 		m_impl->m_port, m_impl->m_stream, buffer,
@@ -1059,7 +1059,7 @@ auto basic_serial_port_binding<Exec>::io_context::write
 	);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Buffer>
 decltype(auto) basic_serial_port_binding<Exec>::io_context::payload() const
 	noexcept(std::same_as<Buffer,std::string> or std::same_as<Buffer,payload_t>)
@@ -1078,10 +1078,10 @@ decltype(auto) basic_serial_port_binding<Exec>::io_context::payload() const
 	else if constexpr( std::same_as<Buffer,payload_t> )
 		return static_cast<const payload_t&>(m_impl->m_payload);
 	else
-		return libgs::copy_buffer_data<Buffer>(m_impl->m_payload);
+		return riwo::copy_buffer_data<Buffer>(m_impl->m_payload);
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 template <typename Buffer>
 Buffer basic_serial_port_binding<Exec>::io_context::take_payload()
 	noexcept(std::same_as<Buffer,payload_t>)
@@ -1091,19 +1091,19 @@ Buffer basic_serial_port_binding<Exec>::io_context::take_payload()
 		return std::move(m_impl->m_payload);
 	else
 	{
-		auto result = libgs::copy_buffer_data<Buffer>(m_impl->m_payload);
+		auto result = riwo::copy_buffer_data<Buffer>(m_impl->m_payload);
 		m_impl->m_payload.clear();
 		return result;
 	}
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 std::string_view basic_serial_port_binding<Exec>::io_context::port() const noexcept
 {
 	return m_impl->m_port;
 }
 
-template <libgs::concepts::exec Exec>
+template <riwo::concepts::exec Exec>
 auto basic_serial_port_binding<Exec>::io_context::get_executor() noexcept -> executor_t
 {
 	return m_impl->m_rule->m_exec;

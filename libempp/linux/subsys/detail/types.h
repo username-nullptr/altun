@@ -39,7 +39,7 @@ inline bool check(enumeration _e, bool _throw)
 #undef X_MACRO
 	if( _throw )
 	{
-		libgs::invalid_argument::loc_throw(std::format (
+		riwo::invalid_argument::loc_throw(std::format (
 			"libempp::subsys::check: Invalid subsystem ({})", _e
 		));
 	}
@@ -54,7 +54,7 @@ inline const char *string(enumeration _e, bool _throw)
 #undef X_MACRO
 	if( _throw )
 	{
-		libgs::invalid_argument::loc_throw(std::format (
+		riwo::invalid_argument::loc_throw(std::format (
 			"libempp::subsys::string: Invalid subsystem ({})", _e
 		));
 	}

@@ -2,7 +2,7 @@
 
 [Linux module](../linux.md) · [Documentation](../README.md)
 
-Storage APIs live in `libempp::storage`, link with `empp.linux`, and return `libgs::sys_expected<T>`. A successful lookup with no result uses `libgs::optional<T>`.
+Storage APIs live in `libempp::storage`, link with `empp.linux`, and return `riwo::sys_expected<T>`. A successful lookup with no result uses `riwo::optional<T>`.
 
 | Header | Capability | Writes storage? |
 | --- | --- | :---: |
@@ -45,7 +45,7 @@ if(not info)
     return info.error().value();
 
 std::vector<std::byte> data(info->geometry.logical_block_size);
-auto count = (*opened)->read_some_at(0, libgs::buffer(data));
+auto count = (*opened)->read_some_at(0, riwo::buffer(data));
 ```
 
 Offsets and counts are bytes; short reads are valid. Re-resolve a device after hot unplug instead of trusting an old `/dev` name.

@@ -10,19 +10,19 @@
 namespace libempp::storage
 {
 
-libgs::optional<sector_t> partition_info::end_sector() const noexcept
+riwo::optional<sector_t> partition_info::end_sector() const noexcept
 {
 	if( size_sectors == 0 or
 		start_sector > std::numeric_limits<sector_t>::max() - size_sectors + 1 )
-		return libgs::nullopt;
+		return riwo::nullopt;
 	return start_sector + size_sectors - 1;
 }
 
-libgs::optional<uint64_t> partition_info::size_bytes(uint32_t sector_size) const noexcept
+riwo::optional<uint64_t> partition_info::size_bytes(uint32_t sector_size) const noexcept
 {
 	if( sector_size == 0 or
 		size_sectors > std::numeric_limits<uint64_t>::max() / sector_size )
-		return libgs::nullopt;
+		return riwo::nullopt;
 	return size_sectors * sector_size;
 }
 

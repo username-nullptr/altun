@@ -33,7 +33,7 @@ int main(int argc, const char *argv[])
 			argv[4], std::numeric_limits<uint32_t>::max()
 		);
 		if( duty > period )
-			libgs::out_of_range::loc_throw("PWM value");
+			riwo::out_of_range::loc_throw("PWM value");
 
 		libempp::subsys::pwm output ({
 			argv[1], static_cast<uint8_t>(channel)

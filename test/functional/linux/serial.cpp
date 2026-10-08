@@ -175,7 +175,7 @@ EMPP_TEST("virtual-device", "serial binding exchanges data over a pseudo termina
 	binding.received.connect([&](const binding_type::io_context_ptr &io) {
 		const auto payload = io->take_payload<std::string>();
 		std::error_code error;
-		const auto size = io->write(libgs::buffer(payload), error);
+		const auto size = io->write(riwo::buffer(payload), error);
 		std::scoped_lock lock(mutex);
 		received_payload.append(payload);
 		reply_size += size;

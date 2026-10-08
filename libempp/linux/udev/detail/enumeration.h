@@ -14,7 +14,7 @@ namespace libempp::udev
 {
 
 template <subsys_enum Subsys> requires subsys::is_valid_v<Subsys>
-enumeration<Subsys>::enumeration(std::string_view pro_key, const libgs::value &pro_value) :
+enumeration<Subsys>::enumeration(std::string_view pro_key, const riwo::value &pro_value) :
 	enumeration(properties_t{{ pro_key, *pro_value }})
 {
 
@@ -22,7 +22,7 @@ enumeration<Subsys>::enumeration(std::string_view pro_key, const libgs::value &p
 
 template <subsys_enum Subsys> requires subsys::is_valid_v<Subsys>
 enumeration<Subsys>::enumeration
-(std::initializer_list<std::pair<std::string_view,libgs::value>> properties)
+(std::initializer_list<std::pair<std::string_view,riwo::value>> properties)
 {
 	properties_t map;
 	for(const auto &[key,value] : properties)
@@ -81,13 +81,13 @@ template <subsys_enum Subsys> requires subsys::is_valid_v<Subsys>
 enumeration<Subsys> &enumeration<Subsys>::operator=(enumeration &&other) noexcept = default;
 
 template <subsys_enum Subsys> requires subsys::is_valid_v<Subsys>
-libgs::optional<libgs::value> enumeration<Subsys>::property
-(libgs::concepts::string_p<char> auto &&key) const noexcept
+riwo::optional<riwo::value> enumeration<Subsys>::property
+(riwo::concepts::string_p<char> auto &&key) const noexcept
 {
 	if( not m_impl )
 		return {};
 
-	return m_impl->property(libgs::strtls::to_view(
+	return m_impl->property(riwo::strtls::to_view(
 		std::forward<decltype(key)>(key)
 	));
 }
@@ -124,7 +124,7 @@ udev_native_t enumeration<Subsys>::native() noexcept
 
 template <subsys_enum Subsys> requires subsys::is_valid_v<Subsys>
 std::vector<enumeration<Subsys>> enumeration<Subsys>::list
-(std::string_view pro_key, const libgs::value &pro_value)
+(std::string_view pro_key, const riwo::value &pro_value)
 {
 	return list({{ pro_key, *pro_value }});
 }

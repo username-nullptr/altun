@@ -47,7 +47,7 @@ EMPP_TEST("core", "settings load, change, and persist an INI file")
 	auto &settings = libempp_settings(settings_name);
 	struct signal_cleanup
 	{
-		libgs::utils::settings &settings;
+		riwo::utils::settings &settings;
 		~signal_cleanup()
 		{
 			settings.changed.disconnect();
@@ -102,7 +102,7 @@ EMPP_TEST("core", "settings load, change, and persist an INI file")
 	EMPP_REQUIRE(&settings == &libempp_settings(settings_name));
 	const auto missing_name = std::string("empp-test-settings-missing-") + suffix;
 	EMPP_REQUIRE_THROWS(std::runtime_error,
-		static_cast<void>(libgs::utils::settings::instance(
+		static_cast<void>(riwo::utils::settings::instance(
 			missing_name, false
 		)));
 	const auto conflict_name = std::string("empp-test-settings-conflict-") + suffix;
@@ -112,7 +112,7 @@ EMPP_TEST("core", "settings load, change, and persist an INI file")
 	EMPP_REQUIRE_EQ(conflict_result.error(),
 		std::make_error_code(std::errc::device_or_resource_busy));
 
-	const auto names = libgs::utils::settings::names();
+	const auto names = riwo::utils::settings::names();
 	EMPP_REQUIRE(std::ranges::find(names, settings_name) != names.end());
 }
 
@@ -288,7 +288,7 @@ EMPP_TEST("core", "plugin manager loads managed processes and a virtual shared l
 	const auto process = manager::process("managed");
 	EMPP_REQUIRE(process);
 	EMPP_REQUIRE((*process)->joinable());
-	EMPP_REQUIRE_EQ((*process)->state(), libgs::utils::process_state::running);
+	EMPP_REQUIRE_EQ((*process)->state(), riwo::utils::process_state::running);
 	EMPP_REQUIRE(not manager::process("missing-app"));
 	const auto library = manager::library("virtual");
 	EMPP_REQUIRE(library);

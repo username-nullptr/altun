@@ -9,10 +9,10 @@
 namespace libempp::storage { namespace
 {
 
-[[nodiscard]] libgs::optional<uint64_t> multiply(uint64_t left, uint64_t right) noexcept
+[[nodiscard]] riwo::optional<uint64_t> multiply(uint64_t left, uint64_t right) noexcept
 {
 	if( left != 0 and right > std::numeric_limits<uint64_t>::max() / left )
-		return libgs::nullopt;
+		return riwo::nullopt;
 	return left * right;
 }
 
@@ -21,11 +21,11 @@ namespace libempp::storage { namespace
 result_t<space_info> space(const path_t &path)
 {
 	if( path.empty() )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::invalid_argument));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::invalid_argument));
 
 	struct statvfs status {};
 	if( ::statvfs(path.c_str(), &status) < 0 )
-		return libgs::sys_unexpected(std::error_code(errno, std::system_category()));
+		return riwo::sys_unexpected(std::error_code(errno, std::system_category()));
 
 	const uint64_t block_size = status.f_frsize != 0 ? status.f_frsize : status.f_bsize;
 	const auto total = multiply(status.f_blocks, block_size);
@@ -34,7 +34,7 @@ result_t<space_info> space(const path_t &path)
 	const auto available = multiply(status.f_bavail, block_size);
 
 	if( not total or not free or not available or *free > *total or *available > *free )
-		return libgs::sys_unexpected(std::make_error_code(std::errc::value_too_large));
+		return riwo::sys_unexpected(std::make_error_code(std::errc::value_too_large));
 
 	return space_info {
 		.total = *total,

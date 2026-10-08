@@ -9,7 +9,7 @@
 | CMake | 3.16+ |
 | Language | C++20 |
 | Compiler | GCC 13+, Clang 17+, or supported MSVC 2022 |
-| LibGS | Embedded by default; an external CMake package is also supported |
+| Riwo | Embedded by default; an external CMake package is also supported |
 | nlohmann/json | Embedded by default; an external CMake package is also supported |
 | Linux libraries | `pkg-config`, `libudev`, and `libblkid` development files |
 | Optional Linux backend | libgpiod 1.x/2.x; otherwise GPIO uses sysfs |
@@ -60,8 +60,8 @@ ctest --test-dir build-test -R '^empp\.' --output-on-failure
 | `LIBEMPP_BUILD_EXAMPLES` | `OFF` | Build `examples/` |
 | `LIBEMPP_BUILD_STATIC` | `OFF` | Build static instead of shared libraries |
 | `LIBEMPP_ADD_LIBRARY_VERSION` | `ON` | Add version/SOVERSION to shared libraries |
-| `LIBEMPP_USE_EMBEDDED_LIBGS` | `ON` | Use the embedded LibGS dependency |
-| `LIBEMPP_LIBGS_INSTALL_PREFIX` | empty | Absolute install prefix of an external LibGS package; requires `LIBEMPP_USE_EMBEDDED_LIBGS=OFF` |
+| `LIBEMPP_USE_EMBEDDED_RIWO` | `ON` | Use the embedded Riwo dependency |
+| `LIBEMPP_RIWO_INSTALL_PREFIX` | empty | Absolute install prefix of an external Riwo package; requires `LIBEMPP_USE_EMBEDDED_RIWO=OFF` |
 | `LIBEMPP_USE_EMBEDDED_NLOHMANN` | `ON` | Use the embedded nlohmann/json dependency |
 | `LIBEMPP_NLOHMANN_INSTALL_PREFIX` | empty | Absolute install prefix of an external nlohmann/json package; requires `LIBEMPP_USE_EMBEDDED_NLOHMANN=OFF` |
 | `LIBEMPP_USE_GPIOD` | `AUTO` | `AUTO`, `ON`, or `OFF` for the GPIO backend |
@@ -80,7 +80,7 @@ ctest --test-dir build-test -R '^empp\.' --output-on-failure
 | `LIBEMPP_BUILD_SBUS_CYCLONE` | `OFF` | Build the CycloneDDS transport |
 | `LIBEMPP_BUILD_SBUS_SHM` | `OFF` | Build the POSIX shared-memory transport |
 
-Selecting `dbus`, `cyclone`, or `shm` also requires its corresponding build option. Selecting `udp` requires `LIBGS_BUILD_UTILITIES_SBUS_UDP=ON`.
+Selecting `dbus`, `cyclone`, or `shm` also requires its corresponding build option. Selecting `udp` requires `RIWO_BUILD_UTILITIES_SBUS_UDP=ON`.
 
 Shared-memory participants use `/libempp-sbus-<uid>` by default. Set the same `LIBEMPP_SBUS_SHM_NAME=/name` in all participating processes to use another namespace.
 
@@ -117,23 +117,23 @@ find_package(libEMpp 0.6 CONFIG REQUIRED COMPONENTS core linux)
 target_link_libraries(my_app PRIVATE libEMpp::linux)
 ```
 
-The package restores its LibGS and platform dependencies automatically and
+The package restores its Riwo and platform dependencies automatically and
 also defines `empp.core` and `empp.linux` as compatibility targets.
 
-To build against an already installed LibGS outside the normal CMake search
+To build against an already installed Riwo outside the normal CMake search
 prefixes, configure libEMpp with its absolute install prefix:
 
 ```sh
 cmake -S . -B build \
-  -DLIBEMPP_USE_EMBEDDED_LIBGS=OFF \
-  -DLIBEMPP_LIBGS_INSTALL_PREFIX=/opt/libgs
+  -DLIBEMPP_USE_EMBEDDED_RIWO=OFF \
+  -DLIBEMPP_RIWO_INSTALL_PREFIX=/opt/riwo
 ```
 
 That prefix is recorded in the installed libEMpp package. A downstream build
-can override it before `find_package(libEMpp)` when LibGS has moved:
+can override it before `find_package(libEMpp)` when Riwo has moved:
 
 ```cmake
-set(LIBEMPP_LIBGS_INSTALL_PREFIX "/another/libgs/prefix")
+set(LIBEMPP_RIWO_INSTALL_PREFIX "/another/riwo/prefix")
 find_package(libEMpp CONFIG REQUIRED)
 ```
 
@@ -157,5 +157,5 @@ cmake --install build --prefix /opt/libempp
 
 Shared or static libraries, headers, enabled examples, and CMake package files
 are installed below `lib/`, `include/`, `examples/`, and
-`lib/cmake/libEMpp/`. When bundled LibGS is enabled, its libraries and package
+`lib/cmake/libEMpp/`. When bundled Riwo is enabled, its libraries and package
 files are installed into the same prefix.

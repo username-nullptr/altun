@@ -15,7 +15,7 @@ namespace libempp::subsys
 
 class LIBEMPP_LINUX_API backlight
 {
-	LIBGS_DISABLE_COPY(backlight)
+	RIWO_DISABLE_COPY(backlight)
 
 public:
 	using brightness_t = uint32_t;

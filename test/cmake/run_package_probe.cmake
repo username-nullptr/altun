@@ -14,7 +14,7 @@ foreach(required_variable
 endforeach()
 
 # Configure the real project first so the probe exercises the generated
-# altunConfig.cmake rather than a test-only approximation.
+# AltunConfig.cmake rather than a test-only approximation.
 include("${CMAKE_CURRENT_LIST_DIR}/run_configure.cmake")
 
 set(probe_binary_dir "${TEST_BINARY_DIR}-probe")
@@ -61,7 +61,7 @@ if (TEST_TOOLCHAIN_FILE)
 endif ()
 
 list(APPEND probe_command
-	"-Daltun_DIR=${TEST_BINARY_DIR}"
+	"-DAltun_DIR=${TEST_BINARY_DIR}"
 	"-DPROBE_COMPONENT=${TEST_PROBE_COMPONENT}"
 	"-DPROBE_EXPECT_FOUND=${TEST_PROBE_EXPECT_FOUND}"
 	"-DPROBE_EXPECT_ERROR=${TEST_PROBE_EXPECT_ERROR}"

@@ -94,7 +94,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
 	if (ALTUN_USE_LIBCXX)
 		message(STATUS "${PRO_NAME}: Use clang libc++.")
-		add_compile_options(-stdlib=libc++)
+		add_compile_options (
+			$<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>
+		)
 		add_link_options(-stdlib=libc++)
 	endif ()
 
@@ -121,8 +123,8 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		endif ()
 
 		message(STATUS "${PRO_NAME}: Use GNU LTO.")
-		add_compile_options(-flto)
-		add_link_options(-flto)
+		add_compile_options(-flto=auto)
+		add_link_options(-flto=auto)
 	endif ()
 
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")

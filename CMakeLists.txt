@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.15)
 
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 7)
-set(PATCH_VERSION 0)
+set(PATCH_VERSION 1)
 
 set(PRO_VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION})
 set(PRO_NAME Altun)
@@ -45,7 +45,7 @@ add_subdirectory(altun)
 # Generate the installed package only after every provider and exported target
 # has been resolved.  External providers choose their concrete imported target
 # names while configuring 3rd_party, so generating this file earlier leaves
-# empty target names in altunConfig.cmake.
+# empty target names in AltunConfig.cmake.
 include(provider)
 
 if (BUILD_TESTING)

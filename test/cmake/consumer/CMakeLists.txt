@@ -5,18 +5,18 @@ cmake_minimum_required(VERSION 3.15)
 project(altun_install_consumer LANGUAGES CXX)
 
 if (ALTUN_REQUEST_MISSING_COMPONENT)
-	find_package(altun CONFIG QUIET COMPONENTS
+	find_package(Altun CONFIG QUIET COMPONENTS
 		${ALTUN_REQUEST_MISSING_COMPONENT}
 	)
-	if (altun_FOUND)
+	if (Altun_FOUND)
 		message(FATAL_ERROR
-			"altun unexpectedly provides component "
+			"Altun unexpectedly provides component "
 			"'${ALTUN_REQUEST_MISSING_COMPONENT}'."
 		)
 	endif ()
 
 	message(STATUS
-		"altun correctly rejected component "
+		"Altun correctly rejected component "
 		"'${ALTUN_REQUEST_MISSING_COMPONENT}'."
 	)
 	return()
@@ -30,7 +30,7 @@ string(REPLACE "," ";" altun_components
 	"${ALTUN_EXPECTED_COMPONENTS}"
 )
 
-find_package(altun ${ALTUN_EXPECTED_VERSION} EXACT CONFIG REQUIRED
+find_package(Altun ${ALTUN_EXPECTED_VERSION} EXACT CONFIG REQUIRED
 	COMPONENTS ${altun_components}
 )
 enable_testing()
@@ -74,6 +74,7 @@ if (WIN32 AND ALTUN_RUNTIME_DIR)
 	endif ()
 endif ()
 
+
 function(add_altun_consumer_runtime_test target)
 	# CMake 3.15 predates TARGET_RUNTIME_DLLS and CTest's
 	# ENVIRONMENT_MODIFICATION property.
@@ -88,8 +89,10 @@ function(add_altun_consumer_runtime_test target)
 	add_test(NAME ${target} COMMAND $<TARGET_FILE:${target}>)
 
 	# The install tree is intentionally outside the system loader's configured
-	# prefixes. Make all co-installed shared dependencies discoverable without
-	# changing their production RPATH policy.
+	# prefixes. Make co-installed libraries and external shared dependencies
+	# discoverable without changing their production RPATH policy. DT_RUNPATH
+	# is not transitive, so the executable's runpath alone cannot resolve a
+	# dependency of an Altun shared library from a separate Riwo prefix.
 	if (UNIX AND ALTUN_LIBRARY_DIR)
 		if (APPLE)
 			set(loader_path_variable DYLD_LIBRARY_PATH)
@@ -97,14 +100,32 @@ function(add_altun_consumer_runtime_test target)
 			set(loader_path_variable LD_LIBRARY_PATH)
 		endif ()
 
+		string(REPLACE "|" ";" dependency_runtime_directories
+			"${ALTUN_DEPENDENCY_RUNTIME_DIRS}"
+		)
+		set(runtime_directories
+			"${ALTUN_LIBRARY_DIR}"
+			${dependency_runtime_directories}
+		)
+		if (NOT "$ENV{${loader_path_variable}}" STREQUAL "")
+			list(APPEND runtime_directories
+				"$ENV{${loader_path_variable}}"
+			)
+		endif ()
+
+		list(FILTER runtime_directories EXCLUDE REGEX "^$")
+		list(REMOVE_DUPLICATES runtime_directories)
+		list(JOIN runtime_directories ":" loader_path)
+
 		set_property(TEST ${target} PROPERTY ENVIRONMENT
-			"${loader_path_variable}=${ALTUN_LIBRARY_DIR}:$ENV{${loader_path_variable}}"
+			"${loader_path_variable}=${loader_path}"
 		)
 	endif ()
 endfunction()
 
+
 foreach(component IN LISTS altun_components)
-	if (NOT altun_${component}_FOUND)
+	if (NOT Altun_${component}_FOUND)
 		message(FATAL_ERROR "Component '${component}' was not reported as found.")
 	endif ()
 

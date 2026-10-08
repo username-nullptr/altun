@@ -8,28 +8,28 @@ if (NOT PROBE_COMPONENT)
 	message(FATAL_ERROR "PROBE_COMPONENT is required.")
 endif ()
 
-find_package(altun CONFIG QUIET COMPONENTS ${PROBE_COMPONENT})
+find_package(Altun CONFIG QUIET COMPONENTS ${PROBE_COMPONENT})
 
 if (PROBE_EXPECT_FOUND)
-	if (NOT altun_FOUND)
+	if (NOT Altun_FOUND)
 		message(FATAL_ERROR
-			"altun component '${PROBE_COMPONENT}' was unexpectedly rejected: "
-			"${altun_NOT_FOUND_MESSAGE}"
+			"Altun component '${PROBE_COMPONENT}' was unexpectedly rejected: "
+			"${Altun_NOT_FOUND_MESSAGE}"
 		)
 	endif ()
 else ()
-	if (altun_FOUND)
+	if (Altun_FOUND)
 		message(FATAL_ERROR
-			"altun component '${PROBE_COMPONENT}' was unexpectedly accepted."
+			"Altun component '${PROBE_COMPONENT}' was unexpectedly accepted."
 		)
 	endif ()
 
-	if (PROBE_EXPECT_ERROR AND NOT altun_NOT_FOUND_MESSAGE MATCHES
+	if (PROBE_EXPECT_ERROR AND NOT Altun_NOT_FOUND_MESSAGE MATCHES
 		"${PROBE_EXPECT_ERROR}")
 		message(FATAL_ERROR
-			"altun component '${PROBE_COMPONENT}' failed for the wrong reason.\n"
+			"Altun component '${PROBE_COMPONENT}' failed for the wrong reason.\n"
 			"Expected: ${PROBE_EXPECT_ERROR}\n"
-			"Actual: ${altun_NOT_FOUND_MESSAGE}"
+			"Actual: ${Altun_NOT_FOUND_MESSAGE}"
 		)
 	endif ()
 endif ()

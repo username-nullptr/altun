@@ -4,6 +4,8 @@
 #include "backend.h"
 #ifdef __linux__
 
+#include <altun/core/log.h>
+
 #include <sys/file.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -25,6 +27,28 @@ bool write_attribute(int descriptor, std::string_view value, std::error_code &er
 		error = system_error_from_errno();
 		return false;
 	}
+	ssize_t size = -1;
+	do {
+		size = ::write(descriptor, value.data(), value.size());
+	}
+	while( size < 0 and errno == EINTR );
+
+	if( size < 0 )
+	{
+		error = system_error_from_errno();
+		return false;
+	}
+	if( static_cast<size_t>(size) != value.size() )
+	{
+		error = std::make_error_code(std::errc::io_error);
+		return false;
+	}
+	return true;
+}
+
+bool write_command(int descriptor, std::string_view value, std::error_code &error) noexcept
+{
+	error.clear();
 	ssize_t size = -1;
 	do {
 		size = ::write(descriptor, value.data(), value.size());
@@ -234,8 +258,18 @@ public:
 				);
 				if( descriptor >= 0 )
 				{
-					static_cast<void>(::write(descriptor, text.data(), text.size()));
+					std::error_code unexport_error;
+					const bool unexported = write_command (
+						descriptor, text, unexport_error
+					);
 					::close(descriptor);
+					if( not unexported )
+					{
+						altun_clog_warning("Altun.Linux",
+							"Failed to unexport PWM channel {}: {}",
+							m_channel, unexport_error.message()
+						);
+					}
 				}
 			}
 			catch(...) {}

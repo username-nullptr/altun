@@ -1,6 +1,6 @@
 # Altun
 
-altun (‌ئالتۇن) is a C++20 component library for embedded applications. The source tree has two library modules:
+altun (ئالتۇن تاغ) is a C++20 component library for embedded applications. The source tree has two library modules:
 
 | Module | Target | Contents |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ Link Linux applications to `altun.linux`; it already carries the public Core dep
 After installing altun, downstream projects can use its CMake package:
 
 ```cmake
-find_package(altun 0.6 CONFIG REQUIRED COMPONENTS core linux)
+find_package(Altun 0.6 CONFIG REQUIRED COMPONENTS core linux)
 
 add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE altun::linux)

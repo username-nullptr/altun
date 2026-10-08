@@ -16,6 +16,7 @@ foreach(required_variable
 	TEST_VERSION
 	TEST_COMPONENTS
 	TEST_MISSING_COMPONENT
+	TEST_DEPENDENCY_RUNTIME_DIRS
 	TEST_CTEST_COMMAND
 )
 	if (NOT DEFINED ${required_variable})
@@ -69,9 +70,9 @@ else ()
 	set(altun_library_dir "${TEST_INSTALL_PREFIX}/${TEST_INSTALL_LIBDIR}")
 endif ()
 
-if (NOT EXISTS "${altun_package_dir}/altunConfig.cmake")
+if (NOT EXISTS "${altun_package_dir}/AltunConfig.cmake")
 	message(FATAL_ERROR
-		"The install tree does not contain altunConfig.cmake at "
+		"The install tree does not contain AltunConfig.cmake at "
 		"${altun_package_dir}."
 	)
 endif ()
@@ -117,10 +118,11 @@ function(make_consumer_configure_command output_variable binary_dir)
 	endif ()
 
 	list(APPEND command
-		"-Daltun_DIR=${altun_package_dir}"
+		"-DAltun_DIR=${altun_package_dir}"
 		"-DALTUN_EXPECTED_VERSION=${TEST_VERSION}"
 		"-DALTUN_RUNTIME_DIR=${altun_runtime_dir}"
 		"-DALTUN_LIBRARY_DIR=${altun_library_dir}"
+		"-DALTUN_DEPENDENCY_RUNTIME_DIRS=${TEST_DEPENDENCY_RUNTIME_DIRS}"
 	)
 	set(${output_variable} ${command} PARENT_SCOPE)
 endfunction()

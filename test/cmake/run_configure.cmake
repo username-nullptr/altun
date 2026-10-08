@@ -87,11 +87,10 @@ if (TEST_EXPECT_SUCCESS)
 		)
 	endif ()
 
-	set(package_config "${TEST_BINARY_DIR}/altunConfig.cmake")
-
+	set(package_config "${TEST_BINARY_DIR}/AltunConfig.cmake")
 	if (NOT EXISTS "${package_config}")
 		message(FATAL_ERROR
-			"Configuration '${TEST_NAME}' did not generate altunConfig.cmake."
+			"Configuration '${TEST_NAME}' did not generate AltunConfig.cmake."
 		)
 	endif ()
 
@@ -106,7 +105,7 @@ if (TEST_EXPECT_SUCCESS)
 		endif ()
 
 		if (NOT package_config_contents MATCHES
-			"set\\(altun_${component}_FOUND ${expected_value_pattern}\\)")
+			"set\\(Altun_${component}_FOUND ${expected_value_pattern}\\)")
 			message(FATAL_ERROR
 				"Configuration '${TEST_NAME}' generated an inconsistent "
 				"${component} component state."

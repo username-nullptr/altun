@@ -86,14 +86,18 @@ namespace altun::storage { namespace
 		const auto id = parse_uint32(id_text);
 		const auto parent_id = parse_uint32(parent_text);
 		const auto separator = device_text.find(':');
-
-		const auto major_number = separator == std::string::npos ?
-			riwo::optional<uint32_t>{} :
-			parse_uint32(std::string_view(device_text).substr(0, separator));
-
-		const auto minor_number = separator == std::string::npos ?
-			riwo::optional<uint32_t>{} :
-			parse_uint32(std::string_view(device_text).substr(separator + 1));
+		if( separator == std::string::npos )
+		{
+			detail::throw_error(make_error_code(errc::malformed_mount_table),
+				"altun::storage::mounts"
+			);
+		}
+		const auto major_number = parse_uint32(
+			std::string_view(device_text).substr(0, separator)
+		);
+		const auto minor_number = parse_uint32(
+			std::string_view(device_text).substr(separator + 1)
+		);
 
 		if( not id or not parent_id or not major_number or not minor_number )
 		{

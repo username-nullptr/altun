@@ -5,6 +5,7 @@
 #include "log.h"
 
 #if defined(__linux__)
+# include <cerrno>
 # include <execinfo.h>
 #endif
 
@@ -17,6 +18,35 @@ const char *version_string() noexcept
 }
 
 #if defined(__linux__)
+namespace
+{
+
+// Fatal-signal output is deliberately best-effort, but it must still handle
+// interrupted and partial writes. Keep this helper limited to async-signal-
+// safe operations.
+void write_all_best_effort(int descriptor, const char *data, size_t size) noexcept
+{
+	if( descriptor < 0 )
+		return ;
+
+	while( size > 0 )
+	{
+		ssize_t written = -1;
+		do {
+			written = ::write(descriptor, data, size);
+		}
+		while( written < 0 and errno == EINTR );
+
+		if( written <= 0 )
+			return ;
+
+		data += written;
+		size -= static_cast<size_t>(written);
+	}
+}
+
+} // namespace
+
 static void signal_handler(int signo, siginfo_t*, void*)
 {
 	if( signo == SIGINT )
@@ -60,29 +90,30 @@ static void signal_handler(int signo, siginfo_t*, void*)
 	head_buf[ofs++] = ']';
 	head_buf[ofs++] = '\n';
 
-	write(fd, head_buf, ofs);
-	write(STDERR_FILENO, head_buf, ofs);
+	write_all_best_effort(fd, head_buf, static_cast<size_t>(ofs));
+	write_all_best_effort(STDERR_FILENO, head_buf, static_cast<size_t>(ofs));
 
 	if( symbols )
 	{
 		for(decltype(num_frames) i=0; i<num_frames; i++)
 		{
-			write(fd, symbols[i], strlen(symbols[i]));
-			write(fd, "\n", 1);
-			write(STDERR_FILENO, symbols[i], strlen(symbols[i]));
-			write(STDERR_FILENO, "\n", 1);
+			const auto symbol_size = strlen(symbols[i]);
+			write_all_best_effort(fd, symbols[i], symbol_size);
+			write_all_best_effort(fd, "\n", 1);
+			write_all_best_effort(STDERR_FILENO, symbols[i], symbol_size);
+			write_all_best_effort(STDERR_FILENO, "\n", 1);
 		}
 		free(symbols);
-		close(fd);
 	}
 	else
 	{
 		constexpr auto text = "The stack cannot be traced.\n";
 		static const size_t len = strlen(text);
-		write(fd, text, len);
-		write(STDERR_FILENO, text, len);
+		write_all_best_effort(fd, text, len);
+		write_all_best_effort(STDERR_FILENO, text, len);
 	}
-	// exit(signo);
+	if( fd >= 0 )
+		close(fd);
 	riwo::forced_termination();
 }
 

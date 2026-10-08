@@ -158,23 +158,60 @@ if (ALTUN_ENABLE_TEST_SANITIZERS OR ALTUN_ENABLE_TEST_TSAN)
 		set(altun_sanitizer_flags -fsanitize=thread)
 	endif ()
 
+	set(altun_sanitizer_probe_compile_options ${altun_sanitizer_flags})
+	set(altun_sanitizer_probe_link_options ${altun_sanitizer_flags})
+
+	if (ALTUN_USE_LIBCXX)
+		list(APPEND altun_sanitizer_probe_compile_options -stdlib=libc++)
+		list(APPEND altun_sanitizer_probe_link_options -stdlib=libc++)
+	endif ()
+
+	string(JOIN " " altun_sanitizer_probe_compile_flags
+		${altun_sanitizer_probe_compile_options}
+	)
 	set(CMAKE_REQUIRED_FLAGS
-		"${altun_saved_required_flags} ${altun_sanitizer_flags}"
+		"${altun_saved_required_flags} ${altun_sanitizer_probe_compile_flags}"
 	)
 	set(CMAKE_REQUIRED_LINK_OPTIONS
-		${altun_saved_required_link_options} ${altun_sanitizer_flags}
+		${altun_saved_required_link_options}
+		${altun_sanitizer_probe_link_options}
 	)
 	unset(ALTUN_TEST_SANITIZER_AVAILABLE CACHE)
 
 	check_cxx_source_compiles("int main() { return 0; }"
 		ALTUN_TEST_SANITIZER_AVAILABLE
 	)
+	# Some libc++/libc++abi/compiler-rt combinations compile and link with
+	# ASan but mismatch allocation APIs when destroying standard exceptions.
+	# Detect that unusable runtime before building a matrix that can only fail
+	# at execution time. Cross builds cannot run a configure-time probe.
+	if (ALTUN_TEST_SANITIZER_AVAILABLE AND
+		ALTUN_ENABLE_TEST_SANITIZERS AND ALTUN_USE_LIBCXX AND
+		NOT CMAKE_CROSSCOMPILING)
+
+		include(CheckCXXSourceRuns)
+		unset(ALTUN_TEST_LIBCXX_ASAN_RUNTIME_COMPATIBLE CACHE)
+
+		check_cxx_source_runs (
+			"#include <stdexcept>\n#include <string>\nint main() { try { throw std::runtime_error(std::string(300, 'x')); } catch(const std::exception &) { return 0; } }"
+			ALTUN_TEST_LIBCXX_ASAN_RUNTIME_COMPATIBLE
+		)
+	endif ()
+
 	set(CMAKE_REQUIRED_FLAGS "${altun_saved_required_flags}")
 	set(CMAKE_REQUIRED_LINK_OPTIONS ${altun_saved_required_link_options})
 
 	if (NOT ALTUN_TEST_SANITIZER_AVAILABLE)
 		message(FATAL_ERROR
 			"${PRO_NAME}: Requested test sanitizer runtime is unavailable."
+		)
+	endif ()
+
+	if (DEFINED ALTUN_TEST_LIBCXX_ASAN_RUNTIME_COMPATIBLE AND
+		NOT ALTUN_TEST_LIBCXX_ASAN_RUNTIME_COMPATIBLE)
+		message(FATAL_ERROR
+			"${PRO_NAME}: Requested libc++ ASan/UBSan runtime is incompatible: "
+			"the standard-exception allocation/deallocation self-test failed."
 		)
 	endif ()
 

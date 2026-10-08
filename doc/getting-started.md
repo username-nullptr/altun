@@ -122,7 +122,7 @@ endif()
 For an installed package, use the exported namespaced targets:
 
 ```cmake
-find_package(altun 0.6 CONFIG REQUIRED COMPONENTS core)
+find_package(Altun 0.6 CONFIG REQUIRED COMPONENTS core)
 
 add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE altun::core)
@@ -131,7 +131,7 @@ target_link_libraries(my_app PRIVATE altun::core)
 On Linux, request and link the `linux` component when needed:
 
 ```cmake
-find_package(altun 0.6 CONFIG REQUIRED COMPONENTS core linux)
+find_package(Altun 0.6 CONFIG REQUIRED COMPONENTS core linux)
 target_link_libraries(my_app PRIVATE altun::linux)
 ```
 
@@ -148,11 +148,11 @@ cmake -S . -B build \
 ```
 
 That prefix is recorded in the installed altun package. A downstream build
-can override it before `find_package(altun)` when Riwo has moved:
+can override it before `find_package(Altun)` when Riwo has moved:
 
 ```cmake
 set(ALTUN_RIWO_INSTALL_PREFIX "/another/riwo/prefix")
-find_package(altun CONFIG REQUIRED)
+find_package(Altun CONFIG REQUIRED)
 ```
 
 The same pattern selects an external nlohmann/json package:
@@ -165,7 +165,7 @@ cmake -S . -B build \
 
 The nlohmann/json prefix is also recorded in the installed package and can be
 overridden by setting `ALTUN_NLOHMANN_INSTALL_PREFIX` before
-`find_package(altun)`.
+`find_package(Altun)`.
 
 ## Install
 
@@ -175,5 +175,5 @@ cmake --install build --prefix /opt/altun
 
 Shared or static libraries, headers, enabled examples, and CMake package files
 are installed below `lib/`, `include/`, `examples/`, and
-`lib/cmake/altun/`. When bundled Riwo is enabled, its libraries and package
+`lib/cmake/Altun/`. When bundled Riwo is enabled, its libraries and package
 files are installed into the same prefix.

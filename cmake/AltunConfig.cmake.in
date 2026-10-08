@@ -5,36 +5,36 @@
 
 include(CMakeFindDependencyMacro)
 
-set(altun_VERSION "@PROJECT_VERSION@")
-set(altun_core_FOUND TRUE)
-set(altun_linux_FOUND @ALTUN_BUILD_LINUX@)
+set(Altun_VERSION "@PROJECT_VERSION@")
+set(Altun_core_FOUND TRUE)
+set(Altun_linux_FOUND @ALTUN_BUILD_LINUX@)
 
 # Resolve component availability before dependencies so an unavailable module
 # is reported even when an unrelated package is absent from the host.
 set(_altun_missing_components)
 
-foreach(_altun_component IN LISTS altun_FIND_COMPONENTS)
-	if (NOT DEFINED altun_${_altun_component}_FOUND)
-		set(altun_${_altun_component}_FOUND FALSE)
+foreach(_altun_component IN LISTS Altun_FIND_COMPONENTS)
+	if (NOT DEFINED Altun_${_altun_component}_FOUND)
+		set(Altun_${_altun_component}_FOUND FALSE)
 	endif ()
 
-	if (NOT altun_${_altun_component}_FOUND AND
-		altun_FIND_REQUIRED_${_altun_component})
+	if (NOT Altun_${_altun_component}_FOUND AND
+		Altun_FIND_REQUIRED_${_altun_component})
 		list(APPEND _altun_missing_components ${_altun_component})
 	endif ()
 endforeach()
 
 if (_altun_missing_components)
 	list(JOIN _altun_missing_components ", " _altun_missing_components_text)
-	set(altun_NOT_FOUND_MESSAGE
-		"Required altun components are unavailable: ${_altun_missing_components_text}"
+	set(Altun_NOT_FOUND_MESSAGE
+		"Required Altun components are unavailable: ${_altun_missing_components_text}"
 	)
 endif ()
 
-set(altun_FOUND TRUE)
-check_required_components(altun)
+set(Altun_FOUND TRUE)
+check_required_components(Altun)
 
-if (NOT altun_FOUND)
+if (NOT Altun_FOUND)
 	unset(_altun_component)
 	unset(_altun_missing_components)
 	unset(_altun_missing_components_text)

@@ -28,12 +28,12 @@ if (ALTUN_BUILD_STATIC)
 endif ()
 
 configure_package_config_file (
-	cmake/altunConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/altunConfig.cmake
+	cmake/AltunConfig.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/AltunConfig.cmake
 	INSTALL_DESTINATION ${ALTUN_INSTALL_CMAKEDIR}
 )
 write_basic_package_version_file (
-	${CMAKE_CURRENT_BINARY_DIR}/altunConfigVersion.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/AltunConfigVersion.cmake
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMinorVersion
 )
@@ -43,7 +43,7 @@ install(EXPORT altunTargets
 	DESTINATION ${ALTUN_INSTALL_CMAKEDIR}
 )
 install(FILES
-	${CMAKE_CURRENT_BINARY_DIR}/altunConfig.cmake
-	${CMAKE_CURRENT_BINARY_DIR}/altunConfigVersion.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/AltunConfig.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/AltunConfigVersion.cmake
 	DESTINATION ${ALTUN_INSTALL_CMAKEDIR}
 )

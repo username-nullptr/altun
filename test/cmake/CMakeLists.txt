@@ -287,7 +287,7 @@ endif ()
 # consumer systems.
 add_altun_package_probe_case(missing-component-precedes-dependencies
 	COMPONENT unknown
-	ERROR "Required altun components are unavailable: unknown"
+	ERROR "Required Altun components are unavailable: unknown"
 	COMPONENTS ${altun_available_components}
 	PROBE_OPTIONS "CMAKE_DISABLE_FIND_PACKAGE_Riwo=TRUE"
 )
@@ -306,6 +306,63 @@ if (CMAKE_CONFIGURATION_TYPES)
 else ()
 	set(altun_consumer_configuration "${CMAKE_BUILD_TYPE}")
 endif ()
+
+
+function(altun_collect_imported_runtime_directories output_variable)
+	set(runtime_directories)
+
+	foreach(target IN LISTS ARGN)
+		if (NOT TARGET ${target})
+			continue()
+		endif ()
+
+		set(location_properties IMPORTED_LOCATION)
+		get_target_property(imported_configurations ${target}
+			IMPORTED_CONFIGURATIONS
+		)
+		foreach(configuration IN LISTS imported_configurations)
+			string(TOUPPER "${configuration}" configuration_upper)
+			list(APPEND location_properties
+				IMPORTED_LOCATION_${configuration_upper}
+			)
+		endforeach()
+
+		foreach(property IN LISTS location_properties)
+			get_target_property(locations ${target} ${property})
+			if (NOT locations OR locations MATCHES "-NOTFOUND$")
+				continue()
+			endif ()
+
+			foreach(location IN LISTS locations)
+				if (IS_ABSOLUTE "${location}")
+					get_filename_component(runtime_directory
+						"${location}" DIRECTORY
+					)
+					if (IS_DIRECTORY "${runtime_directory}")
+						list(APPEND runtime_directories
+							"${runtime_directory}"
+						)
+					endif ()
+				endif ()
+			endforeach()
+		endforeach()
+	endforeach()
+
+	list(REMOVE_DUPLICATES runtime_directories)
+	set(${output_variable} ${runtime_directories} PARENT_SCOPE)
+endfunction()
+
+
+set(altun_consumer_dependency_runtime_directories)
+if (NOT ALTUN_USE_BUNDLED_RIWO)
+	altun_collect_imported_runtime_directories(
+		altun_consumer_dependency_runtime_directories
+		Riwo::core Riwo::coro Riwo::utils
+	)
+endif ()
+string(JOIN "|" altun_consumer_dependency_runtime_directories_arg
+	${altun_consumer_dependency_runtime_directories}
+)
 
 # Exercise the installed package from an independent build tree. This catches
 # missing headers, incomplete exports, broken transitive dependencies, and
@@ -333,6 +390,7 @@ add_altun_ctest(altun.cmake.install-consumer
 	"-DTEST_VERSION=${PROJECT_VERSION}"
 	"-DTEST_COMPONENTS=${altun_consumer_components_arg}"
 	"-DTEST_MISSING_COMPONENT=${altun_missing_component}"
+	"-DTEST_DEPENDENCY_RUNTIME_DIRS=${altun_consumer_dependency_runtime_directories_arg}"
 	"-DTEST_CTEST_COMMAND=${CMAKE_CTEST_COMMAND}"
 	-P "${CMAKE_CURRENT_SOURCE_DIR}/run_install_consumer.cmake"
 )

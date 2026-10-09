@@ -333,7 +333,7 @@ private:
 		return nullptr;
 	}
 
-	static bool read_bytes(DBusMessageIter &arguments, const unsigned char *&data, int &size) noexcept
+	static bool read_bytes(DBusMessageIter &arguments, const unsigned char *&data, size_t &size) noexcept
 	{
 		if( dbus_message_iter_get_arg_type(&arguments) != DBUS_TYPE_ARRAY or
 			dbus_message_iter_get_element_type(&arguments) != DBUS_TYPE_BYTE )
@@ -343,10 +343,18 @@ private:
 		dbus_message_iter_recurse(&arguments, &array);
 
 		void *value = nullptr;
-		dbus_message_iter_get_fixed_array(&array, &value, &size);
+		int value_size = 0;
+		dbus_message_iter_get_fixed_array(&array, &value, &value_size);
 
+		if( value_size < 0 )
+		{
+			data = nullptr;
+			size = 0;
+			return false;
+		}
 		data = static_cast<const unsigned char*>(value);
-		return size >= 0;
+		size = static_cast<size_t>(value_size);
+		return true;
 	}
 
 	void stop_sender() noexcept
@@ -448,23 +456,23 @@ private:
 			return ;
 
 		const unsigned char *topic_data = nullptr;
-		int topic_size = 0;
+		size_t topic_size = 0;
 
 		if( not read_bytes(arguments, topic_data, topic_size) or
 			not dbus_message_iter_next(&arguments) )
 			return ;
 
 		const unsigned char *payload = nullptr;
-		int payload_size = 0;
+		size_t payload_size = 0;
 
 		if( not read_bytes(arguments, payload, payload_size) or
 			dbus_message_iter_next(&arguments) )
 			return ;
 
-		const std::string_view topic = topic_size == 0 ? std::string_view{} :
+		const std::string_view topic = topic_size == 0 ? std::string_view {} :
 			std::string_view(reinterpret_cast<const char*>(topic_data), topic_size);
 
-		bridge_dbus_data_available(topic, payload, static_cast<size_t>(payload_size));
+		bridge_dbus_data_available(topic, payload, payload_size);
 	}
 
 	DBusConnection *m_receive_connection = nullptr;

@@ -4,6 +4,9 @@
 #include "../../test.h"
 
 #include <altun/core/sbus/sbus.h>
+#if ALTUN_SBUS_CYCLONE_SUPPORT
+# include <altun/core/sbus/detail/cyclone_interface.h>
+#endif
 #include <riwo/utils/process.h>
 
 #include <array>
@@ -11,8 +14,25 @@
 #include <condition_variable>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <mutex>
 #include <thread>
+
+#if ALTUN_SBUS_CYCLONE_SUPPORT
+ALTUN_TEST("core.sbus", "CycloneDDS rejects payloads larger than its wire limit")
+{
+	if constexpr( std::numeric_limits<size_t>::max() >
+		std::numeric_limits<uint32_t>::max() )
+	{
+		const auto oversized = static_cast<size_t>(
+			std::numeric_limits<uint32_t>::max()
+		) + 1;
+		altun::sbus::cyclone_interface::publish(
+			"altun.test.sbus.oversized", nullptr, oversized
+		);
+	}
+}
+#endif
 
 ALTUN_TEST("core.sbus", "local delivery is exact and subscriptions can be cancelled")
 {

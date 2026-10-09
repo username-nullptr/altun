@@ -14,9 +14,6 @@
 #include <dds/version.h>
 #include <dds/dds.h>
 
-#include <unordered_set>
-#include <limits>
-
 namespace altun::sbus { namespace
 {
 
@@ -114,6 +111,26 @@ constexpr size_t g_shared_payload_threshold = 64 * 1'024;
 	riwo::forced_termination();
 }
 
+constexpr size_t cache_line_size = 64;
+
+// Keep the hot synchronization values on distinct cache lines.  Spell out
+// the remainder instead of relying on alignas-induced padding: MSVC reports
+// that intentional implicit padding as C4324, which breaks strict /WX builds.
+template <typename T>
+struct alignas(cache_line_size) cache_line_value
+{
+	static_assert(sizeof(T) <= cache_line_size);
+	T value {};
+
+	std::array<std::byte,
+		cache_line_size - sizeof(T)
+	> reserved {};
+};
+
+static_assert(sizeof(cache_line_value<std::atomic_uint64_t>) == cache_line_size);
+static_assert(sizeof(cache_line_value<std::atomic_bool>) == cache_line_size);
+static_assert(sizeof(cache_line_value<std::thread>) == cache_line_size);
+
 class /* RIWO_DECL_HIDDEN */ subscriber_thread
 {
 	RIWO_DISABLE_COPY_MOVE(subscriber_thread)
@@ -123,8 +140,8 @@ protected:
 
 	void start(std::function<void()> task_arg)
 	{
-		m_run.store(true, std::memory_order_release);
-		m_thread = std::thread([this, task = std::move(task_arg)]() mutable noexcept
+		m_run.value.store(true, std::memory_order_release);
+		m_thread.value = std::thread([this, task = std::move(task_arg)]() mutable noexcept
 		{
 			try {
 				do_task(task);
@@ -138,55 +155,57 @@ protected:
 	void notify() noexcept
 	{
 		// A monotonic generation cannot be cleared over a concurrent enqueue.
-		m_epoch.fetch_add(1, std::memory_order_release);
-		std::atomic_notify_one(&m_epoch);
+		m_epoch.value.fetch_add(1, std::memory_order_release);
+		std::atomic_notify_one(&m_epoch.value);
 	}
 
 public:
-	virtual ~subscriber_thread() {
+	~subscriber_thread() {
 		stop();
 	}
 
 protected:
 	void stop() noexcept
 	{
-		m_run.store(false, std::memory_order_release);
+		m_run.value.store(false, std::memory_order_release);
 		notify();
-		if( m_thread.joinable() )
-			m_thread.join();
+		if( m_thread.value.joinable() )
+			m_thread.value.join();
 	}
 
 private:
 	void do_task(const std::function<void()> &task)
 	{
 		uint64_t observed_epoch = 0;
-		while( m_run.load(std::memory_order_acquire) )
+		while( m_run.value.load(std::memory_order_acquire) )
 		{
-			while( m_epoch.load(std::memory_order_acquire) == observed_epoch )
+			while( m_epoch.value.load(std::memory_order_acquire) == observed_epoch )
 			{
 				std::atomic_wait_explicit (
-					&m_epoch, observed_epoch, std::memory_order_acquire
+					&m_epoch.value, observed_epoch, std::memory_order_acquire
 				);
 			}
-			if( not m_run.load(std::memory_order_acquire) )
+			if( not m_run.value.load(std::memory_order_acquire) )
 				break;
 			do {
-				observed_epoch = m_epoch.load(std::memory_order_acquire);
+				observed_epoch = m_epoch.value.load(std::memory_order_acquire);
 				task();
 			}
-			while( m_epoch.load(std::memory_order_acquire) != observed_epoch and
-				m_run.load(std::memory_order_acquire) );
+			while( m_epoch.value.load(std::memory_order_acquire) != observed_epoch and
+				m_run.value.load(std::memory_order_acquire) );
 		}
 	}
 
-	alignas(64) std::atomic_uint64_t m_epoch {0};
-	alignas(64) std::atomic_bool m_run {false};
+	cache_line_value<std::atomic_uint64_t> m_epoch {};
+	cache_line_value<std::atomic_bool> m_run {};
 	/*
 	 * The support for std::jthread by clang requires at least version 20.
 	 * So, it is still advisable to use the traditional std::thread.
 	 */
-	std::thread m_thread {};
+	cache_line_value<std::thread> m_thread {};
 };
+
+static_assert(sizeof(subscriber_thread) == 3 * cache_line_size);
 
 class /* RIWO_DECL_HIDDEN */ global_subscriber : public subscriber_thread
 {
@@ -204,7 +223,7 @@ public:
 		});
 	}
 
-	~global_subscriber() override {
+	~global_subscriber() {
 		stop();
 	}
 
@@ -250,7 +269,7 @@ public:
 		});
 	}
 
-	~subscriber() override {
+	~subscriber() {
 		stop();
 	}
 
@@ -407,6 +426,7 @@ riwo::shared_mutex m_objs_lock {};
 asio::io_context g_ioc {};
 std::thread g_ioc_thread {};
 std::mutex g_runtime_mutex {};
+size_t g_runtime_users = 0;
 
 dds_entity_t g_participant = 0;
 dds_entity_t g_topic = 0;
@@ -417,18 +437,31 @@ dds_entity_t g_writer = 0;
 dds_entity_t g_subscriber = 0;
 dds_entity_t g_reader = 0;
 
+void stop_runtime_locked() noexcept
+{
+	g_ioc.stop();
+
+	if( g_ioc_thread.joinable() )
+		g_ioc_thread.join();
+
+	if( g_participant > 0 )
+		dds_delete(g_participant);
+
+	g_participant = 0;
+	g_topic = 0;
+	g_publisher = 0;
+	g_writer = 0;
+	g_subscriber = 0;
+	g_reader = 0;
+	g_ioc.restart();
+}
+
 struct runtime_guard
 {
 	~runtime_guard()
 	{
 		std::unique_lock lock(g_runtime_mutex);
-		g_ioc.stop();
-
-		if( g_ioc_thread.joinable() )
-			g_ioc_thread.join();
-
-		if( g_participant > 0 )
-			dds_delete(g_participant);
+		stop_runtime_locked();
 	}
 }
 g_runtime_guard;
@@ -566,9 +599,19 @@ cyclone_interface::cyclone_interface() :
 	m_impl(std::make_unique<impl>())
 {
 	RIWO_UNUSED(g_runtime_guard);
+	std::unique_lock lock(g_runtime_mutex);
+	++g_runtime_users;
 }
 
-cyclone_interface::~cyclone_interface() = default;
+cyclone_interface::~cyclone_interface()
+{
+	std::unique_lock lock(g_runtime_mutex);
+	// DDS and Asio own worker threads.  Stop them while normal user code is
+	// still running instead of deferring the work to a DLL static destructor,
+	// which executes under the Windows loader lock.
+	if( g_runtime_users > 0 and --g_runtime_users == 0 )
+		stop_runtime_locked();
+}
 
 void cyclone_interface::init()
 {

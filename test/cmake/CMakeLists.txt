@@ -122,6 +122,20 @@ add_altun_configure_case(sbus-cyclone-disabled
 		"ALTUN_SBUS_INTERFACE=cyclone"
 		"ALTUN_BUILD_SBUS_CYCLONE=OFF"
 )
+add_altun_configure_case(sbus-cyclone-missing-idlc
+	ERROR "CycloneDDS IDL CMake support is required"
+	OPTIONS
+		"ALTUN_SBUS_INTERFACE=cyclone"
+		"ALTUN_BUILD_SBUS_CYCLONE=ON"
+		"CycloneDDS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/cyclonedds-no-idlc"
+)
+add_altun_configure_case(sbus-cyclone-missing-idlc-compiler
+	ERROR "CycloneDDS IDL compiler 'idlc' is required"
+	OPTIONS
+		"ALTUN_SBUS_INTERFACE=cyclone"
+		"ALTUN_BUILD_SBUS_CYCLONE=ON"
+		"CycloneDDS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/cyclonedds-no-idlc-compiler"
+)
 if (ALTUN_BUILD_SBUS_CYCLONE)
 	add_altun_configure_case(sbus-cyclone-enabled SUCCESS
 		OPTIONS
@@ -353,17 +367,15 @@ function(altun_collect_imported_runtime_directories output_variable)
 endfunction()
 
 
-set(altun_consumer_dependency_runtime_directories)
-if (NOT ALTUN_USE_BUNDLED_RIWO)
-	altun_collect_imported_runtime_directories(
-		altun_consumer_dependency_runtime_directories
-		Riwo::core Riwo::coro Riwo::utils
-	)
-endif ()
+altun_collect_imported_runtime_directories (
+	altun_consumer_dependency_runtime_directories
+	Riwo::core Riwo::coro Riwo::utils
+	CycloneDDS::ddsc
+	OpenSSL::SSL OpenSSL::Crypto
+)
 string(JOIN "|" altun_consumer_dependency_runtime_directories_arg
 	${altun_consumer_dependency_runtime_directories}
 )
-
 # Exercise the installed package from an independent build tree. This catches
 # missing headers, incomplete exports, broken transitive dependencies, and
 # source-tree-only target assumptions that an in-tree test cannot detect.

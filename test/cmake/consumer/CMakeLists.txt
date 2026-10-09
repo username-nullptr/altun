@@ -29,7 +29,6 @@ endif ()
 string(REPLACE "," ";" altun_components
 	"${ALTUN_EXPECTED_COMPONENTS}"
 )
-
 find_package(Altun ${ALTUN_EXPECTED_VERSION} EXACT CONFIG REQUIRED
 	COMPONENTS ${altun_components}
 )
@@ -40,6 +39,15 @@ set(altun_expected_definitions)
 
 if (WIN32 AND ALTUN_RUNTIME_DIR)
 	file(GLOB altun_runtime_dlls "${ALTUN_RUNTIME_DIR}/*.dll")
+	string(REPLACE "|" ";" dependency_runtime_directories
+		"${ALTUN_DEPENDENCY_RUNTIME_DIRS}"
+	)
+	foreach(runtime_directory IN LISTS dependency_runtime_directories)
+		if (IS_DIRECTORY "${runtime_directory}")
+			file(GLOB dependency_runtime_dlls "${runtime_directory}/*.dll")
+			list(APPEND altun_runtime_dlls ${dependency_runtime_dlls})
+		endif ()
+	endforeach()
 
 	# Keep the test independent of the caller's PATH and copy the runtime that
 	# belongs to the compiler used for this standalone consumer.
@@ -54,7 +62,7 @@ if (WIN32 AND ALTUN_RUNTIME_DIR)
 			libgcc_s_sjlj-1.dll
 			libwinpthread-1.dll
 		)
-			execute_process(
+			execute_process (
 				COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${runtime_name}
 				OUTPUT_VARIABLE runtime_path
 				OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -69,9 +77,9 @@ if (WIN32 AND ALTUN_RUNTIME_DIR)
 				list(APPEND altun_runtime_dlls "${runtime_path}")
 			endif ()
 		endforeach()
-
-		list(REMOVE_DUPLICATES altun_runtime_dlls)
 	endif ()
+
+	list(REMOVE_DUPLICATES altun_runtime_dlls)
 endif ()
 
 

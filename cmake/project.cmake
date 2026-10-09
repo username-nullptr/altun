@@ -29,6 +29,7 @@ function(altun_add_library target_name)
 
 	target_compile_definitions(${target_name} PRIVATE ${target_micro}_EXPORTS)
 	target_compile_features(${target_name} PUBLIC cxx_std_20)
+	altun_enable_strict_warnings(${target_name})
 
 	# Public headers require the conforming MSVC preprocessor. Consumers also
 	# need the same C++ standard-library ABI selected for this build.
@@ -86,6 +87,7 @@ function(altun_add_executable target_name)
 	)
 	source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${all_files})
 	add_executable(${target_name} ${all_files})
+	altun_enable_strict_warnings(${target_name})
 
 	target_include_directories(${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

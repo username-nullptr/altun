@@ -70,20 +70,20 @@ endif ()
 
 function(configure_altun_test_target test_target)
 	altun_limit_heavy_compile(${test_target})
+	altun_enable_strict_warnings(${test_target})
+
 	target_include_directories(${test_target} PRIVATE ${ALTUN_TEST_SOURCE_DIR})
 	set_target_properties(${test_target} PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/bin
 	)
-
 	if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-		target_compile_options(${test_target} PRIVATE
-			-Wall -Wextra -Wpedantic -Werror
-		)
 		target_compile_definitions(${test_target} PRIVATE _GLIBCXX_ASSERTIONS)
 	endif ()
+
 	if (UNIX)
 		target_link_options(${test_target} PRIVATE -Wl,-rpath,$ORIGIN)
 	endif ()
+
 	if (ALTUN_ENABLE_TEST_SANITIZERS OR ALTUN_ENABLE_TEST_TSAN)
 		target_link_libraries(${test_target} PRIVATE altun.test.sanitizer)
 	endif ()
@@ -99,6 +99,7 @@ function(configure_altun_sanitized_test test_name)
 	if (ALTUN_ENABLE_TEST_SANITIZERS OR ALTUN_ENABLE_TEST_TSAN)
 		set_property(TEST ${test_name} APPEND PROPERTY LABELS sanitizer)
 		set_property(TEST ${test_name} PROPERTY RUN_SERIAL TRUE)
+
 		set_property(TEST ${test_name} APPEND PROPERTY FAIL_REGULAR_EXPRESSION
 			"AddressSanitizer" "LeakSanitizer" "ThreadSanitizer" "runtime error:"
 		)
@@ -126,6 +127,7 @@ endfunction()
 function(add_altun_functional_test name library)
 	set(test_target altun.test.${name})
 	add_altun_test_program(${test_target} ${library} ${ARGN})
+
 	add_altun_ctest(altun.${name} $<TARGET_FILE:${test_target}>)
 	set_tests_properties(altun.${name} PROPERTIES
 		LABELS functional
@@ -143,6 +145,7 @@ endfunction()
 function(add_altun_stress_test name library)
 	set(test_target altun.test.stress.${name})
 	add_altun_test_program(${test_target} ${library} ${ARGN})
+
 	target_compile_definitions(${test_target} PRIVATE
 		ALTUN_STRESS_SCALE=${ALTUN_STRESS_SCALE}
 	)

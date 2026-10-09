@@ -46,7 +46,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	if (CMAKE_CXX_COMPILER_VERSION LESS 17)
 		message(FATAL_ERROR "The minimum version of 'Clang' required is 17.")
 	endif ()
-	add_compile_options(-Wall)
 
 	if (ALTUN_USE_LIBCXX OR ALTUN_USE_LLD)
 		include(CheckCXXSourceCompiles)
@@ -109,7 +108,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	if (CMAKE_CXX_COMPILER_VERSION LESS 13)
 		message(FATAL_ERROR "The minimum version of 'GNU' required is 13.")
 	endif ()
-	add_compile_options(-Wall)
 
 	if (ALTUN_ENABLE_LTO)
 		include(CheckIPOSupported)
@@ -133,7 +131,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	endif ()
 
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_WIN32_WINNT=0x0A00)
-	add_compile_options(/W4 /wd4819 /Zc:preprocessor /bigobj)
+	add_compile_options(/Zc:preprocessor /bigobj)
 
 else ()
 	message(STATUS
@@ -201,6 +199,8 @@ else ()
 endif ()
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(ALTUN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/output)
 
 message(STATUS "")

@@ -15,6 +15,7 @@
 #include <dds/dds.h>
 
 #include <unordered_set>
+#include <limits>
 
 namespace altun::sbus { namespace
 {
@@ -688,6 +689,14 @@ void cyclone_interface::init()
 
 void cyclone_interface::publish(std::string_view topic, const void *buffer, size_t size)
 {
+	if( size > std::numeric_limits<uint32_t>::max() )
+	{
+		altun_clog_error("Altun.Core",
+			"altun.sbus.cyclone: payload size {} exceeds the DDS limit",
+			size
+		);
+		return ;
+	}
 	std::span view {
 		static_cast<const std::byte*>(buffer), size
 	};
@@ -706,7 +715,8 @@ void cyclone_interface::publish(std::string_view topic, const void *buffer, size
 		msg->content._buffer = payload.empty() ?
 			nullptr : reinterpret_cast<char*>(riwo::remove_const(payload.data()));
 
-		msg->content._length = msg->content._maximum = payload.size();
+		const auto payload_size = static_cast<uint32_t>(payload.size());
+		msg->content._length = msg->content._maximum = payload_size;
 		auto res= dds_write(g_writer, msg);
 
 		if( res != DDS_RETCODE_OK )

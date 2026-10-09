@@ -367,17 +367,15 @@ function(altun_collect_imported_runtime_directories output_variable)
 endfunction()
 
 
-set(altun_consumer_dependency_runtime_directories)
-if (NOT ALTUN_USE_BUNDLED_RIWO)
-	altun_collect_imported_runtime_directories(
-		altun_consumer_dependency_runtime_directories
-		Riwo::core Riwo::coro Riwo::utils
-	)
-endif ()
+altun_collect_imported_runtime_directories (
+	altun_consumer_dependency_runtime_directories
+	Riwo::core Riwo::coro Riwo::utils
+	CycloneDDS::ddsc
+	OpenSSL::SSL OpenSSL::Crypto
+)
 string(JOIN "|" altun_consumer_dependency_runtime_directories_arg
 	${altun_consumer_dependency_runtime_directories}
 )
-
 # Exercise the installed package from an independent build tree. This catches
 # missing headers, incomplete exports, broken transitive dependencies, and
 # source-tree-only target assumptions that an in-tree test cannot detect.

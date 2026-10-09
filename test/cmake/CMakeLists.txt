@@ -122,6 +122,20 @@ add_altun_configure_case(sbus-cyclone-disabled
 		"ALTUN_SBUS_INTERFACE=cyclone"
 		"ALTUN_BUILD_SBUS_CYCLONE=OFF"
 )
+add_altun_configure_case(sbus-cyclone-missing-idlc
+	ERROR "CycloneDDS IDL CMake support is required"
+	OPTIONS
+		"ALTUN_SBUS_INTERFACE=cyclone"
+		"ALTUN_BUILD_SBUS_CYCLONE=ON"
+		"CycloneDDS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/cyclonedds-no-idlc"
+)
+add_altun_configure_case(sbus-cyclone-missing-idlc-compiler
+	ERROR "CycloneDDS IDL compiler 'idlc' is required"
+	OPTIONS
+		"ALTUN_SBUS_INTERFACE=cyclone"
+		"ALTUN_BUILD_SBUS_CYCLONE=ON"
+		"CycloneDDS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/cyclonedds-no-idlc-compiler"
+)
 if (ALTUN_BUILD_SBUS_CYCLONE)
 	add_altun_configure_case(sbus-cyclone-enabled SUCCESS
 		OPTIONS

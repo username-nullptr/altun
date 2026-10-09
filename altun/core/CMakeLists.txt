@@ -22,6 +22,39 @@ target_link_libraries(${target_name} PUBLIC
 )
 if (ALTUN_BUILD_SBUS_CYCLONE)
 	find_package(CycloneDDS REQUIRED)
+	if (NOT COMMAND idlc_generate)
+		message(FATAL_ERROR
+			"${PRO_NAME}: CycloneDDS IDL CMake support is required when "
+			"ALTUN_BUILD_SBUS_CYCLONE=ON. The found CycloneDDS package "
+			"does not provide idlc_generate; install the CycloneDDS IDL "
+			"compiler/development tools (for vcpkg: cyclonedds[idlc])."
+		)
+	endif ()
+
+	# CycloneDDS' generator uses its imported compiler target for native builds
+	# and otherwise searches for a host idlc executable.  Validate the same
+	# capability here so incomplete packages fail with an actionable message.
+	if (CMAKE_CROSSCOMPILING OR NOT TARGET CycloneDDS::idlc)
+		unset(altun_cyclonedds_idlc_executable)
+		unset(altun_cyclonedds_idlc_executable CACHE)
+
+		find_program(altun_cyclonedds_idlc_executable
+			NAMES idlc
+			NO_CMAKE_FIND_ROOT_PATH
+		)
+		if (NOT altun_cyclonedds_idlc_executable)
+			message(FATAL_ERROR
+				"${PRO_NAME}: CycloneDDS IDL compiler 'idlc' is required when "
+				"ALTUN_BUILD_SBUS_CYCLONE=ON. The found CycloneDDS package "
+				"does not provide a usable IDL compiler; install the CycloneDDS "
+				"IDL compiler/development tools (for vcpkg: cyclonedds[idlc])."
+			)
+		endif ()
+
+		unset(altun_cyclonedds_idlc_executable)
+		unset(altun_cyclonedds_idlc_executable CACHE)
+	endif ()
+
 	idlc_generate (
 		TARGET cyclone_message
 		FILES ${CMAKE_CURRENT_SOURCE_DIR}/sbus/detail/cyclone_message.idl

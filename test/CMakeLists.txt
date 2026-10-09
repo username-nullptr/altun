@@ -190,8 +190,17 @@ else ()
 		"${PRO_NAME}: Enable ALTUN_BUILD_STRESS_TESTS for stress tests."
 	)
 endif ()
-if (ALTUN_BUILD_PERFORMANCE_TESTS)
+
+if (ALTUN_BUILD_PERFORMANCE_TESTS AND
+	(ALTUN_PERFORMANCE_SBUS_CYCLONE OR ALTUN_PERFORMANCE_SBUS_DBUS OR
+	ALTUN_PERFORMANCE_SBUS_SHM))
 	add_subdirectory(performance)
+
+elseif (ALTUN_BUILD_PERFORMANCE_TESTS)
+	message(STATUS
+		"${PRO_NAME}: No usable optional SBus transport is enabled; "
+		"skipping performance benchmarks."
+	)
 else ()
 	message(STATUS
 		"${PRO_NAME}: Enable ALTUN_BUILD_PERFORMANCE_TESTS for performance benchmarks."

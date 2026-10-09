@@ -84,18 +84,19 @@ endif ()
 
 
 function(add_altun_consumer_runtime_test target)
-	# CMake 3.15 predates TARGET_RUNTIME_DLLS and CTest's
-	# ENVIRONMENT_MODIFICATION property.
-	if (altun_runtime_dlls)
-		add_custom_command(TARGET ${target} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different
-				${altun_runtime_dlls} "$<TARGET_FILE_DIR:${target}>"
-			COMMAND_EXPAND_LISTS
+	if (WIN32)
+		set_target_properties(${target} PROPERTIES
+			RUNTIME_OUTPUT_DIRECTORY
+				"${CMAKE_CURRENT_BINARY_DIR}/runtime/$<CONFIG>"
 		)
 	endif ()
 
 	add_test(NAME ${target} COMMAND $<TARGET_FILE:${target}>)
+	list(APPEND altun_consumer_runtime_test_targets ${target})
 
+	set(altun_consumer_runtime_test_targets
+		${altun_consumer_runtime_test_targets} PARENT_SCOPE
+	)
 	# The install tree is intentionally outside the system loader's configured
 	# prefixes. Make co-installed libraries and external shared dependencies
 	# discoverable without changing their production RPATH policy. DT_RUNPATH
@@ -174,3 +175,26 @@ target_link_libraries(altun_consumer_source_targets PRIVATE
 	${altun_source_targets}
 )
 add_altun_consumer_runtime_test(altun_consumer_source_targets)
+
+# CMake 3.15 predates TARGET_RUNTIME_DLLS and CTest's
+# ENVIRONMENT_MODIFICATION property.  Prepare the shared runtime once instead
+# of attaching identical POST_BUILD copies to every consumer: Ninja may link
+# consumers concurrently, and parallel copies of the same DLL can race.
+if (WIN32 AND altun_runtime_dlls)
+	set(altun_consumer_runtime_output_directory
+		"${CMAKE_CURRENT_BINARY_DIR}/runtime/$<CONFIG>"
+	)
+	add_custom_target(altun_consumer_runtime ALL
+		COMMAND ${CMAKE_COMMAND} -E make_directory
+			"${altun_consumer_runtime_output_directory}"
+
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			${altun_runtime_dlls}
+			"${altun_consumer_runtime_output_directory}"
+
+		COMMAND_EXPAND_LISTS
+	)
+	foreach(target IN LISTS altun_consumer_runtime_test_targets)
+		add_dependencies(${target} altun_consumer_runtime)
+	endforeach()
+endif ()

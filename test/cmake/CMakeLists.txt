@@ -215,6 +215,28 @@ add_altun_configure_case(performance-without-testing
 	ERROR "Stress and performance tests require BUILD_TESTING=ON"
 	OPTIONS "ALTUN_BUILD_PERFORMANCE_TESTS=ON"
 )
+add_altun_configure_case(performance-without-optional-transports SUCCESS
+	OPTIONS
+		"BUILD_TESTING=ON"
+		"ALTUN_BUILD_CMAKE_TESTS=OFF"
+		"ALTUN_BUILD_PERFORMANCE_TESTS=ON"
+		"ALTUN_BUILD_SBUS_CYCLONE=OFF"
+		"ALTUN_BUILD_SBUS_DBUS=OFF"
+		"ALTUN_BUILD_SBUS_SHM=OFF"
+	COMPONENTS ${altun_available_components}
+)
+if (UNIX)
+	add_altun_configure_case(performance-with-shm-only SUCCESS
+		OPTIONS
+			"BUILD_TESTING=ON"
+			"ALTUN_BUILD_CMAKE_TESTS=OFF"
+			"ALTUN_BUILD_PERFORMANCE_TESTS=ON"
+			"ALTUN_BUILD_SBUS_CYCLONE=OFF"
+			"ALTUN_BUILD_SBUS_DBUS=OFF"
+			"ALTUN_BUILD_SBUS_SHM=ON"
+		COMPONENTS ${altun_available_components}
+	)
+endif ()
 add_altun_configure_case(cmake-tests-without-testing
 	ERROR "CMake integration tests require BUILD_TESTING=ON"
 	OPTIONS "ALTUN_BUILD_CMAKE_TESTS=ON"
@@ -330,36 +352,16 @@ function(altun_collect_imported_runtime_directories output_variable)
 			continue()
 		endif ()
 
-		set(location_properties IMPORTED_LOCATION)
-		get_target_property(imported_configurations ${target}
-			IMPORTED_CONFIGURATIONS
-		)
-		foreach(configuration IN LISTS imported_configurations)
-			string(TOUPPER "${configuration}" configuration_upper)
-			list(APPEND location_properties
-				IMPORTED_LOCATION_${configuration_upper}
+		get_target_property(imported ${target} IMPORTED)
+		get_target_property(target_type ${target} TYPE)
+		if (imported AND NOT target_type STREQUAL "INTERFACE_LIBRARY")
+			# Resolve the imported artifact for the active configuration at
+			# generate time.  Enumerating every IMPORTED_CONFIGURATION mixes
+			# Debug and Release runtime directories on multi-config packages.
+			list(APPEND runtime_directories
+				"$<TARGET_FILE_DIR:${target}>"
 			)
-		endforeach()
-
-		foreach(property IN LISTS location_properties)
-			get_target_property(locations ${target} ${property})
-			if (NOT locations OR locations MATCHES "-NOTFOUND$")
-				continue()
-			endif ()
-
-			foreach(location IN LISTS locations)
-				if (IS_ABSOLUTE "${location}")
-					get_filename_component(runtime_directory
-						"${location}" DIRECTORY
-					)
-					if (IS_DIRECTORY "${runtime_directory}")
-						list(APPEND runtime_directories
-							"${runtime_directory}"
-						)
-					endif ()
-				endif ()
-			endforeach()
-		endforeach()
+		endif ()
 	endforeach()
 
 	list(REMOVE_DUPLICATES runtime_directories)

@@ -43,19 +43,23 @@ Targets are `altun.stress.core` and, on Linux, `altun.stress.linux`. See [Stress
 
 ## Performance
 
-The SBus comparison requires CycloneDDS, D-Bus, shared memory, UNIX, and `dbus-run-session`:
+The SBus benchmark is UNIX-only and uses whichever optional transports are
+available. For example, to measure shared memory alone:
 
 ```sh
 cmake -S . -B build-perf \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_TESTING=ON \
   -DALTUN_BUILD_PERFORMANCE_TESTS=ON \
-  -DALTUN_BUILD_SBUS_CYCLONE=ON \
-  -DALTUN_BUILD_SBUS_DBUS=ON \
   -DALTUN_BUILD_SBUS_SHM=ON
 cmake --build build-perf --parallel
 ctest --test-dir build-perf -R '^altun\.performance\.sbus$' -V
 ```
+
+Add the CycloneDDS or D-Bus options when those dependencies are available. The
+benchmark runs each enabled transport and prints pairwise comparisons when at
+least two are present. If no usable optional transport is enabled, the
+benchmark is skipped. D-Bus is skipped when `dbus-run-session` is unavailable.
 
 See [SBus benchmark](performance/README.md) for metric definitions.
 
@@ -95,8 +99,8 @@ ctest --test-dir build-test \
 | `ALTUN_BUILD_PERFORMANCE_TESTS` | `OFF` | Build benchmarks |
 | `ALTUN_ENABLE_TEST_SANITIZERS` | `OFF` | Enable ASan and UBSan |
 | `ALTUN_ENABLE_TEST_TSAN` | `OFF` | Enable TSan |
-| `ALTUN_FUNCTIONAL_REPEAT`, `ALTUN_FUNCTIONAL_SEED`, `ALTUN_FUNCTIONAL_TIMEOUT` | `1`, `1`, `60` | Functional execution controls |
-| `ALTUN_STRESS_SCALE`, `ALTUN_STRESS_REPEAT`, `ALTUN_STRESS_SEED`, `ALTUN_STRESS_TIMEOUT` | `4`, `1`, `1`, `180` | Stress execution controls |
+| `ALTUN_FUNCTIONAL_REPEAT`, `ALTUN_FUNCTIONAL_SEED`, `ALTUN_FUNCTIONAL_TIMEOUT` | `3`, `1`, `120` | Functional execution controls |
+| `ALTUN_STRESS_SCALE`, `ALTUN_STRESS_REPEAT`, `ALTUN_STRESS_SEED`, `ALTUN_STRESS_TIMEOUT` | `5`, `3`, `1`, `180` | Stress execution controls |
 | `ALTUN_PERFORMANCE_SCALE`, `ALTUN_PERFORMANCE_TIMEOUT` | `1`, `180` | Benchmark controls |
 
 ASan/UBSan and TSan are mutually exclusive, require GCC or Clang and

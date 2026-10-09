@@ -19,7 +19,9 @@
 #include <mutex>
 #include <sstream>
 #include <thread>
+#if ALTUN_PERFORMANCE_SBUS_SHM
 #include <unistd.h>
+#endif
 
 namespace
 {
@@ -51,23 +53,29 @@ using subscriber_t = riwo::utils::sbus::basic_subscriber<Interface>;
 template <typename Interface>
 struct transport_traits;
 
+#if ALTUN_PERFORMANCE_SBUS_DBUS
 template <>
 struct transport_traits<altun::sbus::dbus_interface>
 {
 	static constexpr std::string_view name = "dbus";
 };
+#endif
 
+#if ALTUN_PERFORMANCE_SBUS_CYCLONE
 template <>
 struct transport_traits<altun::sbus::cyclone_interface>
 {
 	static constexpr std::string_view name = "cyclone";
 };
+#endif
 
+#if ALTUN_PERFORMANCE_SBUS_SHM
 template <>
 struct transport_traits<altun::sbus::shm_interface>
 {
 	static constexpr std::string_view name = "shm";
 };
+#endif
 
 class receiver
 {
@@ -557,45 +565,35 @@ std::vector<result> read_results(const std::filesystem::path &path)
 }
 
 void print_comparison(
-	const std::vector<result> &dbus,
-	const std::vector<result> &cyclone,
-	const std::vector<result> &shm
+	const std::vector<result> &numerator,
+	const std::vector<result> &denominator
 )
 {
-	if( dbus.size() != cyclone.size() or dbus.size() != shm.size() )
+	if( numerator.size() != denominator.size() )
 		throw std::runtime_error("SBus benchmark result sets do not match");
-	std::cout << "\n[COMPARE] cost ratio above 1.0 means the numerator is slower\n";
-	for(size_t index = 0; index < dbus.size(); ++index)
+	for(size_t index = 0; index < numerator.size(); ++index)
 	{
-		const auto &dbus_value = dbus[index];
-		const auto &cyclone_value = cyclone[index];
-		const auto &shm_value = shm[index];
-		if( dbus_value.scope != cyclone_value.scope or
-			dbus_value.scope != shm_value.scope or
-			dbus_value.metric != cyclone_value.metric or
-			dbus_value.metric != shm_value.metric or
-			dbus_value.payload_size != cyclone_value.payload_size or
-			dbus_value.payload_size != shm_value.payload_size or
-			dbus_value.operations != cyclone_value.operations or
-			dbus_value.operations != shm_value.operations )
+		const auto &numerator_value = numerator[index];
+		const auto &denominator_value = denominator[index];
+		if( numerator_value.scope != denominator_value.scope or
+			numerator_value.metric != denominator_value.metric or
+			numerator_value.payload_size != denominator_value.payload_size or
+			numerator_value.operations != denominator_value.operations )
 			throw std::runtime_error("SBus benchmark result keys do not match");
 
-		const auto dbus_cost =
-			altun_test::performance::nanoseconds_per_operation(dbus_value);
-		const auto cyclone_cost =
-			altun_test::performance::nanoseconds_per_operation(cyclone_value);
-		const auto shm_cost =
-			altun_test::performance::nanoseconds_per_operation(shm_value);
+		const auto numerator_cost =
+			altun_test::performance::nanoseconds_per_operation(numerator_value);
+		const auto denominator_cost =
+			altun_test::performance::nanoseconds_per_operation(denominator_value);
 		std::cout << std::fixed << std::setprecision(2)
-			<< "[COMPARE] scope=" << dbus_value.scope
-			<< " metric=" << dbus_value.metric
-			<< " payload=" << dbus_value.payload_size << "B"
-			<< " dbus/cyclone-cost=" << dbus_cost / cyclone_cost << 'x'
-			<< " dbus/shm-cost=" << dbus_cost / shm_cost << 'x'
-			<< " cyclone/shm-cost=" << cyclone_cost / shm_cost << 'x'
-			<< " dbus=" << dbus_cost << " ns/message"
-			<< " cyclone=" << cyclone_cost << " ns/message"
-			<< " shm=" << shm_cost << " ns/message\n";
+			<< "[COMPARE] scope=" << numerator_value.scope
+			<< " metric=" << numerator_value.metric
+			<< " payload=" << numerator_value.payload_size << "B "
+			<< numerator_value.transport << '/' << denominator_value.transport
+			<< "-cost=" << numerator_cost / denominator_cost << 'x'
+			<< ' ' << numerator_value.transport << '=' << numerator_cost
+			<< " ns/message " << denominator_value.transport << '='
+			<< denominator_cost << " ns/message\n";
 	}
 }
 
@@ -609,12 +607,18 @@ int run_worker(const std::filesystem::path &output)
 
 int run_child(const std::string &transport, const std::filesystem::path &output)
 {
+#if ALTUN_PERFORMANCE_SBUS_DBUS
 	if( transport == "dbus" )
 		return run_worker<altun::sbus::dbus_interface>(output);
+#endif
+#if ALTUN_PERFORMANCE_SBUS_CYCLONE
 	if( transport == "cyclone" )
 		return run_worker<altun::sbus::cyclone_interface>(output);
+#endif
+#if ALTUN_PERFORMANCE_SBUS_SHM
 	if( transport == "shm" )
 		return run_worker<altun::sbus::shm_interface>(output);
+#endif
 	throw std::invalid_argument("unknown SBus transport: " + transport);
 }
 
@@ -625,15 +629,21 @@ int run_peer_child(
 	std::string_view response_topic
 )
 {
+#if ALTUN_PERFORMANCE_SBUS_DBUS
 	if( transport == "dbus" )
 		return run_peer<altun::sbus::dbus_interface>(
 			ready_file, request_topic, response_topic);
+#endif
+#if ALTUN_PERFORMANCE_SBUS_CYCLONE
 	if( transport == "cyclone" )
 		return run_peer<altun::sbus::cyclone_interface>(
 			ready_file, request_topic, response_topic);
+#endif
+#if ALTUN_PERFORMANCE_SBUS_SHM
 	if( transport == "shm" )
 		return run_peer<altun::sbus::shm_interface>(
 			ready_file, request_topic, response_topic);
+#endif
 	throw std::invalid_argument("unknown SBus transport: " + transport);
 }
 
@@ -658,6 +668,7 @@ std::vector<result> launch_worker(
 	return read_results(output);
 }
 
+#if ALTUN_PERFORMANCE_SBUS_SHM
 void isolate_shm_namespace()
 {
 	const char *configured = std::getenv("ALTUN_SBUS_SHM_NAME");
@@ -667,21 +678,43 @@ void isolate_shm_namespace()
 	if( setenv("ALTUN_SBUS_SHM_NAME", name.c_str(), 1) != 0 )
 		throw std::runtime_error("failed to isolate SBus shared-memory namespace");
 }
+#endif
 
 int run_comparison()
 {
+	std::vector<std::vector<result>> result_sets;
+#if ALTUN_PERFORMANCE_SBUS_SHM
 	isolate_shm_namespace();
+#endif
 	temporary_directory directory;
-	const auto dbus = launch_worker("dbus", directory.path() / "dbus.tsv");
-	const auto cyclone = launch_worker("cyclone", directory.path() / "cyclone.tsv");
-	const auto shm = launch_worker("shm", directory.path() / "shm.tsv");
-	for(const auto &value : dbus)
-		altun_test::performance::print_result(value);
-	for(const auto &value : cyclone)
-		altun_test::performance::print_result(value);
-	for(const auto &value : shm)
-		altun_test::performance::print_result(value);
-	print_comparison(dbus, cyclone, shm);
+#if ALTUN_PERFORMANCE_SBUS_DBUS
+	result_sets.emplace_back(
+		launch_worker("dbus", directory.path() / "dbus.tsv")
+	);
+#endif
+#if ALTUN_PERFORMANCE_SBUS_CYCLONE
+	result_sets.emplace_back(
+		launch_worker("cyclone", directory.path() / "cyclone.tsv")
+	);
+#endif
+#if ALTUN_PERFORMANCE_SBUS_SHM
+	result_sets.emplace_back(
+		launch_worker("shm", directory.path() / "shm.tsv")
+	);
+#endif
+	for(const auto &results : result_sets)
+	{
+		for(const auto &value : results)
+			altun_test::performance::print_result(value);
+	}
+	if( result_sets.size() > 1 )
+		std::cout << "\n[COMPARE] cost ratio above 1.0 means the numerator is slower\n";
+	for(size_t numerator = 0; numerator < result_sets.size(); ++numerator)
+	{
+		for(size_t denominator = numerator + 1;
+			denominator < result_sets.size(); ++denominator)
+			print_comparison(result_sets[numerator], result_sets[denominator]);
+	}
 	return 0;
 }
 

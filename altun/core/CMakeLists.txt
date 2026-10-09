@@ -22,6 +22,22 @@ target_link_libraries(${target_name} PUBLIC
 )
 if (ALTUN_BUILD_SBUS_CYCLONE)
 	find_package(CycloneDDS REQUIRED)
+	# CycloneDDS is discovered from this subdirectory.  Imported targets are
+	# directory-scoped unless promoted, which otherwise hides ddsc from sibling
+	# directories such as test/cmake and prevents them from locating its runtime
+	# DLL for installed-package consumer tests.
+	if (TARGET CycloneDDS::ddsc)
+		get_target_property(altun_cyclonedds_ddsc_imported
+			CycloneDDS::ddsc IMPORTED
+		)
+		if (altun_cyclonedds_ddsc_imported)
+			set_property(TARGET CycloneDDS::ddsc PROPERTY
+				IMPORTED_GLOBAL TRUE
+			)
+		endif ()
+		unset(altun_cyclonedds_ddsc_imported)
+	endif ()
+
 	if (NOT COMMAND idlc_generate)
 		message(FATAL_ERROR
 			"${PRO_NAME}: CycloneDDS IDL CMake support is required when "

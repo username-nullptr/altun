@@ -113,19 +113,20 @@ if (ALTUN_BUILD_PERFORMANCE_TESTS)
 		)
 	endif ()
 
-	if (NOT (ALTUN_BUILD_SBUS_CYCLONE AND ALTUN_BUILD_SBUS_DBUS AND
-		ALTUN_BUILD_SBUS_SHM))
-		message(FATAL_ERROR
-			"${PRO_NAME}: Performance tests require all CycloneDDS, D-Bus, "
-			"and shared-memory SBus transports."
-		)
-	endif ()
+	set(ALTUN_PERFORMANCE_SBUS_CYCLONE ${ALTUN_BUILD_SBUS_CYCLONE})
+	set(ALTUN_PERFORMANCE_SBUS_DBUS ${ALTUN_BUILD_SBUS_DBUS})
+	set(ALTUN_PERFORMANCE_SBUS_SHM ${ALTUN_BUILD_SBUS_SHM})
 
-	find_program(ALTUN_PERFORMANCE_DBUS_RUN_SESSION NAMES dbus-run-session)
-	if (NOT ALTUN_PERFORMANCE_DBUS_RUN_SESSION)
-		message(FATAL_ERROR
-			"${PRO_NAME}: Performance tests require dbus-run-session."
-		)
+	if (ALTUN_PERFORMANCE_SBUS_DBUS)
+		find_program(ALTUN_PERFORMANCE_DBUS_RUN_SESSION NAMES dbus-run-session)
+
+		if (NOT ALTUN_PERFORMANCE_DBUS_RUN_SESSION)
+			set(ALTUN_PERFORMANCE_SBUS_DBUS OFF)
+			message(STATUS
+				"${PRO_NAME}: dbus-run-session was not found; skipping the "
+				"D-Bus performance benchmark."
+			)
+		endif ()
 	endif ()
 endif ()
 

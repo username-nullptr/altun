@@ -17,9 +17,9 @@ int main(int argc, const char *argv[])
 			<< "  " << (event.dev_node.empty() ? event.sys_path : event.dev_node)
 			<< '\n';
 	});
-	events.error.connect([](const std::error_code &error)
+	events.error.connect([](const std::error_code &event_error)
 	{
-		std::cerr << "Block event failed: " << error.message() << '\n';
+		std::cerr << "Block event failed: " << event_error.message() << '\n';
 		riwo::exit(1);
 	});
 

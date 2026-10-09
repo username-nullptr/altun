@@ -53,7 +53,7 @@ ALTUN_TEST("linux", "I2C asynchronous device pressure")
 		files.push_back(std::make_unique<temporary_file>());
 		auto device = std::make_unique<device_type>(context.get_executor());
 		device->open(device_type::node(files.back()->path(),
-			static_cast<std::uint16_t>(0x20 + index)));
+			static_cast<device_type::address_t>(0x20 + index)));
 		const auto descriptor = device->handle().native_handle();
 		{
 			std::scoped_lock lock(virtual_ioctl_mutex);

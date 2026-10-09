@@ -296,11 +296,10 @@ public:
 };
 
 template <riwo::concepts::exec Exec>
-basic_i2c<Exec>::node::node(path_t dev_name, address_t addr,
-	const duration_t &timeout) :
+basic_i2c<Exec>::node::node(path_t dev_name, address_t addr, const duration_t &timeout) :
 	dev_name(std::move(dev_name))
 {
-	this->address = addr;
+	this->address = addr & 0x7FU;
 	this->timeout = timeout;
 }
 

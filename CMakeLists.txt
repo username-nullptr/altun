@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.15)
 
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 7)
-set(PATCH_VERSION 1)
+set(PATCH_VERSION 2)
 
 set(PRO_VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION})
 set(PRO_NAME Altun)
@@ -24,6 +24,7 @@ add_definitions (
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(platform)
+include(warnings)
 include(heavy_compile)
 
 include(options)

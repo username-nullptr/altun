@@ -3,22 +3,26 @@
 
 function(altun_add_example target component source)
 	add_executable(${target} ${source})
+	altun_enable_strict_warnings(${target})
+
 	if(component STREQUAL "linux")
 		altun_limit_heavy_compile(${target})
 	endif()
-	target_link_libraries(${target} PRIVATE altun.${component})
 
+	target_link_libraries(${target} PRIVATE altun.${component})
 	set_target_properties(${target} PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY ${ALTUN_OUTPUT_DIR}/examples/${component}
 	)
 	install(TARGETS ${target} DESTINATION examples/${component})
 endfunction()
 
+
 altun_add_example(log core core/log.cpp)
 altun_add_example(settings core core/settings.cpp)
 altun_add_example(plugin_manager core core/plugin_manager.cpp)
 
 add_library(altun_example_plugin SHARED core/plugin.cpp)
+altun_enable_strict_warnings(altun_example_plugin)
 target_link_libraries(altun_example_plugin PRIVATE altun.core)
 
 set_target_properties(altun_example_plugin PROPERTIES

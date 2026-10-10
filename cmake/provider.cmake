@@ -27,10 +27,29 @@ if (ALTUN_BUILD_STATIC)
 	endif ()
 endif ()
 
+# A bundled Riwo is installed beside Altun.  Preserve that exact config
+# directory in the package so cross consumers with
+# CMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY do not re-root the co-installed
+# dependency into the target sysroot.
+if (ALTUN_USE_BUNDLED_RIWO)
+	if (IS_ABSOLUTE "${RIWO_INSTALL_CMAKEDIR}")
+		set(ALTUN_BUNDLED_RIWO_CONFIG_DIR "${RIWO_INSTALL_CMAKEDIR}")
+	else ()
+		set(ALTUN_BUNDLED_RIWO_CONFIG_DIR
+			"${CMAKE_INSTALL_PREFIX}/${RIWO_INSTALL_CMAKEDIR}"
+		)
+	endif ()
+else ()
+	# configure_package_config_file requires every PATH_VARS entry to name a
+	# path.  This value is unused for external Riwo builds.
+	set(ALTUN_BUNDLED_RIWO_CONFIG_DIR "${CMAKE_INSTALL_PREFIX}")
+endif ()
+
 configure_package_config_file (
 	cmake/AltunConfig.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/AltunConfig.cmake
 	INSTALL_DESTINATION ${ALTUN_INSTALL_CMAKEDIR}
+	PATH_VARS ALTUN_BUNDLED_RIWO_CONFIG_DIR
 )
 write_basic_package_version_file (
 	${CMAKE_CURRENT_BINARY_DIR}/AltunConfigVersion.cmake

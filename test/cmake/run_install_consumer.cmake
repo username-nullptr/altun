@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.15)
 foreach(required_variable
 	TEST_SOURCE_DIR
 	TEST_BINARY_DIR
+	TEST_ROOTED_BINARY_DIR
 	TEST_MISSING_BINARY_DIR
 	TEST_INSTALL_PREFIX
 	TEST_INSTALL_CMAKEDIR
@@ -26,6 +27,7 @@ endforeach()
 
 file(REMOVE_RECURSE
 	"${TEST_BINARY_DIR}"
+	"${TEST_ROOTED_BINARY_DIR}"
 	"${TEST_MISSING_BINARY_DIR}"
 	"${TEST_INSTALL_PREFIX}"
 )
@@ -182,6 +184,31 @@ if (NOT consumer_test_result EQUAL 0)
 	message(FATAL_ERROR
 		"Running the installed-package consumer failed.\n"
 		"${consumer_test_stdout}\n${consumer_test_stderr}"
+	)
+endif ()
+
+# Reproduce cross toolchains that search packages only below a sysroot.  Altun
+# itself is selected explicitly, while its co-installed bundled Riwo must be
+# resolved by AltunConfig.cmake without being re-rooted into this unrelated
+# synthetic root.
+make_consumer_configure_command(rooted_configure_command
+	"${TEST_ROOTED_BINARY_DIR}"
+)
+list(APPEND rooted_configure_command
+	"-DALTUN_EXPECTED_COMPONENTS=${TEST_COMPONENTS}"
+	"-DCMAKE_FIND_ROOT_PATH=${TEST_BINARY_DIR}/unrelated-package-root"
+	"-DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY"
+)
+execute_process (
+	COMMAND ${rooted_configure_command}
+	RESULT_VARIABLE rooted_configure_result
+	OUTPUT_VARIABLE rooted_configure_stdout
+	ERROR_VARIABLE rooted_configure_stderr
+)
+if (NOT rooted_configure_result EQUAL 0)
+	message(FATAL_ERROR
+		"Configuring the rooted installed-package consumer failed.\n"
+		"${rooted_configure_stdout}\n${rooted_configure_stderr}"
 	)
 endif ()
 

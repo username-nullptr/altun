@@ -50,6 +50,16 @@ if (ALTUN_RIWO_INSTALL_PREFIX)
 		PATHS "${ALTUN_RIWO_INSTALL_PREFIX}"
 		NO_DEFAULT_PATH
 	)
+elseif (@ALTUN_USE_BUNDLED_RIWO@ AND
+	EXISTS "@PACKAGE_ALTUN_BUNDLED_RIWO_CONFIG_DIR@/RiwoConfig.cmake")
+	# Riwo is co-installed with Altun.  NO_CMAKE_FIND_ROOT_PATH is essential
+	# for staging-prefix consumers whose cross toolchain searches packages only
+	# below its sysroot; this path already points at the intended target package.
+	find_dependency(Riwo CONFIG REQUIRED COMPONENTS coro utils
+		PATHS "@PACKAGE_ALTUN_BUNDLED_RIWO_CONFIG_DIR@"
+		NO_DEFAULT_PATH
+		NO_CMAKE_FIND_ROOT_PATH
+	)
 else ()
 	find_dependency(Riwo CONFIG REQUIRED COMPONENTS coro utils
 		HINTS "${PACKAGE_PREFIX_DIR}"

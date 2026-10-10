@@ -225,6 +225,31 @@ add_altun_configure_case(performance-without-optional-transports SUCCESS
 		"ALTUN_BUILD_SBUS_SHM=OFF"
 	COMPONENTS ${altun_available_components}
 )
+if (ALTUN_BUILD_SBUS_CYCLONE)
+	add_altun_configure_case(performance-with-cyclone-only SUCCESS
+		OPTIONS
+			"BUILD_TESTING=ON"
+			"ALTUN_BUILD_CMAKE_TESTS=OFF"
+			"ALTUN_BUILD_PERFORMANCE_TESTS=ON"
+			"ALTUN_BUILD_SBUS_CYCLONE=ON"
+			"ALTUN_BUILD_SBUS_DBUS=OFF"
+			"ALTUN_BUILD_SBUS_SHM=OFF"
+		COMPONENTS ${altun_available_components}
+	)
+endif ()
+
+if (ALTUN_BUILD_SBUS_DBUS)
+	add_altun_configure_case(performance-with-dbus-only SUCCESS
+		OPTIONS
+			"BUILD_TESTING=ON"
+			"ALTUN_BUILD_CMAKE_TESTS=OFF"
+			"ALTUN_BUILD_PERFORMANCE_TESTS=ON"
+			"ALTUN_BUILD_SBUS_CYCLONE=OFF"
+			"ALTUN_BUILD_SBUS_DBUS=ON"
+			"ALTUN_BUILD_SBUS_SHM=OFF"
+		COMPONENTS ${altun_available_components}
+	)
+endif ()
 if (UNIX)
 	add_altun_configure_case(performance-with-shm-only SUCCESS
 		OPTIONS
@@ -385,6 +410,7 @@ add_altun_ctest(altun.cmake.install-consumer
 	${CMAKE_COMMAND}
 	"-DTEST_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/consumer"
 	"-DTEST_BINARY_DIR=${altun_cmake_test_work_dir}/consumer-build"
+	"-DTEST_ROOTED_BINARY_DIR=${altun_cmake_test_work_dir}/consumer-rooted-build"
 	"-DTEST_MISSING_BINARY_DIR=${altun_cmake_test_work_dir}/consumer-missing-build"
 	"-DTEST_INSTALL_PREFIX=${altun_cmake_test_work_dir}/install"
 	"-DTEST_INSTALL_CMAKEDIR=${ALTUN_INSTALL_CMAKEDIR}"
